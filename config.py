@@ -1,0 +1,125 @@
+# All Raphael settings live here.
+from pathlib import Path
+
+
+# LM Studio local server (Developer tab -> Start Server)
+BASE_URL = "http://localhost:1235/v1"
+API_KEY = "lm-studio"  # placeholder, LM Studio ignores it
+
+# Must match the model id LM Studio shows. Run `python chat.py --models` to list ids.
+MODEL = "google/gemma-4-e4b"
+
+# Gemma "thinks" before answering, which adds 15+ s. "none" turns that off (faster, a bit less careful).
+# Set to None to use the model's default.
+REASONING_EFFORT = "none"
+MAX_REPLY_TOKENS = 250      # hard cap so a rambling answer can't take minutes (about 180 words)
+
+ASSISTANT_NAME = "Raphael"
+
+SYSTEM_PROMPT = (
+    f"You are {ASSISTANT_NAME}, a helpful local voice assistant with a calm, precise, analytical tone. "
+    "When you report a result, begin with 'Answer.' "
+    "Answer in one or two short sentences unless the user asks for detail (up to three when you give options). "
+    "Be honest and wise on every topic, not only apps. When you lack something (an app that is not installed, "
+    "a tool, an ability, or a fact you are not sure of), say so plainly in one sentence, then offer one or two "
+    "practical options, for example install it, use an installed alternative, or the exact steps the user can do. "
+    "Never pretend and never invent facts or results; when unsure, say so and say how to check. "
+    "To type into an app use one type_text call with the window name (open the app first if needed). You cannot see "
+    "which windows are open, so never say a window is missing without trying: call type_text and it will tell you; in a browser "
+    "use before='ctrl+l' and enter='yes'. Use press_keys only for shortcuts like ctrl+t. Never put text inside keys. To play a song or video use play_music; to pause, resume, skip or change volume of what is already playing use media_control. Before you say you cannot do something, think whether a tool gets close, "
+    "use it, then say honestly what happened. "
+    "You learn over time through the user's Obsidian vault. When the user tells you a lasting fact or preference "
+    "about themselves, or corrects you, call remember with one short third-person sentence. For questions about the "
+    "user's notes, projects or things they told you before, call vault_search and vault_read before answering. When "
+    "the user says note this, save this idea or similar, call capture_note. "
+    "The user is a programmer. For coding chores use project_info (call it before running tests, it gives the exact "
+    "command and folder), git_status, search_files, read_file, and run_command with that folder; then summarize the output in one or two sentences: "
+    "passed or failed, and the first error with its file and line. To explain an error the user copied, call "
+    "read_clipboard first. To give the user code or text to paste, use copy_to_clipboard. "
+    "Use the PC facts below as ground truth. Match app names loosely ('Zen browser' means the app 'zen'). "
+    "When the user clearly asks you to do something and you have the tool, call the tool right away; the user "
+    "approves in a window, so do not ask permission in words first. For a website by name (YouTube, Gmail) call "
+    "open_url with its address. If a tool result says DECLINED or Error, the action did NOT happen: say exactly that. "
+    "No markdown, lists or emojis: your reply is spoken aloud. "
+    "The user's words come from speech recognition and may contain wrong words; infer the likely meaning, "
+    "and if a request is unclear, ask a short question instead of guessing. "
+    "You do not know the current time or date: always call get_time for them, never guess. "
+    "To act on the PC use your tools; the user approves risky ones. After a tool runs, check its result "
+    "and only say something was done if the result confirms it. If a tool is declined or fails, say so and stop."
+)
+
+# --- Stage 2: tools ---
+# name the model may use -> command that is run (opening an app always asks you first)
+APP_WHITELIST = {
+    "notepad": "notepad.exe",
+    "calc": "calc.exe",
+    "zen": r"C:\Program Files\Zen Browser\zen.exe",
+    "chrome": "chrome.exe",   # not installed on this PC: Raphael will say so and suggest options
+}
+
+# list_files / read_file only work inside these folders (and their subfolders).
+ALLOWED_DIRS = [
+    str(Path(__file__).parent),  # this project folder (commands run here unless a project is named)
+    r"C:\Users\darnie\own projects",  # your coding projects: read and search freely, writing asks
+]
+# --- Obsidian vault = long-term memory (vault.py follows the vault's SCHEMA.md / AGENTS.md) ---
+VAULT_DIR = r"C:\Users\darnie\Documents\Obsidian Vault"
+VAULT_BLOCKED = ("private", ".obsidian", ".git")  # never read or written (vault rule: never touch private/)
+MEMORY_NOTE = "raphael/memory.md"                  # facts Raphael learns, loaded every session
+MEMORY_MAX_CHARS = 2000                             # how much memory goes into each session's prompt
+PROJECTS_DIR = r"C:\Users\darnie\own projects"  # each subfolder is a project Raphael can name ("scamcheck", "docmind")
+
+MAX_READ_BYTES = 20_000
+MAX_WRITE_BYTES = 100_000
+COMMAND_TIMEOUT = 30        # seconds before a PowerShell command is stopped
+MAX_OUTPUT_CHARS = 4000     # command output sent back to the model
+MAX_TOOL_ROUNDS = 15        # tool steps Raphael may chain for one request (Stop button cancels)
+TYPING_DELAY = 0.035        # seconds between typed letters (0.01 = instant-looking, 0.06 = slow and visible)
+APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Deny
+
+# What happens when the model wants a tool:
+#   "allow" = runs now, "ask" = you click Allow/Deny in the window, "deny" = turned off.
+# Dangerous things (delete, move, uninstall, shutdown, downloads, registry, code files...) are never blocked,
+# but they ALWAYS ask with a red warning, even if you set "allow".
+PERMISSIONS = {
+    "get_time": "allow", "system_info": "allow", "list_files": "allow", "read_file": "allow",
+    "search_files": "allow", "open_folder": "allow", "focus_window": "allow", "media_control": "allow",
+    "remember": "allow", "vault_search": "allow", "vault_read": "allow", "capture_note": "allow", "forget": "ask",
+    "git_status": "allow", "project_info": "allow", "read_clipboard": "allow", "copy_to_clipboard": "allow",
+    "type_text": "allow", "press_keys": "allow", "open_app": "allow", "open_url": "allow", "play_music": "allow",
+    "run_command": "allow",  # only commands that change/delete/install something ask (see DANGEROUS in tools.py)
+    "write_file": "ask", "edit_file": "ask",  # changing files always asks
+}
+
+# --- Stage 3: voice ---
+HOTKEY = "right ctrl"      # hold to talk
+WHISPER_MODEL = "small"    # "tiny", "base" or "small"; runs on CPU
+WHISPER_LANGUAGE = "en"
+WHISPER_BEAM = 5           # 1 = fastest, 5 = more accurate (a little slower)
+WHISPER_HINTS = ""         # extra words you say often, e.g. "Darnie, Tensura, Downloads"
+WHISPER_MIN_LOGPROB = -0.7 # below this average confidence Raphael asks you to repeat (lower = accept more guesses)
+# Piper voice file. Swap by downloading another voice into voices/ and changing this:
+#   .\.venv\Scripts\python.exe -m piper.download_voices <voice-name> --download-dir voices
+PIPER_VOICE = r"voices\en_GB-jenny_dioco-medium.onnx"
+VOICE_SPEED = 1.1          # Piper length_scale: above 1 = slower, below 1 = faster
+VOICE_VARIATION = 0.3      # Piper noise_scale: lower = flatter, more robotic (default 0.667)
+OUTPUT_DEVICE = "Sound Mapper - Output"  # follows the live Windows default output. Or part of the speaker name, or None = Windows default. List: python voice.py --devices
+INPUT_DEVICE = None      # None = Windows default microphone
+
+# --- Stage 4: wake word (optional) ---
+WAKE_WORD_ENABLED = True  # True: say the wake phrase instead of holding the hotkey
+# Wake phrase, spotted by Whisper (CPU, every utterance is transcribed locally). You can say the command
+# in the same breath: "hey raphael, what time is it". Set to None to use the openWakeWord model below instead.
+WAKE_PHRASE = "hey raphael"
+ALWAYS_LISTEN = True        # True: every phrase it hears is a request, no "hey raphael" needed.
+                            # Music or video playing on SPEAKERS can then be heard as requests: use headphones,
+                            # or set False to require the wake phrase again.
+WAKE_FOLLOWUP_SECONDS = 20  # after a reply, keep listening this long without needing "hey raphael" (0 = always need it)
+WAKE_WORD_MODEL = "hey_jarvis"  # only used when WAKE_PHRASE is None
+WAKE_THRESHOLD = 0.5        # lower = more sensitive, more false triggers
+SILENCE_RMS = 0.006         # mic level below this counts as silence (raise if it never stops recording)
+SILENCE_SECONDS = 0.9      # stop recording after this much silence
+MAX_RECORD_SECONDS = 15
+
+# Number of past user/assistant exchanges kept for follow-up questions.
+HISTORY_TURNS = 10
