@@ -252,12 +252,20 @@ def copy_to_clipboard(text):
     return f"Copied {len(text)} characters to the clipboard."
 
 
+request = {"missing_app": None}  # per-request state; chat.ask() resets it
+
+
 def describe_open_app(name):
     key = name.lower().strip()
+    if request["missing_app"] and key != request["missing_app"]:
+        # the user asked for an app that isn't installed: opening another one instead is not what they asked
+        raise ValueError(f"the user asked for '{request['missing_app']}', which is not installed. Do not open "
+                         f"'{name}' instead: tell the user and offer it as an option, then wait for their answer.")
     if key not in config.APP_WHITELIST:
         raise ValueError(f"'{name}' is not on the allowed list. Allowed apps: {', '.join(config.APP_WHITELIST)}. "
                          "Tell the user and suggest an allowed app or adding it to APP_WHITELIST in config.py.")
     if not app_installed(config.APP_WHITELIST[key]):
+        request["missing_app"] = key
         have = [n for n, c in config.APP_WHITELIST.items() if app_installed(c)]
         raise ValueError(f"'{name}' is NOT installed on this PC. Installed apps you can open: {', '.join(have)}. "
                          "Tell the user it is missing and offer to install it or use an installed alternative.")

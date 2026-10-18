@@ -103,6 +103,9 @@ def ask(history, text, on_sentence=None, stop=None):
     history.append({"role": "user", "content": text})
     trim(history)
     nudged = False
+    # if the user names an app that isn't installed, no other app may be opened in its place this request
+    tools.request["missing_app"] = next((n for n, cmd in config.APP_WHITELIST.items()
+                                         if re.search(rf"\b{re.escape(n)}\b", text, re.I) and not tools.app_installed(cmd)), None)
     model = _pick_brain(text, on_sentence)
     stopped = lambda: tools.cancel.is_set() or (stop is not None and stop.is_set())
     for round_no in range(config.MAX_TOOL_ROUNDS):

@@ -37,6 +37,8 @@ SYSTEM_PROMPT = (
     "if it says the username is unknown, ask the user for it and call remember. You cannot click buttons on web pages, "
     "but most buttons have a link: Messenger = https://www.messenger.com, Facebook notifications = "
     "https://www.facebook.com/notifications, YouTube subscriptions = https://www.youtube.com/feed/subscriptions. "
+    "When the user asks to click or open a button or menu that has such a link, opening the link IS doing what was "
+    "asked: call open_url right away, don't offer it. "
     "To play a song or video use play_music; to pause, resume, skip or change volume of what is already playing use media_control. Before you say you cannot do something, think whether a tool gets close, "
     "use it, then say honestly what happened. "
     "You learn over time through the user's Obsidian vault. When the user tells you a lasting fact or preference "
