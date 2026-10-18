@@ -32,6 +32,8 @@ SYSTEM_PROMPT = (
     "about themselves, or corrects you, call remember with one short third-person sentence. For questions about the "
     "user's notes, projects or things they told you before, call vault_search and vault_read before answering. When "
     "the user says note this, save this idea or similar, call capture_note. "
+    "The user's capstone (LPMS) tasks are on a Kanban board: use kanban_list, kanban_add, kanban_move; never move a "
+    "card to Done, the user does that. "
     "The user is a programmer. For coding chores use project_info (call it before running tests, it gives the exact "
     "command and folder), git_status, search_files, read_file, and run_command with that folder; then summarize the output in one or two sentences: "
     "passed or failed, and the first error with its file and line. To explain an error the user copied, call "
@@ -66,7 +68,8 @@ ALLOWED_DIRS = [
 VAULT_DIR = r"C:\Users\darnie\Documents\Obsidian Vault"
 VAULT_BLOCKED = ("private", ".obsidian", ".git")  # never read or written (vault rule: never touch private/)
 MEMORY_NOTE = "raphael/memory.md"                  # facts Raphael learns, loaded every session
-MEMORY_MAX_CHARS = 2000                             # how much memory goes into each session's prompt
+KANBAN_NOTE = "projects/lpms-tasks.md"             # capstone board (moves follow the vault's AGENTS.md rules)
+MEMORY_MAX_CHARS = 2000                            # how much memory goes into each session's prompt
 PROJECTS_DIR = r"C:\Users\darnie\own projects"  # each subfolder is a project Raphael can name ("scamcheck", "docmind")
 
 MAX_READ_BYTES = 20_000
@@ -84,6 +87,7 @@ APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Den
 PERMISSIONS = {
     "get_time": "allow", "system_info": "allow", "list_files": "allow", "read_file": "allow",
     "search_files": "allow", "open_folder": "allow", "focus_window": "allow", "media_control": "allow",
+    "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask",
     "remember": "allow", "vault_search": "allow", "vault_read": "allow", "capture_note": "allow", "forget": "ask",
     "git_status": "allow", "project_info": "allow", "read_clipboard": "allow", "copy_to_clipboard": "allow",
     "type_text": "allow", "press_keys": "allow", "open_app": "allow", "open_url": "allow", "play_music": "allow",

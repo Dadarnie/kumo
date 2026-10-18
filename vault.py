@@ -161,6 +161,116 @@ def capture_note(title, text):
     return f"Saved to {rel}."
 
 
+# ---------- capstone Kanban board (Obsidian Kanban plugin format; rules from the vault's AGENTS.md) ----------
+# Only whole card blocks move; other cards, their order and the %% kanban:settings %% block are never touched;
+# nothing moves to Done (the user does that); card moves are not logged in log.md.
+
+def _board():
+    p = _vault_path(config.KANBAN_NOTE)
+    if not p.exists():
+        raise ValueError(f"no Kanban board at {config.KANBAN_NOTE}.")
+    return p, p.read_text(encoding="utf-8").split("\n")
+
+
+def _sections(lines):
+    """[(name, header_index, end_index)]; the settings block ends the last section."""
+    heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+    stop = next((i for i, l in enumerate(lines) if l.startswith("%% kanban:settings")), len(lines))
+    return [(lines[h][3:].strip(), h, nxt) for h, nxt in zip(heads, heads[1:] + [stop])]
+
+
+def _cards(lines, start, end):
+    """Card blocks in a section: (first_line, end_exclusive) = the '- [ ]' line plus its indented note lines."""
+    blocks, i = [], start + 1
+    while i < end:
+        if lines[i].startswith("- ["):
+            j = i + 1
+            while j < end and lines[j][:1] in ("\t", " ") and lines[j].strip():
+                j += 1
+            blocks.append((i, j))
+            i = j
+        else:
+            i += 1
+    return blocks
+
+
+def _column(lines, name):
+    want = re.sub(r"[^a-z]", "", name.lower())
+    for sec in _sections(lines):
+        if re.sub(r"[^a-z]", "", sec[0].lower()) == want:
+            return sec
+    raise ValueError(f"no column '{name}'. Columns: {', '.join(s[0] for s in _sections(lines))}.")
+
+
+def _insert(lines, column, block):
+    """Put a card block at the end of a column, in the board's spacing (blank line between cards)."""
+    _, head, end = _column(lines, column)
+    cards = _cards(lines, head, end)
+    at = cards[-1][1] if cards else head + 1
+    lines[at:at] = ["", *block]
+
+
+def _find_card(lines, card):
+    words = [w for w in re.findall(r"\w+", card.lower()) if len(w) > 2] or [card.lower()]
+    every = [(sec[0], b) for sec in _sections(lines) for b in _cards(lines, sec[1], sec[2])]
+    norm = lambda s: " ".join(re.findall(r"\w+", s.lower()))
+    hits = [h for h in every if norm(card) in norm(lines[h[1][0]])] \
+        or [h for h in every if all(w in lines[h[1][0]].lower() for w in words)]  # exact phrase first, then all words
+    if not hits:
+        raise ValueError(f"no card matches '{card}'.")
+    if len(hits) > 1:
+        raise ValueError(f"{len(hits)} cards match; use more words: " + " | ".join(lines[b[0]][6:70] for _, b in hits[:4]))
+    return hits[0]
+
+
+def kanban_list():
+    _, lines = _board()
+    out = []
+    for name, head, end in _sections(lines):
+        cards = _cards(lines, head, end)
+        out.append(f"{name} ({len(cards)}):" + "".join(f"\n  - {lines[a][6:110]}" for a, _ in cards[:5])
+                   + ("\n  ..." if len(cards) > 5 else ""))
+    return "\n".join(out)
+
+
+def _target(column):
+    if re.sub(r"[^a-z]", "", column.lower()) == "done":
+        raise ValueError("Raphael never moves cards to Done (vault rule); the user moves them in Obsidian.")
+    return column
+
+
+def describe_kanban_move(card, column, note=""):
+    _, lines = _board()
+    src, (a, _) = _find_card(lines, card)
+    dst = _column(lines, _target(column))[0]
+    return f"Move card {src} -> {dst}:\n{lines[a][6:300]}" + (f"\nNote: {note}" if note else ""), False
+
+
+def kanban_move(card, column, note=""):
+    p, lines = _board()
+    src, (a, b) = _find_card(lines, card)
+    dst = _column(lines, _target(column))[0]
+    block = lines[a:b] + ([f"\t- {'Blocked: ' if dst.lower() == 'blocked' else ''}{note.strip()}"] if note.strip() else [])
+    gap = 1 if a > 0 and lines[a - 1] == "" else 0  # take the blank line before the card with it
+    del lines[a - gap:b]
+    _insert(lines, dst, block)
+    p.write_text("\n".join(lines), encoding="utf-8")
+    return f"Moved to {dst}: {block[0][6:90]}"
+
+
+def describe_kanban_add(text, column="To Do"):
+    _, lines = _board()
+    return f"Add card to {_column(lines, _target(column))[0]}:\n- [ ] {text.strip()}", False
+
+
+def kanban_add(text, column="To Do"):
+    p, lines = _board()
+    dst = _column(lines, _target(column))[0]
+    _insert(lines, dst, [f"- [ ] {' '.join(text.split())}"])
+    p.write_text("\n".join(lines), encoding="utf-8")
+    return f"Added to {dst}: {text.strip()[:90]}"
+
+
 def memory_prompt():
     """Injected into the system prompt each session: remembered facts + what topics the vault covers."""
     try:

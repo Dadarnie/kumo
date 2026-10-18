@@ -16,7 +16,8 @@ from urllib.parse import urlparse
 import keyboard
 
 import config
-from vault import capture_note, describe_forget, forget, remember, vault_read, vault_search  # Obsidian memory tools
+from vault import (capture_note, describe_forget, describe_kanban_add, describe_kanban_move, forget,  # Obsidian tools
+                   kanban_add, kanban_list, kanban_move, remember, vault_read, vault_search)
 
 cancel = threading.Event()   # set by the window's Stop button: tools stop and pending approvals are denied
 approver = None              # set by ui.py: approver(name, detail, danger) -> bool. None = ask in the terminal
@@ -617,6 +618,13 @@ TOOLS = [
     _fn("vault_search", "Search the user's Obsidian notes (their second brain) for words.", {"query": "Words to find"}),
     _fn("vault_read", "Read one Obsidian note by name, e.g. second-brain or lpms-capstone.", {"note": "Note name or path"}),
     _fn("capture_note", "Save an idea or note into the user's Obsidian inbox.", {"title": "Short title", "text": "The note"}),
+    _fn("kanban_list", "Show the user's capstone task board (Obsidian Kanban): cards in To Do, Doing, Review, Blocked, Done. "
+        "'What's next' = the first card under To Do."),
+    _fn("kanban_add", "Add a card to the capstone board. The user must approve.",
+        {"text": "Card text", "column": "To Do (default), Doing, Review or Blocked"}, optional=("column",)),
+    _fn("kanban_move", "Move a card to To Do, Doing, Review or Blocked (never Done). The user must approve.",
+        {"card": "A few words from the card", "column": "To Do, Doing, Review or Blocked",
+         "note": "Short note added under the card, e.g. why it is blocked (optional)"}, optional=("note",)),
     _fn("project_info", "What a coding project uses (Python/Node/Docker, git) and the exact command to run its tests. "
         "Call this before running tests.", {"project": "Project name, e.g. docmind"}),
     _fn("git_status", "Show a coding project's git branch, changed files and recent commits.",
@@ -625,7 +633,7 @@ TOOLS = [
     _fn("copy_to_clipboard", "Put text on the user's clipboard so they can paste it.", {"text": "Text to copy"}),
 ]
 FUNCS = {f["function"]["name"]: globals()[f["function"]["name"]] for f in TOOLS}
-DESCRIBE = {"forget": describe_forget, "type_text": describe_type_text, "press_keys": describe_press_keys, "focus_window": lambda window: (
+DESCRIBE = {"forget": describe_forget, "kanban_add": describe_kanban_add, "kanban_move": describe_kanban_move, "type_text": describe_type_text, "press_keys": describe_press_keys, "focus_window": lambda window: (
                 f"Bring to front: {_find_window(window)[1]}", False), "open_app": describe_open_app, "open_url": describe_open_url, "play_music": describe_play_music, "write_file": describe_write_file, "edit_file": describe_edit_file,
             "run_command": describe_run_command}
 
