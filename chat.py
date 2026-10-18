@@ -70,6 +70,23 @@ def text_tool_call(content):
     return None
 
 
+def wait_for_llm(app=None, minutes=5):
+    """At login Raphael may start before LM Studio's server: keep trying for a few minutes instead of quitting."""
+    deadline, told = time.time() + minutes * 60, False
+    while True:
+        try:
+            return warm_llm()
+        except OpenAIError:
+            if time.time() > deadline:
+                raise
+            if not told:
+                told = True
+                print("Waiting for LM Studio's server (start it, or turn on 'start server on login')...")
+                if app:
+                    app.note("Waiting for LM Studio's server to start…")
+            time.sleep(5)
+
+
 def warm_llm():
     """One tiny request: loads the model if LM Studio unloaded it, and primes the prompt."""
     messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": "hi"}]
@@ -234,7 +251,7 @@ def converse(voice_mode, app=None):
         if app:
             app.set_state("thinking")
         t = time.time()
-        warm_llm()
+        wait_for_llm(app)
         if voice_mode:
             voice.preload()
         print(f"Ready ({time.time() - t:.1f}s).")

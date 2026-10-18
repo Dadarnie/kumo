@@ -18,6 +18,9 @@ import config
 import tools
 
 HTML = Path(__file__).parent / "hud.html"
+ICON = Path(__file__).parent / "raphael.ico"
+# own taskbar identity, so Windows shows Raphael's icon instead of grouping it under Python
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Raphael.Assistant")
 
 
 # ---------- live PC numbers (Windows API, no packages) ----------
@@ -159,12 +162,27 @@ class App:
             config.ASSISTANT_NAME, url=str(HTML), js_api=_Api(self),
             width=1320, height=820, min_size=(1100, 700), background_color="#07070d")
         self.window.events.loaded += self.ready.set
+        self.window.events.shown += self._set_icon
         self.window.events.closed += self.closed.set
         _start_cursor_thread()
         mode = ("ALWAYS LISTENING" if config.ALWAYS_LISTEN else f"SAY '{config.WAKE_PHRASE.upper()}'") \
             if config.WAKE_WORD_ENABLED else f"HOLD {config.HOTKEY.upper()}"
         self._send(t="config", theme=config.HUD_THEME, name=config.ASSISTANT_NAME, model=config.MODEL.split("/")[-1], mode=mode,
                    voice=Path(config.PIPER_VOICE).stem.split("-")[1].upper())
+
+    def _set_icon(self):
+        """Raphael's icon on the window and taskbar (instead of Python's)."""
+        try:
+            hwnd = int(str(self.window.native.Handle))
+            u = ctypes.windll.user32
+            u.LoadImageW.restype = ctypes.c_void_p
+            u.SendMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+            for size, which in ((256, 1), (32, 0)):  # ICON_BIG, ICON_SMALL
+                icon = u.LoadImageW(None, str(ICON), 1, size, size, 0x10)  # IMAGE_ICON, LR_LOADFROMFILE
+                if icon:
+                    u.SendMessageW(hwnd, 0x80, which, icon)  # WM_SETICON
+        except Exception as e:
+            print(f"(icon not set: {e})")
 
     # ---------- thread-safe API (same as the old Tk window) ----------
     def _send(self, **event):
