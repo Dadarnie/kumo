@@ -29,8 +29,12 @@ SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 # "Let me read it", "I will copy that", "I'll check" said instead of calling a tool (questions to the user don't count)
 PROMISE = re.compile(r"\b(let me|allow me|i will|i'll|i am going to|i'm going to|i need to|i can now|one moment|"
                      r"please wait|i await)\b(?![^?]*\?)", re.I)
-# computed once at startup: what is really installed + what Raphael remembers from the Obsidian vault
-SYSTEM = config.SYSTEM_PROMPT + tools.environment_note() + vault.memory_prompt()
+BASE_SYSTEM = config.SYSTEM_PROMPT + tools.environment_note()  # what is installed: checked once at startup
+
+
+def system_prompt():
+    """Rebuilt every request, so a fact remembered a minute ago is already known (memory files are tiny)."""
+    return BASE_SYSTEM + vault.memory_prompt()
 EXTRA = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
 
 
@@ -89,7 +93,7 @@ def wait_for_llm(app=None, minutes=5):
 
 def warm_llm():
     """One tiny request: loads the model if LM Studio unloaded it, and primes the prompt."""
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": "hi"}]
+    messages = [{"role": "system", "content": system_prompt()}, {"role": "user", "content": "hi"}]
     client.chat.completions.create(model=config.MODEL, messages=messages, tools=tools.TOOLS, max_tokens=1, **EXTRA)
 
 
@@ -105,7 +109,7 @@ def ask(history, text, on_sentence=None, stop=None):
         if stopped():
             print("(stopped)")
             return ""
-        messages = [{"role": "system", "content": SYSTEM}, *history]
+        messages = [{"role": "system", "content": system_prompt()}, *history]
         content, buf, calls = "", "", {}
         for chunk in client.chat.completions.create(model=model, messages=messages, tools=tools.TOOLS, stream=True,
                                                     max_tokens=config.MAX_REPLY_TOKENS, **EXTRA):
@@ -146,6 +150,12 @@ def ask(history, text, on_sentence=None, stop=None):
             history.append({"role": "user", "content": "(Do it now: call the tool instead of saying you will.)"})
             continue
         if not calls:
+            if not content.strip() and round_no > 0:  # tools ran but the model said nothing: report the last result
+                last = next((m["content"] for m in reversed(history) if m["role"] == "tool"), "Done.")
+                content = (last.strip().splitlines() or ["Done."])[0][:160]
+                print(content)
+                if on_sentence:
+                    on_sentence(content)
             return content
         for c in calls.values():
             try:

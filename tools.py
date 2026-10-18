@@ -328,12 +328,17 @@ def _windows():
     return [(h, _title(h), _exe(h)) for h in found if _title(h) != config.ASSISTANT_NAME]
 
 
-def _find_window(window):
-    """First window whose title or program name contains `window` (case-insensitive)."""
-    w = window.lower().strip()
-    for h, title, exe in _windows():
-        if w and (w in title.lower() or w in exe):
-            return h, title, exe
+def _find_window(window, wait=0.0):
+    """First window whose title or program name contains `window` (case-insensitive).
+    wait: keep looking this many seconds (a page that is still loading gets its title late)."""
+    w, end = window.lower().strip(), time.time() + wait
+    while True:
+        for h, title, exe in _windows():
+            if w and (w in title.lower() or w in exe):
+                return h, title, exe
+        if time.time() >= end:
+            break
+        time.sleep(0.5)
     names = sorted({t[:40] for _, t, _ in _windows()})[:15]
     raise ValueError(f"no open window matches '{window}'. Open windows: {'; '.join(names)}. "
                      "Open the app first (open_app) or use one of these names.")
@@ -366,7 +371,7 @@ def focus_window(window):
 
 
 def _describe_keys(window, what):
-    h, title, exe = _find_window(window)
+    h, title, exe = _find_window(window, wait=12)
     terminal = exe in TERMINALS
     warn = "\nTHIS IS A TERMINAL: typed text can run commands." if terminal else ""
     return f"Target window: {title} ({exe}){warn}\n{what}", terminal
@@ -415,9 +420,76 @@ def _point_and_wait(hwnd, label, address_bar=False):
     time.sleep(cursor_glide)
 
 
-def type_text(window, text, before="", enter="no"):
-    h, title, _ = _find_window(window)
+# Sending a message is irreversible: Enter in a chat or mail page always asks first, even with type_text on "allow".
+MESSAGING = re.compile(r"messenger|facebook|whatsapp|telegram|discord|gmail|outlook|inbox|instagram|slack|teams|"
+                       r"linkedin|twitter|\bx\.com|messages|mail|chat", re.I)
+BROWSERS = {"zen.exe", "firefox.exe", "chrome.exe", "msedge.exe", "brave.exe", "opera.exe"}
+_last_page_open = [0.0]
+
+
+def _settled_title(h, exe):
+    """A browser that just opened a page still shows the old title for a moment: wait until it stops changing."""
+    if exe in BROWSERS and time.time() - _last_page_open[0] < 15:
+        time.sleep(max(0.0, _last_page_open[0] + 3 - time.time()))
+        prev, still = _title(h), 0
+        while still < 3:
+            time.sleep(0.5)
+            cur = _title(h)
+            still, prev = (still + 1 if cur == prev else 0), cur
+    return _title(h)
+
+
+def _guard_send(h, exe, text, sends):
+    """If this would send a message (Enter in a chat/mail window), ask the user. Returns an error text or None."""
+    if not sends:
+        return None
+    title = _settled_title(h, exe)
+    if MESSAGING.search(f"{title} {exe}") and not confirm(
+            "send_message", f"THIS WILL SEND A MESSAGE in: {title}\nMessage: {text[:400]}", True):
+        return "DECLINED: the user did not approve sending this message. Nothing was typed or sent."
+    return None
+
+
+def _contact_username(person):
+    """Messenger username of a person from Raphael's memory ("X's Messenger username is Y" or a messenger/facebook link)."""
+    import vault
+    f = vault._memory_file()
+    words = [w for w in re.findall(r"\w+", person.lower()) if len(w) > 2 and w not in ("san", "the", "my")]
+    for line in vault._facts(f.read_text(encoding="utf-8")) if f.exists() else []:
+        low = line.lower()
+        if words and all(w in low for w in words) and ("messenger" in low or "facebook" in low):
+            m = re.search(r"username is ([\w.\-]+)|(?:messenger\.com/t/|facebook\.com/)([\w.\-]+)", line, re.I)
+            if m:
+                return (m.group(1) or m.group(2)).rstrip(".")
+    return None
+
+
+def describe_send_message(person, message):
+    if not _contact_username(person):
+        raise ValueError(f"I don't know {person}'s Messenger username. Ask the user for it (the part after facebook.com/ "
+                         f"or messenger.com/t/ in their profile link), then call remember with "
+                         f"\"{person}'s Messenger username is NAME\" and try again.")
+    return "", False
+
+
+def send_message(person, message):
+    """Open the Messenger chat, wait for it, ask the user, then type and send. Always asks, whatever the settings."""
+    username = _contact_username(person)
+    if not confirm("send_message", f"THIS WILL SEND A MESSAGE to {person} on Messenger (messenger.com/t/{username}):\n"
+                                   f"{message[:400]}", True):
+        return "DECLINED: the user did not approve. Nothing was opened, typed or sent."
+    open_url(f"https://www.messenger.com/t/{username}")
+    return type_text("Messenger", message, enter="yes", _approved=True)
+
+
+def type_text(window, text, before="", enter="no", _approved=False):
+    h, title, exe = _find_window(window, wait=12)
     _bring_to_front(h)
+    blocked = None if _approved else _guard_send(h, exe, text, _yes(enter) or "\n" in text)
+    if blocked:
+        return blocked
+    _settled_title(h, exe)  # let a just-opened page finish loading before the keys arrive
+    _bring_to_front(h)  # the approval click may have moved focus to Raphael's window
     try:
         steps = [s.strip() for s in before.split(",") if s.strip()]
         _point_and_wait(h, "typing…", address_bar="ctrl+l" in steps)
@@ -442,7 +514,11 @@ def describe_press_keys(window, keys):
 
 
 def press_keys(window, keys):
-    h, title, _ = _find_window(window)
+    h, title, exe = _find_window(window, wait=12)
+    _bring_to_front(h)
+    blocked = _guard_send(h, exe, f"(press {keys})", "enter" in keys.lower())
+    if blocked:
+        return blocked
     _bring_to_front(h)
     try:
         _point_and_wait(h, keys)
@@ -554,6 +630,7 @@ def describe_open_url(url):
 
 
 def open_url(url):
+    _last_page_open[0] = time.time()  # typing right after this waits for the page to load (see _settled_title)
     return f"Opened {url} in the default browser." if webbrowser.open(url) else "Error: the browser did not open."
 
 
@@ -644,6 +721,9 @@ TOOLS = [
         "By default looks at the window the user is working in.",
         {"question": "What to find out, e.g. 'what does this error say?'",
          "window": "A window name, or 'screen' for everything (optional)"}, optional=("window",)),
+    _fn("send_message", "Send a Messenger (Facebook) message to a person. Finds their username in memory, opens the chat "
+        "and sends after the user approves. Use this for any 'message X' or 'tell X on Facebook' request.",
+        {"person": "Who, e.g. Christine-san", "message": "The message to send"}),
     _fn("media_control", "Control what is playing (YouTube in the browser, Spotify...): play or pause (one toggle), "
         "next, previous, stop, volume_up, volume_down, mute. Use for 'play it', 'pause', 'next video', 'louder'.",
         {"action": "play, pause, next, previous, stop, volume_up, volume_down or mute",
@@ -700,7 +780,7 @@ TOOLS = [
     _fn("copy_to_clipboard", "Put text on the user's clipboard so they can paste it.", {"text": "Text to copy"}),
 ]
 FUNCS = {f["function"]["name"]: globals()[f["function"]["name"]] for f in TOOLS}
-DESCRIBE = {"forget": describe_forget, "kanban_add": describe_kanban_add, "kanban_move": describe_kanban_move, "type_text": describe_type_text, "press_keys": describe_press_keys, "focus_window": lambda window: (
+DESCRIBE = {"send_message": describe_send_message, "forget": describe_forget, "kanban_add": describe_kanban_add, "kanban_move": describe_kanban_move, "type_text": describe_type_text, "press_keys": describe_press_keys, "focus_window": lambda window: (
                 f"Bring to front: {_find_window(window)[1]}", False), "open_app": describe_open_app, "open_url": describe_open_url, "play_music": describe_play_music, "write_file": describe_write_file, "edit_file": describe_edit_file,
             "run_command": describe_run_command}
 
@@ -800,6 +880,10 @@ if __name__ == "__main__":
         for risky in ("Remove-Item x", "New-Item x.txt", "echo hi > x.txt", "winget uninstall x", "Copy-Item a b"):
             assert "DECLINED" in run_tool("run_command", {"command": risky}), risky  # ...changes still ask
         assert not (Path(root) / "x.txt").exists()
+        for title in ("Christine | Messenger", "(3) Facebook", "Inbox (2) - me@gmail.com - Gmail", "WhatsApp"):
+            assert MESSAGING.search(title), title
+        for title in ("YouTube", "Nadarang - YouTube", "Untitled - Notepad", "GitHub"):
+            assert not MESSAGING.search(title), title
         config.PERMISSIONS["read_file"] = "deny"
         assert "turned off" in run_tool("read_file", {"path": root + r"\chat.py"})
         config.PERMISSIONS["get_time"] = "allow"

@@ -32,7 +32,10 @@ SYSTEM_PROMPT = (
     "substitute another one (for example do not open Zen when Chrome was asked); offer the alternative and wait. "
     "To type into an app use one type_text call with the window name (open the app first if needed). You cannot see "
     "which windows are open, so never say a window is missing without trying: call type_text and it will tell you; in a browser "
-    "use before='ctrl+l' and enter='yes'. Use press_keys only for shortcuts like ctrl+t. Never put text inside keys. To play a song or video use play_music; to pause, resume, skip or change volume of what is already playing use media_control. Before you say you cannot do something, think whether a tool gets close, "
+    "use before='ctrl+l' and enter='yes'. Use press_keys only for shortcuts like ctrl+t. Never put text inside keys. "
+    "To message someone, call send_message with the person and the message (the user approves before it is sent); "
+    "if it says the username is unknown, ask the user for it and call remember. You cannot click buttons on web pages. "
+    "To play a song or video use play_music; to pause, resume, skip or change volume of what is already playing use media_control. Before you say you cannot do something, think whether a tool gets close, "
     "use it, then say honestly what happened. "
     "You learn over time through the user's Obsidian vault. When the user tells you a lasting fact or preference "
     "about themselves, or corrects you, call remember with one short third-person sentence. For questions about the "
@@ -94,6 +97,7 @@ APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Den
 PERMISSIONS = {
     "get_time": "allow", "system_info": "allow", "list_files": "allow", "read_file": "allow",
     "search_files": "allow", "open_folder": "allow", "focus_window": "allow", "media_control": "allow",
+    "send_message": "allow",  # it ALWAYS asks before sending, whatever this says
     "look_at_screen": "allow",  # screenshot goes only to the local model
     "set_reminder": "allow", "list_reminders": "allow", "cancel_reminder": "allow",
     "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask",

@@ -245,3 +245,11 @@ The project is a git repository (`git log` shows each step); the Piper voices an
 ## Tray icon
 
 While the window is open, Raphael's icon sits in the system tray (bottom right; it may be under the `^` arrow). Right-click: Show / Hide window / Mute or unmute mic / Stop current task / Quit. Double-click shows the window. Reminder pop-ups come from the tray icon. Needs `pystray` and `Pillow` (installed: `.\.venv\Scripts\python.exe -m pip install pystray Pillow`).
+
+## Messaging (Facebook Messenger)
+
+"Message Christine-san: running late" -> `send_message` finds her Messenger username in memory, then **always asks Allow/Deny** (red: THIS WILL SEND A MESSAGE), then opens `messenger.com/t/<username>` in Zen, waits for the page, types and sends.
+- Teach a contact once: "remember that Christine-san's Messenger username is christine.santos" (the part after `facebook.com/` or `messenger.com/t/` in their profile link). Zen must be logged in to Facebook.
+- Any Enter typed into a chat or mail window (Messenger, Facebook, WhatsApp, Gmail, Discord, ...) also asks first, even when `type_text` is "allow".
+- Raphael can't click buttons on web pages; links like `messenger.com/t/...` avoid the need.
+- Memory is reloaded on every request, so facts you just told Raphael work right away.
