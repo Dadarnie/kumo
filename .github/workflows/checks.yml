@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT
+name: Build and unit checks
+
+on:
+  pull_request:
+    paths:
+      - "windows/**"
+      - "LICENSE*"
+      - "legal/**"
+      - "THIRD_PARTY_NOTICES"
+      - ".github/workflows/checks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "windows/**"
+      - "LICENSE*"
+      - "legal/**"
+      - "THIRD_PARTY_NOTICES"
+      - ".github/workflows/checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            windows/target
+          key: checks-windows-${{ hashFiles('windows/Cargo.lock') }}
+          restore-keys: checks-windows-
+      - run: npm ci
+      - name: Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Frontend unit tests
+        run: npm run test:unit
+      - name: Rust workspace tests
+        run: cargo test --workspace --locked
+      - name: Production frontend and relay build
+        run: npm run build

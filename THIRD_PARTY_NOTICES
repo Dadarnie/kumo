@@ -1,0 +1,47 @@
+Third-party notices
+===================
+
+Mimo's application code is MIT licensed (see LICENSE). Mimo's original artwork,
+branding and sound recordings have separate terms in LICENSE-ASSETS.md.
+
+Coucou
+------
+Source: https://github.com/Louis-CFM/coucou
+License: MIT
+Copyright (c) 2026 Louis Raillé
+
+Mimo is a Windows-focused adaptation of Coucou. The complete original copyright
+and permission notice is retained in legal/Coucou-MIT.txt and bundled with
+the application.
+
+Inter font
+----------
+Copyright (c) 2016 The Inter Project Authors.
+License: SIL Open Font License 1.1.
+Full text: windows/src/assets/fonts/Inter-LICENSE.txt
+Bundled as: licenses/Inter-LICENSE.txt
+
+Vendor artwork
+--------------
+GitHub Octicons and other connected-service marks retain their own notices.
+Full details: windows/src/mimo/brands/README.md
+README agent icons: docs/media/agents/README.md and docs/media/agents/sources.json
+Bundled as: licenses/INTEGRATION-ARTWORK.md
+
+Dependencies
+------------
+npm and Rust dependencies retain their own licenses. Dependency source and
+license records remain with their respective packages and lockfiles.
+
+Earlier Mimo asset grants
+------------------------
+Earlier MIT asset permissions remain applicable to copies received under them.
+The historical notice is retained in legal/legacy/MIMO-ASSETS-MIT.md.
+Historical upstream recordings and reference media are kept in the private backup.
+
+Fira Code font
+--------------
+Copyright 2014-2020 The Fira Code Project Authors.
+Source: https://github.com/tonsky/FiraCode/releases/tag/6.2
+Distributed under the SIL Open Font License 1.1.
+See windows/src/assets/fonts/FiraCode-LICENSE.txt.

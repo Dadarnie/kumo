@@ -1,0 +1,20 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build for Windows — Mimo</title><link rel="icon" href="media/icon.png"><link rel="stylesheet" href="site.css"></head><body><div class="wrap">
+<header><a href="index.html" aria-label="Mimo home"><img src="media/icon.png" alt=""></a><span class="name">Mimo</span><nav><a href="index.html">Home</a><a href="build.html" class="on">Build</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="legal.html">Legal</a></nav></header>
+<h1>Build Mimo for Windows</h1>
+<p class="meta">Build and installation by John Paul · Windows 10/11</p>
+<p>The application source and Rust workspace live in <code>\windows</code> inside your Mimo project folder. You need Node 20+, Rust, MSVC C++ build tools and WebView2.</p>
+<h2>Download</h2>
+<p><a href="https://github.com/Jiocode1/mimo/raw/refs/heads/main/downloads/Mimo-Windows-setup.exe" download="Mimo-Windows-setup.exe">Download Mimo-Windows-setup.exe</a> · <a href="https://github.com/Jiocode1/mimo/raw/refs/heads/main/downloads/SHA256SUMS.txt">SHA-256 checksum</a>. The installer is not code-signed. Windows may warn about an unknown publisher. Review the source, build it yourself or compare the downloaded file with the release checksum. A checksum confirms file identity, not safety.</p>
+<h2>Create the installer</h2>
+<pre><code>cd C:\projects\Mimo\windows
+npm ci
+npm run pack</code></pre>
+<p>The installer is copied to <code>windows\release\Mimo-Windows-setup.exe</code> and <code>windows\release\Mimo-Windows-&lt;version&gt;-setup.exe</code>. Run either installer to install Mimo for your Windows account.</p>
+<h2>Run from source</h2>
+<pre><code>cd C:\projects\Mimo\windows
+npm run tauri dev</code></pre>
+<p>The local project includes <code>README.md</code>, <code>windows\README.md</code> and the complete source tree. Source and Windows downloads are available in the <a href="https://github.com/Jiocode1/mimo">Mimo repository</a>.</p>
+<p>Maintained by John Paul. See the <a href="license.html">source license</a> and <a href="artwork.html">asset terms</a>.</p>
+<footer>Mimo for Windows · Build and installation by John Paul · <a href="license.html">Source license</a> · <a href="artwork.html">Artwork</a> · <a href="privacy.html">Privacy</a> · <a href="legal.html">Legal notice</a></footer></div></body></html>

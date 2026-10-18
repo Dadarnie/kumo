@@ -1,0 +1,25 @@
+{
+  "description": "License identifiers for files that cannot carry source comments. Source headers use SPDX-License-Identifier: MIT and retain inherited notices.",
+  "groups": [
+    {
+      "paths": ["windows/**/*.json", "windows/Cargo.lock"],
+      "SPDX-License-Identifier": "MIT",
+      "notice": "LICENSE; legal/Coucou-MIT.txt. Dependency licenses are separate."
+    },
+    {
+      "paths": ["windows/assets/sounds/*.wav", "windows/mimo-app--icon/*", "windows/src/assets/app-icon*.png", "windows/src-tauri/icons/*", "windows/public/mimo-bot.svg", "docs/media/*.gif", "docs/media/icon.png", "docs/media/screenshots/*.png"],
+      "SPDX-License-Identifier": "LicenseRef-Mimo-Assets",
+      "notice": "LICENSE-ASSETS.md; earlier grants in legal/legacy/MIMO-ASSETS-MIT.md remain effective."
+    },
+    {
+      "paths": ["windows/src/assets/fonts/*.woff2"],
+      "SPDX-License-Identifier": "OFL-1.1",
+      "notice": "windows/src/assets/fonts/Inter-LICENSE.txt; windows/src/assets/fonts/FiraCode-LICENSE.txt"
+    },
+    {
+      "paths": ["windows/src/mimo/brands/*.svg", "docs/media/agents/*.png", "docs/media/agents/marks/*"],
+      "SPDX-License-Identifier": "LicenseRef-Vendor-Marks",
+      "notice": "windows/src/mimo/brands/README.md; docs/media/agents/README.md; individual vendor licenses and trademark terms apply."
+    }
+  ]
+}

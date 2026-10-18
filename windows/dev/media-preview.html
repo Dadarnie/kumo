@@ -1,0 +1,214 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mimo media layout preview</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import "/src/style.css";
+      import { Island } from "/src/island/island.ts";
+      import { State, normalizeSettings } from "/src/core/state.ts";
+      import { audioLevels } from "/src/core/audio-levels.ts";
+      import { mediaStore } from "/src/core/media-store.ts";
+      import {
+        createMediaState,
+        withMediaSession,
+        withPlaybackState,
+      } from "/src/core/media.ts";
+
+      State.settings.soundEnabled = false;
+      State.loadIntegrationTasks();
+      const island = new Island(document.getElementById("root"));
+      island.applySettings();
+      let revision = 0;
+      const actions = [];
+      const audioActions = [];
+      mediaStore.applyAudio({
+        revision: 0,
+        available: true,
+        deviceId: "preview-output",
+        volume: 48,
+        muted: false,
+        outputs: [
+          { id: "preview-output", name: "Speakers" },
+          { id: "headphones", name: "Headphones" },
+        ],
+        canSwitchOutput: true,
+        sessions: [],
+      });
+      mediaStore.setAudioController(async (action) => {
+        audioActions.push(action);
+        if (window.mediaPreview.audioDelay)
+          await new Promise((resolve) =>
+            setTimeout(resolve, window.mediaPreview.audioDelay),
+          );
+        if (window.mediaPreview.audioError)
+          throw new Error("Audio unavailable");
+        const snapshot = mediaStore.audioSnapshot();
+        if (snapshot.deviceId !== action.deviceId)
+          throw new Error("Output changed");
+        const confirmed = { ...snapshot, revision: snapshot.revision + 1 };
+        if (action.sessionId) {
+          confirmed.sessions = snapshot.sessions.map((session) =>
+            session.id === action.sessionId
+              ? {
+                  ...session,
+                  volume: action.volume ?? session.volume,
+                  muted: action.muted ?? session.muted,
+                }
+              : session,
+          );
+        } else {
+          if (action.volume !== undefined) confirmed.volume = action.volume;
+          if (action.muted !== undefined) confirmed.muted = action.muted;
+        }
+        if (action.inputId) confirmed.inputId = action.inputId;
+        if (action.outputId) {
+          confirmed.deviceId = action.outputId;
+          confirmed.volume = action.outputId === "headphones" ? 32 : 48;
+          confirmed.muted = false;
+        }
+        mediaStore.applyAudio(confirmed);
+        return confirmed;
+      });
+      const cover = document.createElement("canvas");
+      cover.width = cover.height = 128;
+      const paint = cover.getContext("2d");
+      paint.fillStyle = "#794954";
+      paint.fillRect(0, 0, 128, 128);
+      paint.fillStyle = "#c99782";
+      paint.fillRect(12, 12, 104, 104);
+      paint.fillStyle = "#4e434e";
+      paint.beginPath();
+      paint.arc(64, 64, 34, 0, Math.PI * 2);
+      paint.fill();
+      mediaStore.setController(async (_sessionId, action) => {
+        actions.push(action);
+        if (window.mediaPreview.controlDelay)
+          await new Promise((resolve) =>
+            setTimeout(resolve, window.mediaPreview.controlDelay),
+          );
+        if (window.mediaPreview.controlError)
+          throw new Error("Player unavailable");
+        const snapshot = mediaStore.snapshot();
+        mediaStore.apply({
+          ...snapshot,
+          revision: snapshot.revision + 1,
+          state:
+            typeof action !== "string"
+              ? snapshot.state
+              : action === "play" || action === "pause"
+                ? withPlaybackState(
+                    snapshot.state,
+                    action === "play" ? "playing" : "paused",
+                  )
+                : withMediaSession({
+                    playbackState: "playing",
+                    title: action === "next" ? "Next track" : "Previous track",
+                    artist: "Preview artist",
+                  }),
+          player: {
+            ...snapshot.player,
+            ...(typeof action !== "string" && "shuffle" in action ? { shuffle: action.shuffle } : {}),
+            ...(typeof action !== "string" && "repeatMode" in action ? { repeatMode: action.repeatMode } : {}),
+            ...(typeof action !== "string" && "volume" in action
+              ? { volume: action.volume }
+              : {}),
+            ...(typeof action !== "string" && "seekMs" in action
+              ? {
+                  timeline: {
+                    ...snapshot.player.timeline,
+                    positionMs: action.seekMs,
+                    updatedAtUnixMs: Date.now(),
+                  },
+                }
+              : {}),
+          },
+        });
+      });
+      window.mediaPreview = {
+        island,
+        store: mediaStore,
+        state: State,
+        actions,
+        audioActions,
+        levels: audioLevels,
+        audioDelay: 0,
+        audioError: false,
+        controlDelay: 0,
+        publishAudio(
+          volume,
+          muted = false,
+          deviceId = "preview-output",
+          available = true,
+        ) {
+          mediaStore.applyAudio({
+            ...mediaStore.audioSnapshot(),
+            revision: mediaStore.audioSnapshot().revision + 1,
+            volume,
+            muted,
+            deviceId,
+            available,
+            outputs: mediaStore.audioSnapshot().outputs,
+            canSwitchOutput: true,
+            sessions: mediaStore.audioSnapshot().sessions,
+          });
+        },
+        artwork: cover.toDataURL("image/png"),
+        controlError: false,
+        preferences(patch) {
+          State.settings = normalizeSettings({
+            ...State.settings,
+            ...patch,
+            modules: { ...State.settings.modules, ...patch.modules },
+          });
+          State.loadIntegrationTasks();
+          island.applySettings();
+        },
+        publish(
+          playbackState,
+          title = "Night Drive",
+          artist = "The Midnight",
+          player = {},
+        ) {
+          revision = Math.max(revision, mediaStore.snapshot().revision) + 1;
+          mediaStore.apply({
+            revision,
+            state:
+              playbackState === "none"
+                ? createMediaState("ready")
+                : withMediaSession({
+                    playbackState,
+                    title,
+                    artist,
+                    sourceAppId: player.sourceAppId ?? "Player.exe",
+                  }),
+            player: {
+              sessionId: "preview-session",
+              controls: { previous: true, play: true, pause: true, next: true },
+              artwork: null,
+              ...player,
+            },
+          });
+        },
+        open(view = "overview") {
+          island.visibility.pointerEntered();
+          island.open(view);
+        },
+        compact() {
+          island.visibility.pointerLeft();
+          island.visibility.island();
+        },
+        hide() {
+          island.visibility.pointerLeft();
+          island.visibility.peek();
+        },
+      };
+      window.mediaPreview.open();
+    </script>
+  </body>
+</html>

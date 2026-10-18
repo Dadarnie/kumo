@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mimo icon study</title>
+    <style>
+      @import "/src/design/tokens.css";
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 13px var(--font); }
+      main { max-width: 1200px; margin: auto; padding: 24px; }
+      h1 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; }
+      p { color: var(--dim); margin: 0 0 24px; }
+      .sheets { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      .sheet { padding: 20px; border-radius: 16px; }
+      .sheet[data-surface="dark"] { background: var(--card-flat); color: var(--ink); }
+      .sheet[data-surface="light"] { background: #f4f5f7; color: #1d2128; color-scheme: light; }
+      h2 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+      .scale { font-size: 12px; opacity: .75; margin-bottom: 20px; }
+      .family { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; }
+      .specimen { min-width: 0; }
+      .samples { display: grid; grid-template-columns: repeat(4, 28px); align-items: center; justify-items: center; min-height: 28px; }
+      .name { display: block; margin-top: 8px; font-size: 11px; }
+      @media (max-width: 900px) { .sheets { grid-template-columns: 1fr; } }
+      @media (max-width: 480px) { .family { grid-template-columns: repeat(2, minmax(0, 1fr)); } main { padding: 16px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Mimo icons</h1>
+      <p>Soft geometry. One quiet family.</p>
+      <div class="sheets"></div>
+    </main>
+    <script type="module">
+      import * as glyphs from "/src/icons/glyphs.ts";
+      import { mimoIcon } from "/src/icons/render.ts";
+      import { h } from "/src/views/dom.ts";
+
+      for (const surface of ["dark", "light"]) {
+        const family = h("div", { class: "family" });
+        for (const glyph of Object.values(glyphs)) {
+          family.append(h("div", { class: "specimen" },
+            h("div", { class: "samples" }, ...[16, 18, 20, 24].map(size => mimoIcon(glyph, size))),
+            h("span", { class: "name", text: glyph.name.replaceAll("-", " ") }),
+          ));
+        }
+        document.querySelector(".sheets").append(h("section", { class: "sheet", "data-surface": surface },
+          h("h2", { text: `On ${surface}` }),
+          h("div", { class: "scale", text: "16 / 18 / 20 / 24 px" }),
+          family,
+        ));
+      }
+      window.iconPreviewReady = true;
+    </script>
+  </body>
+</html>

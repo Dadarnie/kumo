@@ -1,0 +1,114 @@
+/* SPDX-License-Identifier: MIT */
+:root {
+  color-scheme: dark;
+  --font: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-compact: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --code-keyword: color-mix(in srgb, var(--mini-violet) 55%, var(--ink));
+  --code-string: color-mix(in srgb, var(--mini-amber) 55%, var(--ink));
+  --code-function: color-mix(in srgb, var(--mini-amber) 35%, var(--ink));
+  --code-type: color-mix(in srgb, var(--mini-mint) 55%, var(--ink));
+  --ink: #f4f4f5;
+  --ink-2: #dddddf;
+  --dim: #aaa9ae;
+  --dim-2: #95949a;
+  --dim-3: var(--dim-2);
+  --dim-4: var(--dim-2);
+  --dim-5: var(--dim-2);
+  --bg: #000000;
+  --card: #121212;
+  --card-flat: #0e0e0e;
+  --tab-on: #252525;
+  --hairline: rgba(255, 255, 255, 0.055);
+  --accent: var(--mini-work-blue);
+  /* Local Home identity colors sampled from the supplied video at 8 seconds. */
+  --mini-work-blue: #2da4f9;
+  --mini-mint: #4fb29e;
+  --mini-coral: #e13d44;
+  --mini-amber: #e69537;
+  --mini-violet: #8358e9;
+  --home-workspace-fill: var(--card);
+  --accent-surface: color-mix(in srgb, var(--mini-work-blue) 18%, var(--bg));
+  --green: var(--mini-mint);
+  --green-2: color-mix(in srgb, var(--mini-mint) 75%, var(--ink));
+  --red: var(--mini-coral);
+  --red-text: color-mix(in srgb, var(--mini-coral) 70%, var(--ink));
+  --amber: var(--mini-amber);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --icon-compact: 16px;
+  --icon-normal: 18px;
+  --icon-primary: 24px;
+  --integration-tile: 40px;
+  --integration-gap: 8px;
+  --integration-padding: 12px;
+  --type-title: 20px;
+  --type-section: 16px;
+  --type-body: 14px;
+  --type-meta: 12px;
+  --media-height: 168px;
+  --motion-fast: 120ms;
+  --motion-enter: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 55%);
+  --terminal-fill: #101010;
+  --terminal-glow: radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
+  --shadow-shell: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --shell-fill: var(--bg);
+  --shell-border: transparent;
+  --shell-blur: 0px;
+  --shell-saturation: 1;
+  --shell-highlight: transparent;
+  --popover-fill: var(--card-flat);
+  --welcome-fill: var(--card);
+  --control-fill: rgba(255, 255, 255, 0.065);
+  --control-hover: rgba(255, 255, 255, 0.105);
+  --field-fill: rgba(255, 255, 255, 0.045);
+  --primary-control-ink: #0b0c0e;
+  --primary-hover: #fff;
+  --artwork-fill: #2a303b;
+  --progress-rail: #343943;
+  --disabled-ink: #8992a2;
+  --focus-border: rgba(235, 240, 250, 0.3);
+  --selection-fill: #34343a;
+  --scroll-thumb: #424245;
+  --danger-fill: #261113;
+  --danger-edge: rgba(225, 61, 68, 0.28);
+  --danger-light: rgba(225, 61, 68, 0.26);
+}
+
+/* One square viewport per functional icon, including inside flex/grid controls. */
+.ui-icon {
+  display: block;
+  flex: 0 0 auto;
+  inline-size: var(--icon-size);
+  block-size: var(--icon-size);
+  min-inline-size: var(--icon-size);
+  min-block-size: var(--icon-size);
+  max-inline-size: var(--icon-size);
+  max-block-size: var(--icon-size);
+}
+
+::selection {
+  background: var(--selection-fill);
+  color: var(--ink);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+input {
+  caret-color: var(--accent);
+}

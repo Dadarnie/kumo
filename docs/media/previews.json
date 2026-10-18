@@ -1,0 +1,72 @@
+{
+  "source": "product-launch/export/export-4k.mp4",
+  "source_sha256": "c5e17e9cffc43e3029cc377769611700f203fcec0114c4c36b7de0ea629f683a",
+  "source_description": "Final Mimo Signature master: 3840x2160, 60 fps, 74 seconds. All GIF images are decoded from this export.",
+  "encoder": "Original GIFs; main loop losslessly trimmed with Pillow",
+  "fps": 15,
+  "max_colors": 192,
+  "presentation": "Original 960 x 528 rectangular framing, with only the appended triple-tap scene removed.",
+  "clips": [
+    {
+      "file": "mimo-intro.gif",
+      "source_ranges": [
+        {
+          "start_seconds": 0.1,
+          "duration_seconds": 14.6
+        },
+        {
+          "start_seconds": 15.05,
+          "duration_seconds": 8.45
+        }
+      ],
+      "shows": [
+        "Opening and permissions",
+        "Terminal",
+        "GitHub activity",
+        "Stripe balance count-up"
+      ],
+      "source_duration_seconds": 23.049999999999997,
+      "source_crop": {
+        "x": 520,
+        "y": 540,
+        "width": 2800,
+        "height": 1540
+      },
+      "width": 960,
+      "height": 528,
+      "frames": 346,
+      "decoded_duration_ms": 23070,
+      "loop": 0,
+      "bytes": 9160491,
+      "sha256": "e9cc7e43c0c40190f2f97d17434585ca4352c14aac50dc622ae9c99407ec1b1a",
+      "original_gif_sha256": "7fd892f94f55beca77770cc8e25ca43da0698950e31f1f66a04a1c20327bef8c",
+      "retained_frames_pixel_identical": true
+    },
+    {
+      "file": "mimo-coding.gif",
+      "source_ranges": [
+        {
+          "start_seconds": 2.8,
+          "duration_seconds": 12
+        }
+      ],
+      "shows": [
+        "Permissions and terminal"
+      ],
+      "source_duration_seconds": 12,
+      "source_crop": {
+        "x": 520,
+        "y": 540,
+        "width": 2800,
+        "height": 1540
+      },
+      "width": 960,
+      "height": 528,
+      "frames": 180,
+      "decoded_duration_ms": 11940,
+      "loop": 0,
+      "bytes": 3437255,
+      "sha256": "b4bca14250180e84a4c28319292c226927a5892d82baa2595a1f4b823eb581e2"
+    }
+  ]
+}

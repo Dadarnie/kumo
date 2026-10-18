@@ -1,0 +1,149 @@
+{
+  "method": "Official vendor site icons and press artwork, frozen locally without recoloring.",
+  "icons": [
+    {
+      "id": "claude",
+      "name": "Claude Code",
+      "page": "https://claude.com/",
+      "source": "https://claude.ai/images/claude_app_icon.png",
+      "mark": "marks/claude.png",
+      "bytes": 14038,
+      "sha256": "c7b5642f810adfba78781592d9dec18d7eb376c7ebf403c4d882fb9d39f65408",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "claude.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "7cb1d9e5d996aac948e510e4507e7d7a05697809142d04afe59563dc5671bc93"
+      }
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "page": "https://learn.chatgpt.com/docs",
+      "source": "https://learn.chatgpt.com/favicon.png",
+      "mark": "marks/codex.png",
+      "bytes": 1841,
+      "sha256": "8d5575ee667ff715cd3e3074d5296edc68d5aadd89720d203e13131b68b22a04",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "codex.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "c4c4a81a998f96cd672e4e7ee17f2aad5a95ac0f5b81da77c75341601bcb163f"
+      }
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "page": "https://cursor.com/brand",
+      "source": "https://cursor.com/marketing-static/icon-192x192-light.png",
+      "mark": "marks/cursor.png",
+      "bytes": 6694,
+      "sha256": "267649be4d2a26dea632bb6cc1f7a400daa117e5cd3335a140ba5cb0148aaedc",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "cursor.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "73b5b46852871693631903c6b3ade09b07822a9fedaaa6f12d5a6541458814ee"
+      }
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini CLI",
+      "page": "https://geminicli.com/",
+      "source": "https://geminicli.com/icon.png",
+      "mark": "marks/gemini.png",
+      "bytes": 46696,
+      "sha256": "351e9f5b1bf863d738cd7be4ed040a625a1419450ae7fc490143e4042b7c2438",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "gemini.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "ecd29c3d40888628ba4964758a33c59aa61e25658dc8cccc0ccbe6f3c089e12e"
+      }
+    },
+    {
+      "id": "antigravity",
+      "name": "Antigravity",
+      "page": "https://antigravity.google/press",
+      "source": "https://antigravity.google/assets/image/brand/antigravity-icon__full-color.svg",
+      "mark": "marks/antigravity.svg",
+      "bytes": 5301,
+      "sha256": "d775965ea1f8060538c15f758a3e22487317211fcb6051333b5e023f35aa726f",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "antigravity.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "3c5d84e188067c3fc54ad55eaff0a4dc9c41151df7a6ecfe1a9d9a0eeeb82f4f"
+      }
+    },
+    {
+      "id": "muse",
+      "name": "Muse Code",
+      "page": "https://dev.meta.ai/",
+      "source": "https://dev.meta.ai/favicon.ico?favicon.0o~z3n2dfavrq.ico",
+      "mark": "marks/muse.ico",
+      "bytes": 32038,
+      "sha256": "778876a7aae08af4cad55ffebe07e9ec1f2b04507c54cc823a15d236b0aad1fe",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "muse.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "a9616a07a0c7d75443432da54bd8dac8cf7f95518b4cbba857ae97967b5958be"
+      }
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "page": "https://opencode.ai/brand",
+      "source": "https://opencode.ai/favicon-96x96-v3.png",
+      "mark": "marks/opencode.png",
+      "bytes": 536,
+      "sha256": "aa34092540de60c889610edfa3c25316e215f12d88af29cfba530d09aee7265c",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "opencode.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "82f97de14d6bd87d71c574b1dc8e031c9da912b8e52863edf996c21f40e12402"
+      }
+    },
+    {
+      "id": "copilot",
+      "name": "Copilot CLI",
+      "page": "https://github.com/primer/octicons",
+      "source": "https://raw.githubusercontent.com/primer/octicons/main/icons/copilot-24.svg",
+      "mark": "marks/copilot.svg",
+      "bytes": 1689,
+      "sha256": "eeafb3c2f333e04ccf7d031ae215f7adafaed4c6352556b0bf79496e048bcdd7",
+      "notice": "MIT, GitHub Octicons; original notice in windows/src/mimo/brands/README.md",
+      "badge": {
+        "file": "copilot.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "c93dd03c65c58b36e58aeb361e8f02fb301a789edcc661aa40bfa9cc7e57e085"
+      }
+    },
+    {
+      "id": "hermes",
+      "name": "Hermes Agent",
+      "page": "https://hermes-agent.nousresearch.com/",
+      "source": "https://web-assets.nousresearch.com/marketing/879389c1b9f2e8ed2557e40e1ce8916d2892962d/assets/hermes-agent/icon.png",
+      "mark": "marks/hermes.png",
+      "bytes": 4100,
+      "sha256": "5fbced606189c9bfc2925a16f8903333041cabbf1f8699fe9fe9b3e24504048f",
+      "notice": "Vendor trademark; used only to identify supported software.",
+      "badge": {
+        "file": "hermes.png",
+        "width": 540,
+        "height": 144,
+        "sha256": "870ca863c3960216f780d23574e25ecc36d0ca04b96972ba453832b3d6daf35c"
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: MIT
+# Local dependencies and generated build output
+node_modules/
+windows/node_modules/
+windows/dist/
+windows/target/
+windows/release/
+*.tsbuildinfo
+
+# Local only (never published)
+.claude/
+_prive/
+/sound-backups/
+
+# Archived production media and design references stay local.
+/product-launch/
+/windows/promotion/
+/windows/video-reference/
+/windows/mimo-core-look/
+/windows/screenshots/
+/docs/media/*
+!/docs/media/icon.png
+!/docs/media/mimo-coding.gif
+!/docs/media/mimo-intro.gif
+!/docs/media/README.md
+!/docs/media/previews.json
+!/docs/media/agents/
+!/docs/media/screenshots/
+/docs/media/screenshots/*
+!/docs/media/screenshots/shelf.png
+!/docs/media/screenshots/settings.png
+!/docs/media/screenshots/captures.json
+
+# Other screenshot galleries and their capture helpers stay local.
+/docs/screenshots.md
+/scripts/extract-promo-screenshots.py
+/scripts/capture-readme-settings.mjs
+/scripts/render-readme-collages.mjs
+
+# Local assistant configuration, transcripts and runtime measurements.
+/.codex/
+/continuethis.md
+/windows/verification/
+
+# Assistant tooling stays available locally, outside the public source tree.
+/.agents/
+/.impeccable/
+/windows/.impeccable/
+/AGENTS.md
+/CLAUDE.md
+/skills-lock.json
+/skills/
+/references/
+/reference/
+
+# Internal design briefs and reference notes remain available locally.
+/docs/design.md
+/docs/style.md
+/docs/design-references.md
+
+# Python media helpers and editor caches.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.cache/
+
+# Local secrets, recordings, promotion exports and installer artifacts.
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.exe
+!/downloads/Mimo-Windows-setup.exe
+*.msi
+*.msix
+*.pdb
+/export/
+/exports/
+/promotion/
+/promo/
+/captures/
+/screenshots/
+/posters/
+/windows/.smoke-artifacts/
+.DS_Store
+Thumbs.db

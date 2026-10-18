@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MIT
+[package]
+name = "mimo-hook"
+description = "Relays Claude Code hook events to Mimo over a Windows named pipe"
+authors = ["John Paul"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "mimo-hook"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+
+# Just enough Win32 to know our own SID and to check who is serving the pipe.
+windows = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Security_Authorization",
+  "Win32_System_Pipes",
+  "Win32_System_IO",
+  "Win32_System_Threading",
+] }

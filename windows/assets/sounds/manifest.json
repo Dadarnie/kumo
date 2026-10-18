@@ -1,0 +1,529 @@
+{
+  "name": "Mimo console sound pack",
+  "events": 28,
+  "retained_cues": [
+    "blip",
+    "close",
+    "finish",
+    "greet",
+    "gulp",
+    "hover",
+    "open",
+    "peek",
+    "tick"
+  ],
+  "new_cues": 19,
+  "format": "PCM16 source formats preserved; per-cue gain balancing only. Retained cues: 48 kHz stereo. New cues: 44.1 kHz mono.",
+  "files": [
+    {
+      "name": "peek",
+      "file": "console-peek.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.4,
+      "sha256": "d4c2cadf67e6d3a3f3d08555fecc05e17b897636a8b0af00553501853c1acce0",
+      "source_sha256": "3774884ad166c4fe138bc20ca038e8a040aec86a2480813f736124f155a54f81",
+      "leveling": {
+        "target_db": -28,
+        "source_db": -28.12,
+        "measured_db": -28,
+        "gain_db": 0.12,
+        "peak_db": -17.235
+      }
+    },
+    {
+      "name": "open",
+      "file": "console-open.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.43,
+      "sha256": "104f4a4dd291fbf515013a4fc1f16d333602f1c0ae697eb1279b046732288fed",
+      "source_sha256": "faa5166b006bfa5942a264e2b2ac926ee6599410091c7084cb8d17e372c6fda2",
+      "leveling": {
+        "target_db": -28,
+        "source_db": -29.84,
+        "measured_db": -28,
+        "gain_db": 1.84,
+        "peak_db": -18.22
+      }
+    },
+    {
+      "name": "close",
+      "file": "console-close.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.35,
+      "sha256": "f978eab2ab9b1f23bb73f4db8351e9be0a221dd08db5203c30af40994faabe54",
+      "source_sha256": "849dd2a39bccb072c3487b424d351f8a1feee233609730a1d63fcf139f2eef81",
+      "leveling": {
+        "target_db": -29,
+        "source_db": -32.59,
+        "measured_db": -29,
+        "gain_db": 3.59,
+        "peak_db": -17.601
+      }
+    },
+    {
+      "name": "hover",
+      "file": "console-hover.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.11,
+      "sha256": "dc3e24a58ba21e0f1c7bc74f3f57c3f4d49143dafde60111f8c12faba3c0c804",
+      "source_sha256": "39840678f07b7c8a6416d0b659588c82281e6ab966e855b88efd428a8e09ca77",
+      "leveling": {
+        "target_db": -36,
+        "source_db": -48.77,
+        "measured_db": -36,
+        "gain_db": 12.77,
+        "peak_db": -21.946
+      }
+    },
+    {
+      "name": "blip",
+      "file": "console-blip.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.15,
+      "sha256": "ae9eb53c28a03e58b6635bf3f57cf3c9f6fdaaf58b04c014b93d41df7c6a98e0",
+      "source_sha256": "07298a3f780b68417adeea194ba4be13e8b252cf1107121dba2813661bfae5d4",
+      "leveling": {
+        "target_db": -31,
+        "source_db": -41.12,
+        "measured_db": -31,
+        "gain_db": 10.12,
+        "peak_db": -17.303
+      }
+    },
+    {
+      "name": "slap",
+      "file": "console-slap.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.41219954648526075,
+      "sha256": "20ccf9822750f59f1e36eea37c5768d4e4cc230120b793828bc0c4a9dd615b64",
+      "source_sha256": "068771123a81158cc8dca1385b57ca5acdfc658d6c37a06e412d700d01d63deb",
+      "leveling": {
+        "target_db": -24,
+        "source_db": -12.726,
+        "measured_db": -24,
+        "gain_db": -11.274,
+        "peak_db": -13.212
+      }
+    },
+    {
+      "name": "annoyed",
+      "file": "console-annoyed.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.440702947845805,
+      "sha256": "ed9dd30f98655a081cb57a627f691309783584983465775b45842ee6c46cdce9",
+      "source_sha256": "7f1a0b249bc0672bffa9a90ce9ed322464fff75dafa7d67a84eca0e460385c1b",
+      "leveling": {
+        "target_db": -24,
+        "source_db": -12.013,
+        "measured_db": -24,
+        "gain_db": -11.987,
+        "peak_db": -15.085
+      }
+    },
+    {
+      "name": "dizzy",
+      "file": "console-dizzy.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.6695918367346938,
+      "sha256": "697b974a305e8fbf9ed6404e9b90ea249a50c255d4f80cba7f5e185755faf3dc",
+      "source_sha256": "6edd738c558dda0fe6f37820136a1d6762e91c22c93adbca6fcf52606960cbe1",
+      "leveling": {
+        "target_db": -23,
+        "source_db": -8.633,
+        "measured_db": -23,
+        "gain_db": -14.367,
+        "peak_db": -17.466
+      }
+    },
+    {
+      "name": "greet",
+      "file": "console-greet.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.75,
+      "sha256": "1252e20626e3a025a59d25b31a9fea57af796f26b16408523756de004f215f8b",
+      "source_sha256": "6782e063394919402a10fadd0875e860a5b8aa9cf142e10db9bf8c62ca14e3ec",
+      "leveling": {
+        "target_db": -22,
+        "source_db": -16.97,
+        "measured_db": -22,
+        "gain_db": -5.03,
+        "peak_db": -16.815
+      }
+    },
+    {
+      "name": "work",
+      "file": "console-work.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.5923129251700681,
+      "sha256": "a9f44b2a4cb852845d68335b7dbb6483ca936caf33a5efe65bf99de045a77540",
+      "source_sha256": "4d6d335e298bed8027567791044cb003c3c19f1987b7dbcc2a205ede636e0975",
+      "leveling": {
+        "target_db": -29,
+        "source_db": -9.366,
+        "measured_db": -29,
+        "gain_db": -19.634,
+        "peak_db": -24.07
+      }
+    },
+    {
+      "name": "finish",
+      "file": "console-finish.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.1200208333333332,
+      "sha256": "72e4e7092a3def41d4b7c5c6b16a382f7db01f31e1ba4986d610c20618edc36b",
+      "source_sha256": "e9e5bba571069b2395c862059026b7c8ef6c67a2c0dbda4284282862d9d9d44c",
+      "leveling": {
+        "target_db": -21,
+        "source_db": -10.44,
+        "measured_db": -21,
+        "gain_db": -10.56,
+        "peak_db": -14.386
+      }
+    },
+    {
+      "name": "error",
+      "file": "console-error.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.5071201814058957,
+      "sha256": "ba63506283cd66566c5517d292a9a2c057efc843a952e3e621e8ef3765153d1d",
+      "source_sha256": "c8ee2ac82e13ef4f2f4df81da1c837488d0d073dbcd2d83c3f778070c15cb45e",
+      "leveling": {
+        "target_db": -21,
+        "source_db": -11.362,
+        "measured_db": -21,
+        "gain_db": -9.638,
+        "peak_db": -13.38
+      }
+    },
+    {
+      "name": "approval",
+      "file": "console-approval.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.5421541950113378,
+      "sha256": "50902b985f620f8e555a87dfb0c3f6ffdf982d62c57586d75756e7fb2ae21776",
+      "source_sha256": "c6c5776b736e01424c6d2b41246b39dac2365e19ce8f1ab9933b803005660f5d",
+      "leveling": {
+        "target_db": -21,
+        "source_db": -4.442,
+        "measured_db": -21,
+        "gain_db": -16.558,
+        "peak_db": -18.497
+      }
+    },
+    {
+      "name": "question",
+      "file": "console-question.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.9850566893424036,
+      "sha256": "6f4301308acfa61c52dd89cfabd282340f81d1539fb599c81b9ca2d52a447104",
+      "source_sha256": "6ed6a3bb3b295cc91f8bdd875c03e13006f205180fe1ca504ee359369de2b3b3",
+      "leveling": {
+        "target_db": -22,
+        "source_db": -7.779,
+        "measured_db": -22,
+        "gain_db": -14.221,
+        "peak_db": -17.963
+      }
+    },
+    {
+      "name": "approve",
+      "file": "console-approve.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.6734467120181405,
+      "sha256": "2c87be2a1abe93e2733cf18a3a2f9425d16bbead7e91e467b66591e6a8e33e66",
+      "source_sha256": "135d9f1ea36887937d228f66e2cc2a0f2fcc1acf4b3799e0ecb1fb4230ab9933",
+      "leveling": {
+        "target_db": -23,
+        "source_db": -9.024,
+        "measured_db": -23,
+        "gain_db": -13.976,
+        "peak_db": -17.075
+      }
+    },
+    {
+      "name": "gulp",
+      "file": "console-gulp.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.7,
+      "sha256": "c4d97685a9e9843a29da70258d0c30c2456dad06becf92990fb649dd9e29db0e",
+      "source_sha256": "0c3bc5476d9fdddf8f3c5b28bcbd1f54b7eebd1073dbcd6e84b3f7beba15523c",
+      "leveling": {
+        "target_db": -24,
+        "source_db": -19.53,
+        "measured_db": -24,
+        "gain_db": -4.47,
+        "peak_db": -15.439
+      }
+    },
+    {
+      "name": "tick",
+      "file": "console-tick.wav",
+      "source": "retained Mimo cue",
+      "channels": 2,
+      "sample_rate": 48000,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.09,
+      "sha256": "b5dbd5ac781465ab18d3846291baddfc8a590e3593f06ec805d7ff006e58f011",
+      "source_sha256": "56646420be049b4044f7e6fddfa2bff7585f46b0c89c688af79d4d52a3c071af",
+      "leveling": {
+        "target_db": -34,
+        "source_db": -52.401,
+        "measured_db": -34,
+        "gain_db": 18.401,
+        "peak_db": -19.3
+      }
+    },
+    {
+      "name": "send",
+      "file": "console-send.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.6344671201814059,
+      "sha256": "3801f19e7c686d73fb039523cd68e0b06c35e79b289f23294666af467a25c0b3",
+      "source_sha256": "078bde252af9005ef93d4449b4c3df738a225421c55cb167b8a54a78727328a8",
+      "leveling": {
+        "target_db": -28,
+        "source_db": -9.299,
+        "measured_db": -28,
+        "gain_db": -18.701,
+        "peak_db": -22.445
+      }
+    },
+    {
+      "name": "love",
+      "file": "console-love.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.5521541950113378,
+      "sha256": "ff504d036b23534eed42ca3cbebbbf4fa8e42577dd037f3dd830b3539c3c2668",
+      "source_sha256": "d8e6985d14ecf828e9fbd13bd7d4718d4f7e77281fd99db039c8c716d445a64e",
+      "leveling": {
+        "target_db": -25,
+        "source_db": -7.099,
+        "measured_db": -25,
+        "gain_db": -17.901,
+        "peak_db": -21.001
+      }
+    },
+    {
+      "name": "pop",
+      "file": "console-pop.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.13700680272108842,
+      "sha256": "03045c7d4cca2982efffa8caa4bbd31c3ddb11548b3142d517e869e27b545a33",
+      "source_sha256": "96cffe8ac09458ac17ff6c1ad95b37656d6cbdf1e7655e3ca5a276d4c9765cd5",
+      "leveling": {
+        "target_db": -28,
+        "source_db": -20.12,
+        "measured_db": -28,
+        "gain_db": -7.88,
+        "peak_db": -12.317
+      }
+    },
+    {
+      "name": "proud",
+      "file": "console-proud.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 2.0110884353741496,
+      "sha256": "6c8bbb76e0e658ecd7f2cc1be18b72f95c5f8229c4088855e4b8159675e6601f",
+      "source_sha256": "883cb6a718e6661778a1e217b43d96682742478be675b409bf78e51443c781a2",
+      "leveling": {
+        "target_db": -23,
+        "source_db": -4.579,
+        "measured_db": -23,
+        "gain_db": -18.421,
+        "peak_db": -19.834
+      }
+    },
+    {
+      "name": "wink",
+      "file": "console-wink.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.6352607709750567,
+      "sha256": "e47bf46322abc682829019381786498cafc1e6a1328b3950f685dabc50b1846d",
+      "source_sha256": "8deb8f8b7f9f96a8bbdf618441684f583501e8f746737d2bd526ae23c3113b0c",
+      "leveling": {
+        "target_db": -26,
+        "source_db": -8.543,
+        "measured_db": -26,
+        "gain_db": -17.457,
+        "peak_db": -21.2
+      }
+    },
+    {
+      "name": "yawn",
+      "file": "console-yawn.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.525532879818594,
+      "sha256": "fb46563b1c16deeb87e16df9a4f48cec63972d4e1bb81e00f211f7f59b42b5bb",
+      "source_sha256": "d537e4d42cb4bbd1b7d79790eb95160033989635d2b1f3e58705bb1c9d5d402f",
+      "leveling": {
+        "target_db": -26,
+        "source_db": -7.156,
+        "measured_db": -26,
+        "gain_db": -18.844,
+        "peak_db": -23.281
+      }
+    },
+    {
+      "name": "attach",
+      "file": "console-attach.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.5853514739229025,
+      "sha256": "d2ede7785b27c3e348666295f28e21323acba2dec04652b100bc759357f58fb9",
+      "source_sha256": "65b98d84e1c1939c41963f6d832f9da72d78928432bfc86c1b12c8f0f725db2b",
+      "leveling": {
+        "target_db": -27,
+        "source_db": -9.672,
+        "measured_db": -27,
+        "gain_db": -17.328,
+        "peak_db": -20.426
+      }
+    },
+    {
+      "name": "think",
+      "file": "console-think.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 1.1071882086167801,
+      "sha256": "9206c4963133c1eb1d53ff26de9ea9f9122cb672213667831dd773e9afb86509",
+      "source_sha256": "1fac216c6d4a0852d2e8c9b6a576055fa741fb770f0f9a0f8a717f1de3edc766",
+      "leveling": {
+        "target_db": -29,
+        "source_db": -9.291,
+        "measured_db": -29,
+        "gain_db": -19.709,
+        "peak_db": -25.731
+      }
+    },
+    {
+      "name": "search",
+      "file": "console-search.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.6022448979591837,
+      "sha256": "c8b9183d23975d9ad3807603b9ffac77e06311e3a3a97e8faff2f311300eb171",
+      "source_sha256": "06e26b0aee23c468a6ed4a00cbc3f99f4049c29865a956e09e277c334ebe3498",
+      "leveling": {
+        "target_db": -29,
+        "source_db": -11.827,
+        "measured_db": -29,
+        "gain_db": -17.173,
+        "peak_db": -21.611
+      }
+    },
+    {
+      "name": "rate",
+      "file": "console-rate.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 0.9316553287981859,
+      "sha256": "0aca5885c29518f0b3a44a707f619de06955092f13cff947c94de25a48f8e418",
+      "source_sha256": "ece7e4dccc322e834306e6ce43e8ba3743fd21eda0c19d0f9cfea843835b3c04",
+      "leveling": {
+        "target_db": -23,
+        "source_db": -7.287,
+        "measured_db": -23,
+        "gain_db": -15.713,
+        "peak_db": -18.812
+      }
+    },
+    {
+      "name": "sleep",
+      "file": "console-sleep.wav",
+      "source": "new console set",
+      "channels": 1,
+      "sample_rate": 44100,
+      "bits_per_sample": 16,
+      "duration_seconds": 2.379863945578231,
+      "sha256": "56a42c46b7f190c7c7df01212207312dfc23e85fd2b60950ca86435cfc6e98ed",
+      "source_sha256": "4dc537027760781943ae259d6f39c37be09eec8de84c453804e7d686f2844b9b",
+      "leveling": {
+        "target_db": -28,
+        "source_db": -8.231,
+        "measured_db": -28,
+        "gain_db": -19.769,
+        "peak_db": -24.206
+      }
+    }
+  ],
+  "leveling": {
+    "metric": "K-weighted loudest 400 ms; 48 kHz stereo analysis; mono duplicated to match Web Audio playback",
+    "profile": "mimo-ui-v1",
+    "peak_ceiling_db": -6,
+    "note": "Quiet hover/clicks remain below actions and attention cues. Constant gain per file; no compression, pitch change or time change."
+  }
+}

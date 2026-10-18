@@ -1,0 +1,164 @@
+/* SPDX-License-Identifier: MIT */
+.section-tab {
+  width: 36px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font: 500 13px/1.2 var(--font);
+  border-radius: var(--radius-control);
+}
+.tab,
+.header-actions > button,
+.section-action {
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
+}
+.tab,
+.header-actions > button {
+  cursor: pointer;
+}
+.tab:active,
+.header-actions > button:active,
+.section-action:active {
+  transform: scale(0.97);
+}
+.section-tab[hidden] {
+  display: none;
+}
+.section-tab svg {
+  flex: 0 0 auto;
+}
+.header-actions .header-limits {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  width:auto;
+  min-width:32px;
+  padding:0 6px;
+  color:var(--ink-2);
+  font:500 11px/16px var(--font);
+}
+.header-actions .header-limits.on { background:var(--tab-on); color:var(--ink); }
+.header-limits[hidden], .header-limits [hidden] { display:none; }
+.header-limits-provider { display:inline-flex; align-items:center; gap:6px; color:var(--ink-2); font:500 10px/16px var(--font); }
+.audio-device-dot { display:inline-block; width:6px; height:6px; flex:0 0 6px; border-radius:50%; }
+.audio-device-name:has(.audio-device-dot), .audio-device-option-name { display:inline-flex; align-items:center; gap:6px; min-width:0; }
+.header-capacity { display:flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums; }
+.header-capacity-window { --capacity-color:var(--green); display:flex; align-items:baseline; flex:0 0 auto; gap:5px; color:var(--capacity-color); }
+.header-capacity-window b { color:inherit; font:600 11px/14px var(--font); letter-spacing:-.02em; }
+.header-capacity-period { color:var(--dim); font:500 9px/14px var(--font); }
+.header-capacity-window[data-capacity="low"] { --capacity-color:var(--amber); }
+.header-actions .header-account { width:auto; max-width:98px; align-self:center; }
+.header-actions .header-account[hidden] { display:none; }
+.header-account .audio-device-label { display:none; }
+.header-actions .header-agent-select { display:flex; width:auto; max-width:98px; min-height:28px; gap:4px; padding:0 6px; border:0; background:transparent; color:var(--dim); font:500 10px/16px var(--font); }
+.header-agent-select .audio-device-name { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.header-agent-select .ui-icon { --icon-size:11px!important; }
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.home-view .home-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0; }
+.coding-home-context { position:absolute; z-index:2; top:8px; left:8px; width:82px; min-width:0; }
+.coding-home-context[hidden] { display:none; }
+.coding-home-context .coding-heading { justify-content:center; max-width:100%; min-height:24px; gap:4px; }
+.coding-home-context .coding-project { color:var(--dim); flex:0 0 auto; font:500 9px/14px var(--font-compact); }
+.coding-home-context .coding-workspace { flex:0 1 auto; font:400 9px/14px var(--font-compact); }
+.coding-home-context .coding-count { display:none; }
+.coding-home-context .coding-session-picker .audio-device-button { justify-content:center; color:var(--dim); font-size:9px; min-height:24px; }
+.coding-home-context:has(.coding-session-picker) .coding-workspace { display:none; }
+.home-view .home-footer h2 { margin:0 0 5px; font:500 10px/14px var(--font); }
+.home-view .section-actions { gap:6px; }
+.home-view .section-action { min-height:30px; padding:5px 10px; gap:5px; border:1px solid var(--hairline); border-radius:999px; background:var(--card-flat); font:500 11px/16px var(--font); }
+.home-view .section-action:hover { background:var(--control-fill); }
+.home-view .section-action .ui-icon { --icon-size:13px!important; }
+.home-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 0 8px;
+}
+
+.home-footer h2 {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.section-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 8px;
+  color: var(--ink-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  cursor: pointer;
+  font: 500 13px var(--font);
+  white-space: nowrap;
+}
+.section-action:hover {
+  background: var(--tab-on);
+}
+.section-action svg {
+  flex: 0 0 auto;
+}
+.media-page {
+  display: flex;
+  flex-direction: column;
+}
+.section-empty {
+  height: 208px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+}
+.section-empty > svg {
+  color: var(--dim);
+}
+.section-empty h1 {
+  font: 600 18px var(--font);
+}
+/* The message input belongs to a rounded bar, so its focus indication does too. */
+.home-view .home-footer { display:flex; flex-wrap:wrap; justify-content:space-between; }
+.chat-input:focus-visible {
+  outline: none;
+}
+.chat-bar:focus-within {
+  box-shadow: 0 0 0 2px rgba(235, 240, 250, 0.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .header-actions > button,
+  .section-action,
+  .utility-row,
+  .view,
+  .view.on {
+    transform: none;
+    transition: opacity 80ms linear, background-color 80ms linear, color 80ms linear;
+  }
+  .tab:active,
+  .header-actions > button:active,
+  .section-action:active { transform: none; }
+}
+
+.home-view.module-layout { display:grid; }
+.home-view .home-footer { grid-column:1 / -1; align-self:start; }
+.home-view .home-footer[hidden] { display:none; }

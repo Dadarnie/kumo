@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: MIT */
+.mimo-quick-menu { width: 216px; max-height: calc(100vh - 16px); overflow: auto; padding: 6px; }
+.mimo-quick-menu .mimo-quick-action { width: 100%; min-height: 34px; display: flex; align-items: center; padding: 7px 10px; gap: 8px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink-2); text-align: left; font: 500 12px/18px var(--font); }
+.mimo-quick-menu .mimo-quick-action:hover { background: var(--control-hover); }
+.mimo-quick-menu .mimo-quick-action:focus-visible { outline: 2px solid var(--focus-border); outline-offset: -2px; background: var(--control-fill); }
+.mimo-quick-menu [role="menuitemcheckbox"]::after { content: ""; margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--disabled-ink); opacity: .45; }
+.mimo-quick-menu [aria-checked="true"]::after { background: var(--ink); opacity: 1; }
+/* The receiving lip grows through the existing geometry and native hit region. */
+#island[data-grab-detached="true"] #bot-canvas { transition: none; }
+#island[data-grab-detached="true"] .activity-strip { visibility: hidden; }
+#island[data-grab-return-hover="true"] .core-rim { stroke: rgb(255 255 255 / 24%); transition: stroke 180ms var(--ease-out); }

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What Mimo's windows are allowed to do. Everything that touches the OS goes through Mimo's own commands.",
+  "windows": ["island", "settings", "grab-companion"],
+  "permissions": ["core:default", "autostart:default"]
+}
