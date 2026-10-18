@@ -163,7 +163,7 @@ class App:
         _start_cursor_thread()
         mode = ("ALWAYS LISTENING" if config.ALWAYS_LISTEN else f"SAY '{config.WAKE_PHRASE.upper()}'") \
             if config.WAKE_WORD_ENABLED else f"HOLD {config.HOTKEY.upper()}"
-        self._send(t="config", name=config.ASSISTANT_NAME, model=config.MODEL.split("/")[-1], mode=mode,
+        self._send(t="config", theme=config.HUD_THEME, name=config.ASSISTANT_NAME, model=config.MODEL.split("/")[-1], mode=mode,
                    voice=Path(config.PIPER_VOICE).stem.split("-")[1].upper())
 
     # ---------- thread-safe API (same as the old Tk window) ----------

@@ -18,6 +18,7 @@ REASONING_EFFORT = "none"
 MAX_REPLY_TOKENS = 250      # hard cap so a rambling answer can't take minutes (about 180 words)
 
 ASSISTANT_NAME = "Raphael"
+HUD_THEME = "neon"  # window look: "neon", "tensura" (Raphael gold/teal) or "cyberpunk" (yellow/cyan/magenta)
 
 SYSTEM_PROMPT = (
     f"You are {ASSISTANT_NAME}, a helpful local voice assistant with a calm, precise, analytical tone. "

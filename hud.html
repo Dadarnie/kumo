@@ -10,13 +10,16 @@
     --text: #e7e9f5; --dim: #7c7f99; --accent: #ff6a3d;
     --ease: cubic-bezier(.2, .8, .2, 1);
   }
+  /* themes: config.HUD_THEME. Slots: --orange = standby, --cyan = listening, --purple = thinking, --pink = speaking */
+  body[data-theme="tensura"] { --orange: #e8b04b; --cyan: #5eead4; --purple: #fbbf24; --pink: #fde68a; --red: #f87171; --bg: #080705; }
+  body[data-theme="cyberpunk"] { --orange: #fcee0a; --cyan: #00f0ff; --purple: #ff2a6d; --pink: #d300c5; --red: #ff2a6d; --bg: #06060a; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; }
   body {
     background:
-      radial-gradient(900px 600px at 12% -10%, rgba(168, 85, 247, .16), transparent 60%),
-      radial-gradient(800px 600px at 100% 110%, rgba(255, 106, 61, .14), transparent 60%),
-      radial-gradient(600px 400px at 50% 45%, rgba(34, 211, 238, .05), transparent 70%),
+      radial-gradient(900px 600px at 12% -10%, color-mix(in srgb, var(--purple) 16%, transparent), transparent 60%),
+      radial-gradient(800px 600px at 100% 110%, color-mix(in srgb, var(--orange) 14%, transparent), transparent 60%),
+      radial-gradient(600px 400px at 50% 45%, color-mix(in srgb, var(--cyan) 5%, transparent), transparent 70%),
       var(--bg);
     color: var(--text); font: 13px/1.45 "Segoe UI Variable Text", "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased; user-select: none;
@@ -74,8 +77,8 @@
   .msg { margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; background: rgba(255,255,255,.035);
          border: 1px solid rgba(255,255,255,.04); animation: rise .45s var(--ease) both; }
   .msg .who { font: 700 9.5px "Bahnschrift", sans-serif; letter-spacing: .2em; margin-bottom: 2px; }
-  .msg.you .who { color: var(--cyan); } .msg.you { border-left: 2px solid rgba(34, 211, 238, .6); }
-  .msg.rap .who { color: var(--orange); } .msg.rap { border-left: 2px solid rgba(255, 106, 61, .6); }
+  .msg.you .who { color: var(--cyan); } .msg.you { border-left: 2px solid color-mix(in srgb, var(--cyan) 60%, transparent); }
+  .msg.rap .who { color: var(--orange); } .msg.rap { border-left: 2px solid color-mix(in srgb, var(--orange) 60%, transparent); }
   .msg.note { background: none; border: none; padding: 2px 4px; color: #5d6078; font-style: italic; font-size: 12px; }
   .typing { display: none; gap: 5px; padding: 12px 14px; }
   .typing.on { display: flex; }
@@ -230,6 +233,12 @@ const STATES = {
   speaking:  { color: "#ff5fa2", label: "SPEAKING",  hint: "answering",                spin: 0.35, pulse: 0.08,  speed: 7.0 },
 };
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const cssVar = n => getComputedStyle(document.body).getPropertyValue(n).trim();
+function applyTheme() {  // state colours come from the theme's CSS slots
+  STATES.idle.color = cssVar("--orange"); STATES.listening.color = cssVar("--cyan");
+  STATES.thinking.color = cssVar("--purple"); STATES.speaking.color = cssVar("--pink");
+  document.documentElement.style.setProperty("--accent", STATES[state].color);
+}
 const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -261,7 +270,8 @@ function addRow(icon, text) {
   if (icon === "▶") $("ftools").textContent = (++toolsRun) + " RUN";
 }
 const handlers = {
-  config: e => { $("name").textContent = e.name.toUpperCase(); $("model").textContent = "LOCAL ASSISTANT  //  " + e.model.toUpperCase();
+  config: e => { document.body.dataset.theme = e.theme || "neon"; applyTheme();
+                 $("name").textContent = e.name.toUpperCase(); $("model").textContent = "LOCAL ASSISTANT  //  " + e.model.toUpperCase();
                  $("mode").textContent = e.mode; $("voice").textContent = e.voice; $("fmodel").textContent = e.model.toUpperCase();
                  document.title = e.name; },
   state: e => { state = STATES[e.v] ? e.v : "idle"; const s = STATES[state];
@@ -386,7 +396,7 @@ function drawCore(ctx, w, h, level, dt) {
 function drawBars(ctx, w, h, talking) {
   ctx.clearRect(0, 0, w, h);
   const n = shown.length, gap = 4, bw = (w - 36 - gap * (n - 1)) / n, base = h * .72, maxH = base - 10;
-  const [a, b] = talking ? ["#ff6a3d", "#ff5fa2"] : ["#22d3ee", "#a855f7"];
+  const [a, b] = talking ? [STATES.idle.color, STATES.speaking.color] : [STATES.listening.color, STATES.thinking.color];
   const grad = ctx.createLinearGradient(18, 0, w - 18, 0); grad.addColorStop(0, a); grad.addColorStop(1, b);
   for (let i = 0; i < n; i++) {
     shown[i] = lerp(shown[i], levels[i], .22);  // eased bars
@@ -430,7 +440,7 @@ function draw(now) {
   const [c2, w2, h2] = fit($("bars")); drawBars(c2, w2, h2, talking);
   const [c3, w3, h3] = fit($("spark")); drawSpark(c3, w3, h3);
   $("vlab").textContent = talking ? $("name").textContent : "MIC";
-  $("vlab").style.color = talking ? "#ff6a3d" : "#22d3ee";
+  $("vlab").style.color = talking ? STATES.idle.color : STATES.listening.color;
   $("vval").textContent = Math.round(value * 100) + "%";
 }
 requestAnimationFrame(frame);
