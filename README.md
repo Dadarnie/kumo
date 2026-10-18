@@ -241,3 +241,7 @@ Raphael uses your vault (`VAULT_DIR`, `C:\Users\darnie\Documents\Obsidian Vault`
 | Tests | `.\.venv\Scripts\python.exe tests\run_all.py` (fast) or `... --live` (LM Studio on) | |
 
 The project is a git repository (`git log` shows each step); the Piper voices and `.venv` are not in git.
+
+## Tray icon
+
+While the window is open, Raphael's icon sits in the system tray (bottom right; it may be under the `^` arrow). Right-click: Show / Hide window / Mute or unmute mic / Stop current task / Quit. Double-click shows the window. Reminder pop-ups come from the tray icon. Needs `pystray` and `Pillow` (installed: `.\.venv\Scripts\python.exe -m pip install pystray Pillow`).

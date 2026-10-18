@@ -219,7 +219,8 @@ def start_reminders(voice_module=None, app=None):
     def fire(text, late):
         message = f"Reminder{' (missed while I was off)' if late else ''}: {text}"
         print(f"\n[{message}]")
-        reminders.notify(config.ASSISTANT_NAME, message)
+        if not (app and app.tray_notify(config.ASSISTANT_NAME, message)):  # tray pop-up, else Windows toast
+            reminders.notify(config.ASSISTANT_NAME, message)
         if app:
             app.note(message)
             app.activity("⏰", message)

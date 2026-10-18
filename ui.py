@@ -275,10 +275,44 @@ class App:
                     break
             time.sleep(0.033)
 
+    # ---------- system tray ----------
+    def _start_tray(self):
+        """Tray icon: right-click for Show / Hide / Mute / Stop / Quit; double-click shows the window."""
+        import pystray
+        from PIL import Image
+        Item = pystray.MenuItem
+
+        def show():
+            self.window.show()
+            self.window.restore()
+        menu = pystray.Menu(
+            Item(f"Show {config.ASSISTANT_NAME}", lambda: show(), default=True),  # default = double-click
+            Item("Hide window", lambda: self.window.hide()),
+            Item("Mute / unmute mic", lambda: self.on_toggle_mute()),
+            Item("Stop current task", lambda: self._stop()),
+            pystray.Menu.SEPARATOR,
+            Item("Quit", lambda: self.close()))
+        self.tray = pystray.Icon("raphael", Image.open(ICON), config.ASSISTANT_NAME, menu)
+        threading.Thread(target=self.tray.run, daemon=True, name="tray").start()
+
+    def tray_notify(self, title, message):
+        """Pop-up from the tray icon (works even where Windows toast notifications are blocked)."""
+        if getattr(self, "tray", None):
+            self.tray.notify(message, title)
+            return True
+        return False
+
     def mainloop(self):
         """Blocks until the window is closed (must run on the main thread)."""
+        try:
+            self._start_tray()
+        except Exception as e:  # tray is a convenience; never block the window
+            print(f"(tray icon off: {e})")
         webview.start(self._pump)
         self.closed.set()
+        if getattr(self, "tray", None):
+            self.tray.visible = False  # remove it now, so no "ghost" icon stays in the tray
+            self.tray.stop()
 
 
 if __name__ == "__main__":  # demo with fake data so every panel shows something
