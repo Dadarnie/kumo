@@ -223,3 +223,21 @@ Raphael uses your vault (`VAULT_DIR`, `C:\Users\darnie\Documents\Obsidian Vault`
 - `forget` removes a fact (asks first). Every memory change and capture adds one entry to `log.md`.
 - `private/`, `.obsidian/` and `.git/` are blocked in code (`VAULT_BLOCKED`); Raphael never reads or writes them.
 - "Learning" = notes Raphael reads back, not changes to the model itself. Self-check (fake vault, never your real one): `.\.venv\Scripts\python.exe vault.py`.
+
+## More features
+
+| Feature | How to use | Settings |
+|---|---|---|
+| Capstone Kanban | "what's next on my capstone?", "add a card ...", "move the X card to Review" (follows the vault's `AGENTS.md`: whole cards only, never to Done; add/move ask) | `KANBAN_NOTE` |
+| Barge-in | talk over Raphael (or press the hotkey) and it stops speaking and listens | `BARGE_IN`, `BARGE_IN_RMS` |
+| Reminders & timers | "remind me in 20 minutes to stretch", "set a 5 minute timer", "remind me tomorrow at 9 am...", "what reminders do I have?" -> spoken + HUD + Windows notification; saved in `data/`, missed ones fire at startup | |
+| Daily notes | on exit / closing the window, a short session summary goes to `raphael/daily/YYYY-MM-DD.md` in the vault; the last one is recalled next session | `DAILY_DIR` |
+| Type instead of talk | "Type to Raphael..." box under the core | |
+| Mute | mic button in the footer or **Ctrl+Alt+M** | `MUTE_HOTKEY` |
+| See the screen | "what does this error say?", "what's open in Zen?" -> screenshot of your working window (or a named one / "screen") read by the local vision model | |
+| Big brain | "think harder ..." switches to the 12B model (up to a minute to load), "back to fast mode" switches back | `SMART_MODEL` |
+| Themes | `neon`, `tensura` (gold/teal), `cyberpunk` | `HUD_THEME` |
+| Start with Windows | `.\.venv\Scripts\python.exe autostart.py on` / `off`; Raphael waits up to 5 min for LM Studio's server | |
+| Tests | `.\.venv\Scripts\python.exe tests\run_all.py` (fast) or `... --live` (LM Studio on) | |
+
+The project is a git repository (`git log` shows each step); the Piper voices and `.venv` are not in git.
