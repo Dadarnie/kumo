@@ -8,6 +8,9 @@ API_KEY = "lm-studio"  # placeholder, LM Studio ignores it
 
 # Must match the model id LM Studio shows. Run `python chat.py --models` to list ids.
 MODEL = "google/gemma-4-e4b"
+# "Think harder" / "use your big brain" switches to this one (sticky until "back to fast mode").
+# Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Must be downloaded in LM Studio.
+SMART_MODEL = "google/gemma-4-12b-qat"
 
 # Gemma "thinks" before answering, which adds 15+ s. "none" turns that off (faster, a bit less careful).
 # Set to None to use the model's default.
@@ -88,6 +91,7 @@ APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Den
 PERMISSIONS = {
     "get_time": "allow", "system_info": "allow", "list_files": "allow", "read_file": "allow",
     "search_files": "allow", "open_folder": "allow", "focus_window": "allow", "media_control": "allow",
+    "look_at_screen": "allow",  # screenshot goes only to the local model
     "set_reminder": "allow", "list_reminders": "allow", "cancel_reminder": "allow",
     "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask",
     "remember": "allow", "vault_search": "allow", "vault_read": "allow", "capture_note": "allow", "forget": "ask",

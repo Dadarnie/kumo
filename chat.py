@@ -34,6 +34,26 @@ SYSTEM = config.SYSTEM_PROMPT + tools.environment_note() + vault.memory_prompt()
 EXTRA = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
 
 
+# Two brains: fast E4B by default, bigger 12B on request. Sticky, because swapping models in LM Studio takes
+# up to a minute to the big one and ~30 s back (only one fits in 8 GB of VRAM at a time).
+BRAIN = {"model": config.MODEL}
+BIG_BRAIN = re.compile(r"\b(think (harder|carefully|deeper|deeply)|(big|bigger|smart|smarter) (brain|model)|deep mode)\b", re.I)
+FAST_BRAIN = re.compile(r"\b(fast (mode|brain|model)|back to (normal|fast)|(small|smaller|quick) (brain|model|mode)|normal mode)\b", re.I)
+
+
+def _pick_brain(text, on_sentence):
+    want = config.SMART_MODEL if BIG_BRAIN.search(text) else config.MODEL if FAST_BRAIN.search(text) else BRAIN["model"]
+    if want != BRAIN["model"]:
+        big = want == config.SMART_MODEL
+        note = ("Switching to my bigger brain; this takes up to a minute." if big else  # measured: ~57 s / ~33 s
+                "Switching back to my fast brain; about half a minute.")
+        print(f"[{note}]")
+        if on_sentence:
+            on_sentence(note)
+        BRAIN["model"] = want
+    return BRAIN["model"]
+
+
 def text_tool_call(content):
     """'play_music(query="x")' written as plain text (alone on a line, maybe in `backticks`)
     -> ("play_music", {"query": "x"}); None if no line is a known tool call."""
@@ -62,6 +82,7 @@ def ask(history, text, on_sentence=None, stop=None):
     history.append({"role": "user", "content": text})
     trim(history)
     nudged = False
+    model = _pick_brain(text, on_sentence)
     stopped = lambda: tools.cancel.is_set() or (stop is not None and stop.is_set())
     for round_no in range(config.MAX_TOOL_ROUNDS):
         if stopped():
@@ -69,7 +90,7 @@ def ask(history, text, on_sentence=None, stop=None):
             return ""
         messages = [{"role": "system", "content": SYSTEM}, *history]
         content, buf, calls = "", "", {}
-        for chunk in client.chat.completions.create(model=config.MODEL, messages=messages, tools=tools.TOOLS, stream=True,
+        for chunk in client.chat.completions.create(model=model, messages=messages, tools=tools.TOOLS, stream=True,
                                                     max_tokens=config.MAX_REPLY_TOKENS, **EXTRA):
             if stopped():
                 break

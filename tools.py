@@ -454,6 +454,62 @@ def press_keys(window, keys):
     return f"Pressed {keys} in '{title}'."
 
 
+# ---------- seeing the screen (local vision: the image only goes to the local model in LM Studio) ----------
+
+def _screenshot(rect=None):
+    """PNG bytes of a screen area (x, y, w, h) or the whole primary screen, scaled to at most 1600 px wide."""
+    out = Path(os.environ.get("TEMP", ".")) / f"raphael_screen_{os.getpid()}.png"
+    area = f"New-Object System.Drawing.Rectangle({rect[0]}, {rect[1]}, {rect[2]}, {rect[3]})" if rect else \
+        "[System.Windows.Forms.Screen]::PrimaryScreen.Bounds"
+    ps = ("Add-Type -AssemblyName System.Drawing, System.Windows.Forms;"
+          f"$b = {area}; $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height;"
+          "[System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size);"
+          "$s = [Math]::Min(1, 1600 / $b.Width); $o = New-Object System.Drawing.Bitmap $bmp, ([int]($b.Width*$s)), ([int]($b.Height*$s));"
+          f"$o.Save('{out}', [System.Drawing.Imaging.ImageFormat]::Png)")
+    subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, timeout=20)
+    try:
+        return out.read_bytes()
+    finally:
+        out.unlink(missing_ok=True)
+
+
+def _work_window():
+    """The window you're working in: the top-most normal window that isn't Raphael's own."""
+    for h, title, exe in _windows():
+        r = _Rect()
+        user32.GetWindowRect(HWND(h), ctypes.byref(r))
+        if r.right - r.left > 300 and r.bottom - r.top > 200 and title not in ("Program Manager",):
+            return h, title, (r.left, r.top, r.right - r.left, r.bottom - r.top)
+    return None
+
+
+def look_at_screen(question, window=""):
+    """Screenshot (your working window, a named window, or 'screen') and ask the local vision model about it."""
+    import base64
+    from openai import OpenAI
+    if window.strip().lower() in ("screen", "whole screen", "desktop", "all"):
+        target, rect = "the whole screen", None
+    elif window.strip():
+        h, title, _ = _find_window(window)
+        r = _Rect()
+        user32.GetWindowRect(HWND(h), ctypes.byref(r))
+        target, rect = f"window '{title}'", (r.left, r.top, r.right - r.left, r.bottom - r.top)
+    else:
+        found = _work_window()
+        target, rect = (f"window '{found[1]}'", found[2]) if found else ("the whole screen", None)
+    png = _screenshot(rect)
+    if not png:
+        return "Error: could not take a screenshot."
+    client = OpenAI(base_url=config.BASE_URL, api_key=config.API_KEY)
+    extra = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
+    r = client.chat.completions.create(model=config.MODEL, max_tokens=400, **extra, messages=[
+        {"role": "system", "content": "You look at a screenshot for the user. Answer their question precisely and briefly. "
+                                      "Quote error messages and code exactly. If something is unreadable, say so."},
+        {"role": "user", "content": [{"type": "text", "text": question or "What is on the screen?"},
+                                     {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}}]}])
+    return f"(Looked at {target})\n{r.choices[0].message.content or ''}"
+
+
 MEDIA_KEYS = {"play": "play/pause media", "pause": "play/pause media", "play_pause": "play/pause media",
               "next": "next track", "previous": "previous track", "stop": "stop media",
               "volume_up": "volume up", "volume_down": "volume down", "mute": "volume mute"}
@@ -584,6 +640,10 @@ TOOLS = [
     _fn("open_app", f"Open an application. Allowed: {', '.join(config.APP_WHITELIST)}.", {"name": "App name"}),
     _fn("play_music", "Play a song or video: finds the best YouTube match and plays it in the browser. Use this for any "
         "'play ...' request. Needs internet.", {"query": "Song title and artist, or video topic"}),
+    _fn("look_at_screen", "See the user's screen and answer a question about it (errors, what's open, read text). "
+        "By default looks at the window the user is working in.",
+        {"question": "What to find out, e.g. 'what does this error say?'",
+         "window": "A window name, or 'screen' for everything (optional)"}, optional=("window",)),
     _fn("media_control", "Control what is playing (YouTube in the browser, Spotify...): play or pause (one toggle), "
         "next, previous, stop, volume_up, volume_down, mute. Use for 'play it', 'pause', 'next video', 'louder'.",
         {"action": "play, pause, next, previous, stop, volume_up, volume_down or mute",
