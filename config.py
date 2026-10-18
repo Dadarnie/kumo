@@ -108,7 +108,9 @@ PIPER_VOICE = r"voices\en_GB-jenny_dioco-medium.onnx"
 VOICE_SPEED = 1.1          # Piper length_scale: above 1 = slower, below 1 = faster
 VOICE_VARIATION = 0.3      # Piper noise_scale: lower = flatter, more robotic (default 0.667)
 OUTPUT_DEVICE = "Sound Mapper - Output"  # follows the live Windows default output. Or part of the speaker name, or None = Windows default. List: python voice.py --devices
-INPUT_DEVICE = None      # None = Windows default microphone
+BARGE_IN = True            # talk over Raphael (or press the hotkey) to make it stop speaking
+BARGE_IN_RMS = 0.05        # how loud you must be to interrupt (raise if it stops by itself on speakers)
+INPUT_DEVICE = None     # None = Windows default microphone
 
 # --- Stage 4: wake word (optional) ---
 WAKE_WORD_ENABLED = True  # True: say the wake phrase instead of holding the hotkey

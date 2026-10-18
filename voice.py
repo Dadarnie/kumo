@@ -60,11 +60,18 @@ def speak(text, voice_file=None):
             from piper.config import SynthesisConfig
             cfg = SynthesisConfig(length_scale=config.VOICE_SPEED, noise_scale=config.VOICE_VARIATION)
             for chunk in voice.synthesize(text, cfg):
+                if interrupted.is_set():
+                    return
                 audio, rate = chunk.audio_int16_array, voice.config.sample_rate
                 step = int(rate * 0.05)
                 on_speak([_rms(audio[i:i + step] / 32768) for i in range(0, len(audio), step)], 0.05)
                 sd.play(audio, rate, device=_output_device())
-                sd.wait()
+                end = time.time() + len(audio) / rate + 0.3
+                while time.time() < end and sd.get_stream().active:  # like sd.wait(), but stoppable by barge-in
+                    if interrupted.is_set():
+                        sd.stop()
+                        return
+                    time.sleep(0.02)
             return
         print(f"(Piper voice not found at {config.PIPER_VOICE}, using Windows voice)")
     except Exception as e:
@@ -76,15 +83,43 @@ def speak(text, voice_file=None):
 
 
 _speech_q = queue.Queue()
+interrupted = threading.Event()  # set by barge-in: stop talking now, drop what is queued
+_speaking = threading.Event()
 
 
 def _speech_worker():
     while True:
         text = _speech_q.get()
         try:
-            speak(text)
+            if not interrupted.is_set():
+                _speaking.set()
+                if config.BARGE_IN and not any(t.name == "barge-in" for t in threading.enumerate()):
+                    threading.Thread(target=_barge_in_monitor, name="barge-in", daemon=True).start()
+                speak(text)
         finally:
+            if _speech_q.unfinished_tasks <= 1:
+                _speaking.clear()
             _speech_q.task_done()
+
+
+def _barge_in_monitor():
+    """While Raphael talks: if you talk over it (or press the hotkey), stop speaking.
+    The threshold adapts to how loud Raphael's own voice comes back through the mic (speaker echo)."""
+    n, loud, echo, t0 = int(RATE * 0.05), 0, [], time.time()
+    try:
+        with sd.InputStream(samplerate=RATE, channels=1, dtype="float32", blocksize=n, device=config.INPUT_DEVICE) as s:
+            while _speaking.is_set() and not interrupted.is_set():
+                level = _rms(s.read(n)[0][:, 0])
+                if time.time() - t0 < 0.4:  # first 0.4 s: learn the echo level of Raphael's own voice
+                    echo.append(level)
+                    continue
+                limit = max(config.BARGE_IN_RMS, 3 * (max(echo) if echo else 0))
+                loud = loud + 1 if level > limit else 0
+                if loud >= 4 or (not config.WAKE_WORD_ENABLED and keyboard.is_pressed(config.HOTKEY)):  # 0.2 s of you
+                    print("[barge-in: stopped talking]")
+                    interrupted.set()
+    except Exception as e:  # never let the monitor break speech
+        print(f"(barge-in monitor off: {e})")
 
 
 def speak_async(text):

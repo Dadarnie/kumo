@@ -55,20 +55,22 @@ def warm_llm():
     client.chat.completions.create(model=config.MODEL, messages=messages, tools=tools.TOOLS, max_tokens=1, **EXTRA)
 
 
-def ask(history, text, on_sentence=None):
-    """Send one user message, stream the reply, run any tool calls. on_sentence(s) gets each finished sentence."""
+def ask(history, text, on_sentence=None, stop=None):
+    """Send one user message, stream the reply, run any tool calls. on_sentence(s) gets each finished sentence.
+    stop: optional threading.Event (barge-in) that ends the reply early."""
     history.append({"role": "user", "content": text})
     trim(history)
     nudged = False
+    stopped = lambda: tools.cancel.is_set() or (stop is not None and stop.is_set())
     for round_no in range(config.MAX_TOOL_ROUNDS):
-        if tools.cancel.is_set():
-            print("(stopped by user)")
+        if stopped():
+            print("(stopped)")
             return ""
         messages = [{"role": "system", "content": SYSTEM}, *history]
         content, buf, calls = "", "", {}
         for chunk in client.chat.completions.create(model=config.MODEL, messages=messages, tools=tools.TOOLS, stream=True,
                                                     max_tokens=config.MAX_REPLY_TOKENS, **EXTRA):
-            if tools.cancel.is_set():
+            if stopped():
                 break
             if not chunk.choices:
                 continue
@@ -195,11 +197,15 @@ def converse(voice_mode, app=None):
                     voice.speak_async(sentence)
 
                 tools.cancel.clear()
-                reply = ask(history, text, say if voice_mode else None)
+                if voice_mode:
+                    voice.interrupted.clear()
+                reply = ask(history, text, say if voice_mode else None, voice.interrupted if voice_mode else None)
                 if app:
                     app.show(reply=reply)
                 if voice_mode:
                     voice.wait_speaking()
+                    if voice.interrupted.is_set() and app:
+                        app.note("(you interrupted; go ahead)")
                     voice.stay_awake()  # follow-up window starts when she finishes talking
     except OpenAIError as e:
         print(f"{LLM_DOWN}\n({e})")
