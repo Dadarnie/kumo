@@ -236,7 +236,7 @@ function addMsg(cls, who, text) {
   box.scrollTop = box.scrollHeight;
 }
 function addRow(icon, text) {
-  const cls = { "▶": "run", "✓": "ok", "✗": "bad", "■": "bad" }[icon] || "run";
+  const cls = { "▶": "run", "✓": "ok", "✗": "bad", "■": "bad", "⏰": "ok" }[icon] || "run";
   const r = document.createElement("div"); r.className = "row " + cls;
   r.innerHTML = '<div class="ic"></div><div class="tx"></div><div class="tm"></div>';
   r.children[0].textContent = icon; r.children[1].textContent = text; r.children[2].textContent = time();

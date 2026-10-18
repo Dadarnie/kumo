@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 import keyboard
 
 import config
+from reminders import cancel_reminder, list_reminders, set_reminder  # reminders and timers
 from vault import (capture_note, describe_forget, describe_kanban_add, describe_kanban_move, forget,  # Obsidian tools
                    kanban_add, kanban_list, kanban_move, remember, vault_read, vault_search)
 
@@ -618,6 +619,11 @@ TOOLS = [
     _fn("vault_search", "Search the user's Obsidian notes (their second brain) for words.", {"query": "Words to find"}),
     _fn("vault_read", "Read one Obsidian note by name, e.g. second-brain or lpms-capstone.", {"note": "Note name or path"}),
     _fn("capture_note", "Save an idea or note into the user's Obsidian inbox.", {"title": "Short title", "text": "The note"}),
+    _fn("set_reminder", "Set a reminder or timer. Give in_minutes (e.g. 20) OR at (e.g. 15:30, 3:30 pm, tomorrow 9:00).",
+        {"text": "What to remind about (for a timer: 'Timer')", "in_minutes": "Minutes from now",
+         "at": "Clock time or date and time"}, optional=("in_minutes", "at")),
+    _fn("list_reminders", "List upcoming reminders and timers."),
+    _fn("cancel_reminder", "Cancel a reminder.", {"text": "Words from the reminder"}),
     _fn("kanban_list", "Show the user's capstone task board (Obsidian Kanban): cards in To Do, Doing, Review, Blocked, Done. "
         "'What's next' = the first card under To Do."),
     _fn("kanban_add", "Add a card to the capstone board. The user must approve.",

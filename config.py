@@ -87,6 +87,7 @@ APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Den
 PERMISSIONS = {
     "get_time": "allow", "system_info": "allow", "list_files": "allow", "read_file": "allow",
     "search_files": "allow", "open_folder": "allow", "focus_window": "allow", "media_control": "allow",
+    "set_reminder": "allow", "list_reminders": "allow", "cancel_reminder": "allow",
     "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask",
     "remember": "allow", "vault_search": "allow", "vault_read": "allow", "capture_note": "allow", "forget": "ask",
     "git_status": "allow", "project_info": "allow", "read_clipboard": "allow", "copy_to_clipboard": "allow",

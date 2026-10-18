@@ -7,6 +7,7 @@ import time
 from openai import OpenAI, OpenAIError
 
 import config
+import reminders
 import tools
 import vault
 
@@ -149,6 +150,21 @@ def main():
         converse(voice_mode)
 
 
+def start_reminders(voice_module=None, app=None):
+    """Due reminders: spoken, shown in the HUD, and sent as a Windows notification."""
+    def fire(text, late):
+        message = f"Reminder{' (missed while I was off)' if late else ''}: {text}"
+        print(f"\n[{message}]")
+        reminders.notify(config.ASSISTANT_NAME, message)
+        if app:
+            app.note(message)
+            app.activity("⏰", message)
+        if voice_module:
+            voice_module.speak_async(message)
+    reminders.on_fire = fire
+    reminders.start()
+
+
 LLM_DOWN = f"Cannot reach LM Studio at {config.BASE_URL}.\nStart the server in LM Studio and load the model."
 
 
@@ -170,6 +186,7 @@ def converse(voice_mode, app=None):
         if voice_mode:
             voice.preload()
         print(f"Ready ({time.time() - t:.1f}s).")
+        start_reminders(voice if voice_mode else None, app)
         while True:
             if app:
                 app.set_state("idle")
