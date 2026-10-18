@@ -136,7 +136,9 @@ def wait_speaking():
 def record():
     """Record the mic while the hotkey is held. Returns float32 mono audio at 16 kHz."""
     print(f"[hold '{config.HOTKEY}' and speak]")
-    keyboard.wait(config.HOTKEY)  # blocks until pressed
+    while muted.is_set() or not keyboard.is_pressed(config.HOTKEY):  # wait for the key (or typed text)
+        _check_typed()
+        time.sleep(0.03)
     chunks = []
     with sd.InputStream(samplerate=RATE, channels=1, dtype="float32", device=config.INPUT_DEVICE,
                         callback=lambda d, *_: (chunks.append(d.copy()), on_level(_rms(d)))):
@@ -240,12 +242,39 @@ def record_until_silence():
     return np.concatenate(chunks)
 
 
+typed = queue.Queue()      # text typed in the HUD: handled like speech, no wake phrase needed
+muted = threading.Event()  # mic muted (hotkey or HUD button): nothing is heard or transcribed
+on_mute = lambda is_muted: None
+
+
+class _Typed(Exception):
+    """Raised inside the listening loops when typed text arrives, so listen() returns it at once."""
+    def __init__(self, text):
+        super().__init__(text)
+        self.text = text
+
+
+def _check_typed():
+    if not typed.empty():
+        raise _Typed(typed.get())
+
+
+def toggle_mute():
+    muted.clear() if muted.is_set() else muted.set()
+    print("[mic muted]" if muted.is_set() else "[mic on]")
+    on_mute(muted.is_set())
+
+
 def _mic_blocks():
-    """Endless stream of 0.1 s mic blocks (float32 mono 16 kHz). Close it to release the mic."""
+    """Endless stream of 0.1 s mic blocks (float32 mono 16 kHz). Close it to release the mic.
+    While muted it yields silence; typed text interrupts it (raises _Typed)."""
     n = int(RATE * 0.1)
     with sd.InputStream(samplerate=RATE, channels=1, dtype="float32", blocksize=n, device=config.INPUT_DEVICE) as s:
         while True:
+            _check_typed()
             block = s.read(n)[0][:, 0].copy()
+            if muted.is_set():
+                block[:] = 0
             on_level(_rms(block))
             yield block
 
@@ -355,12 +384,18 @@ def _sure(text):
 
 
 def listen():
-    if config.WAKE_WORD_ENABLED:
-        if config.WAKE_PHRASE:
-            return listen_for_wake_phrase()
-        wait_for_wake_word()
-        return _sure(transcribe(record_until_silence()))
-    return _sure(transcribe(record()))
+    """Next request: spoken (per the configured mode) or typed in the HUD, whichever comes first."""
+    global unsure
+    try:
+        if config.WAKE_WORD_ENABLED:
+            if config.WAKE_PHRASE:
+                return listen_for_wake_phrase()
+            wait_for_wake_word()
+            return _sure(transcribe(record_until_silence()))
+        return _sure(transcribe(record()))
+    except _Typed as t:
+        unsure = False
+        return t.text
 
 
 if __name__ == "__main__":

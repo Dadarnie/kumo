@@ -68,7 +68,8 @@ ALLOWED_DIRS = [
 VAULT_DIR = r"C:\Users\darnie\Documents\Obsidian Vault"
 VAULT_BLOCKED = ("private", ".obsidian", ".git")  # never read or written (vault rule: never touch private/)
 MEMORY_NOTE = "raphael/memory.md"                  # facts Raphael learns, loaded every session
-KANBAN_NOTE = "projects/lpms-tasks.md"             # capstone board (moves follow the vault's AGENTS.md rules)
+DAILY_DIR = "raphael/daily"                        # one note per day with a summary of each Raphael session
+KANBAN_NOTE = "projects/lpms-tasks.md"            # capstone board (moves follow the vault's AGENTS.md rules)
 MEMORY_MAX_CHARS = 2000                            # how much memory goes into each session's prompt
 PROJECTS_DIR = r"C:\Users\darnie\own projects"  # each subfolder is a project Raphael can name ("scamcheck", "docmind")
 
@@ -109,7 +110,8 @@ PIPER_VOICE = r"voices\en_GB-jenny_dioco-medium.onnx"
 VOICE_SPEED = 1.1          # Piper length_scale: above 1 = slower, below 1 = faster
 VOICE_VARIATION = 0.3      # Piper noise_scale: lower = flatter, more robotic (default 0.667)
 OUTPUT_DEVICE = "Sound Mapper - Output"  # follows the live Windows default output. Or part of the speaker name, or None = Windows default. List: python voice.py --devices
-BARGE_IN = True            # talk over Raphael (or press the hotkey) to make it stop speaking
+MUTE_HOTKEY = "ctrl+alt+m" # toggles the mic on/off (also the mic button in the window)
+BARGE_IN = True           # talk over Raphael (or press the hotkey) to make it stop speaking
 BARGE_IN_RMS = 0.05        # how loud you must be to interrupt (raise if it stops by itself on speakers)
 INPUT_DEVICE = None     # None = Windows default microphone
 

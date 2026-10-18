@@ -47,7 +47,8 @@ CODE_SUFFIXES = {".py", ".ps1", ".bat", ".cmd", ".exe", ".dll", ".reg", ".vbs", 
 # ---------- read-only tools ----------
 
 def get_time():
-    return datetime.now().strftime("%A, %d %B %Y, %H:%M:%S")
+    now = datetime.now()  # spell out AM/PM: the small model mislabels 24-hour times (01:10 became "1:10 PM")
+    return now.strftime("%A, %d %B %Y, ") + now.strftime("%I:%M %p").lstrip("0") + now.strftime(" (24-hour %H:%M)")
 
 
 def _safe_path(path):

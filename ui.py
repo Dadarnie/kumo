@@ -141,18 +141,22 @@ def _start_cursor_thread():
 
 
 class _Api:
-    """Functions the page can call: pywebview.api.approve(id, ok) and pywebview.api.stop()."""
-    def __init__(self, answer, stop):
-        self.approve = answer
-        self.stop = stop
+    """Functions the page can call: pywebview.api.approve(id, ok), stop(), send_text(text), toggle_mute()."""
+    def __init__(self, app):
+        self.approve = app._answer
+        self.stop = app._stop
+        self.send_text = lambda text: app.on_text(str(text)[:2000])
+        self.toggle_mute = lambda: app.on_toggle_mute()
 
 
 class App:
     def __init__(self):
         self.events, self.pending, self.ids = queue.Queue(), {}, itertools.count(1)
         self.closed, self.ready = threading.Event(), threading.Event()
+        self.on_text = lambda text: None      # chat.py connects these to voice.typed / voice.toggle_mute
+        self.on_toggle_mute = lambda: None
         self.window = webview.create_window(
-            config.ASSISTANT_NAME, url=str(HTML), js_api=_Api(self._answer, self._stop),
+            config.ASSISTANT_NAME, url=str(HTML), js_api=_Api(self),
             width=1320, height=820, min_size=(1100, 700), background_color="#07070d")
         self.window.events.loaded += self.ready.set
         self.window.events.closed += self.closed.set
@@ -180,6 +184,9 @@ class App:
 
     def activity(self, icon, text):
         self._send(t="activity", icon=icon, text=text)
+
+    def set_muted(self, is_muted):
+        self._send(t="muted", v=bool(is_muted))
 
     def level(self, rms):
         self._send(t="level", v=rms)

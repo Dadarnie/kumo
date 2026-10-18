@@ -152,6 +152,18 @@
   .stop { border: 1px solid rgba(255, 77, 94, .45); background: rgba(255, 77, 94, .08); color: #ff8a95; border-radius: 9px;
           padding: 6px 16px; font: 700 10px "Bahnschrift", sans-serif; letter-spacing: .2em; cursor: pointer;
           transition: background .2s, box-shadow .2s, transform .12s; }
+  .mic { border: 1px solid rgba(34, 211, 238, .4); background: rgba(34, 211, 238, .07); color: var(--cyan); border-radius: 9px;
+         padding: 6px 14px; margin-right: 8px; font: 700 10px "Bahnschrift", sans-serif; letter-spacing: .18em; cursor: pointer;
+         transition: all .2s; }
+  .mic.off { border-color: rgba(255, 77, 94, .55); background: rgba(255, 77, 94, .12); color: #ff8a95; box-shadow: 0 0 16px rgba(255, 77, 94, .3); }
+  .ask { display: flex; gap: 8px; width: min(520px, 90%); margin-top: 14px; }
+  .ask input { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--edge); border-radius: 12px; padding: 11px 14px;
+               color: var(--text); font: 13px "Segoe UI Variable Text", "Segoe UI", sans-serif; outline: none; user-select: text;
+               transition: border-color .25s, box-shadow .25s; }
+  .ask input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,255,255,.03), 0 0 18px -6px var(--accent); }
+  .ask button { width: 44px; border: 0; border-radius: 12px; background: var(--accent); color: #0a0a12; font-size: 15px; cursor: pointer;
+                transition: transform .12s, filter .2s; }
+  .ask button:hover { filter: brightness(1.15); } .ask button:active { transform: scale(.95); }
   .stop:hover { background: rgba(255, 77, 94, .18); box-shadow: 0 0 18px rgba(255, 77, 94, .35); } .stop:active { transform: scale(.96); }
 </style>
 </head>
@@ -183,6 +195,10 @@
     <div class="state" id="state">STANDBY</div>
     <div class="hint" id="hint">waiting</div>
     <div class="heard" id="heard"></div>
+    <form class="ask" id="ask" autocomplete="off">
+      <input id="askText" placeholder="Type to Raphael…" maxlength="2000">
+      <button type="submit" aria-label="Send">➤</button>
+    </form>
   </section>
 
   <section class="col right">
@@ -201,7 +217,7 @@
     </div>
   </section>
 
-  <footer><div>MODEL <b id="fmodel">—</b>TOOLS <b id="ftools">0 RUN</b></div><div class="pill" id="pill">STANDBY</div><button class="stop" id="stop">■ STOP</button></footer>
+  <footer><div>MODEL <b id="fmodel">—</b>TOOLS <b id="ftools">0 RUN</b></div><div class="pill" id="pill">STANDBY</div><div><button class="mic" id="mic" title="Mute / unmute the mic (Ctrl+Alt+M)">🎙 MIC ON</button><button class="stop" id="stop">■ STOP</button></div></footer>
 </div>
 
 <script>
@@ -218,7 +234,7 @@ const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 let state = "idle", color = hex(STATES.idle.color), spin = STATES.idle.spin, pulseAmt = STATES.idle.pulse, speed = STATES.idle.speed;
-let micLevel = 0, speech = null, toolsRun = 0, pending = null;
+let micLevel = 0, speech = null, toolsRun = 0, pending = null, isMuted = false;
 const levels = new Array(40).fill(0), shown = new Array(40).fill(0), cpuHist = [];
 
 // ---------- messages from Python ----------
@@ -249,7 +265,9 @@ const handlers = {
                  $("mode").textContent = e.mode; $("voice").textContent = e.voice; $("fmodel").textContent = e.model.toUpperCase();
                  document.title = e.name; },
   state: e => { state = STATES[e.v] ? e.v : "idle"; const s = STATES[state];
-                $("state").textContent = s.label; $("hint").textContent = s.hint; $("pill").textContent = s.label;
+                const label = isMuted && (state === "idle" || state === "listening") ? "MUTED" : s.label;
+                $("state").textContent = label; $("pill").textContent = label;
+                $("hint").textContent = label === "MUTED" ? "mic is off · type below or press Ctrl+Alt+M" : s.hint;
                 document.documentElement.style.setProperty("--accent", s.color);
                 $("typing").classList.toggle("on", state === "thinking"); },
   you: e => { addMsg("you", "YOU", e.v); $("heard").textContent = "“" + e.v + "”"; },
@@ -277,6 +295,8 @@ const handlers = {
     requestAnimationFrame(() => { t.style.transition = `transform ${e.timeout}s linear`; t.style.transform = "scaleX(0)"; });
     a.classList.add("on");
   },
+  muted: e => { isMuted = e.v; const m = $("mic"); m.classList.toggle("off", e.v); m.textContent = e.v ? "🔇 MUTED" : "🎙 MIC ON";
+                handlers.state({ v: state }); },
   approve_close: e => { if (pending === e.id) { pending = null; $("approve").classList.remove("on"); } },
 };
 function answer(ok) {
@@ -287,6 +307,12 @@ function answer(ok) {
 }
 $("allow").onclick = () => answer(true);
 $("deny").onclick = () => answer(false);
+$("ask").onsubmit = ev => {
+  ev.preventDefault();
+  const box = $("askText"), text = box.value.trim();
+  if (text && window.pywebview) { pywebview.api.send_text(text); box.value = ""; }
+};
+$("mic").onclick = () => window.pywebview && pywebview.api.toggle_mute();
 $("stop").onclick = () => { if (pending !== null) answer(false); window.pywebview && pywebview.api.stop(); };
 
 // ---------- drawing ----------

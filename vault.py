@@ -50,10 +50,22 @@ def _notes():
             yield p
 
 
+def _write(p, text):
+    """Write text keeping the file's existing line endings (Windows Python would otherwise turn LF into CRLF and
+    make git see every line of the note as changed)."""
+    crlf = p.exists() and b"\r\n" in p.read_bytes()
+    p.write_bytes((text.replace("\r\n", "\n").replace("\n", "\r\n") if crlf else text.replace("\r\n", "\n")).encode("utf-8"))
+
+
+def _append(p, text):
+    """Append text after a line break (even if the file doesn't end with one), keeping line endings."""
+    old = p.read_text(encoding="utf-8") if p.exists() else ""
+    _write(p, old + ("" if not old or old.endswith("\n") else "\n") + text)
+
+
 def _log(action, subject, detail):
     """Append one entry to log.md in the vault's format: ## [YYYY-MM-DD] action | subject."""
-    with open(_vault_path("log.md"), "a", encoding="utf-8") as f:
-        f.write(f"\n## [{_today()}] {action} | {subject}\n- {detail}\n")
+    _append(_vault_path("log.md"), f"\n## [{_today()}] {action} | {subject}\n- {detail}\n")
 
 
 def _slug(text):
@@ -77,14 +89,14 @@ def remember(fact):
     f = _memory_file()
     if not f.exists():
         f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(MEMORY_HEADER.format(today=_today()), encoding="utf-8")
+        _write(f, MEMORY_HEADER.format(today=_today()))
         _log("create", config.MEMORY_NOTE, "Raphael memory file created.")
     text = f.read_text(encoding="utf-8")
     if any(fact.lower() in l.lower() for l in _facts(text)):
         return f"Already remembered: {fact}"
     text = re.sub(r"^updated: .*$", f"updated: {_today()}", text, count=1, flags=re.M)
     text = text.rstrip("\n") + f"\n- {fact} ({_today()})\n"
-    f.write_text(text, encoding="utf-8")
+    _write(f, text)
     _log("update", "Raphael memory", f"remembered: {fact}")
     size = sum(len(l) for l in _facts(text))
     warn = f" Memory is {size} characters (only the first {config.MEMORY_MAX_CHARS} load each session)." \
@@ -112,7 +124,7 @@ def describe_forget(fact):
 def forget(fact):
     f, line = _matching_facts(fact)
     text = f.read_text(encoding="utf-8").replace(line + "\n", "", 1)
-    f.write_text(re.sub(r"^updated: .*$", f"updated: {_today()}", text, count=1, flags=re.M), encoding="utf-8")
+    _write(f, re.sub(r"^updated: .*$", f"updated: {_today()}", text, count=1, flags=re.M))
     _log("update", "Raphael memory", f"forgot: {line[2:]}")
     return f"Forgot: {line[2:]}"
 
@@ -154,11 +166,41 @@ def capture_note(title, text):
     while (inbox / f"{slug}{'' if n == 1 else f'-{n}'}.md").exists():
         n += 1
     p = inbox / f"{slug}{'' if n == 1 else f'-{n}'}.md"
-    p.write_text(f"---\ntitle: {title.strip()}\ncreated: {_today()}\nupdated: {_today()}\nsource: raphael (voice capture)\n---\n\n"
-                 f"# {title.strip()}\n\n{text.strip()}\n", encoding="utf-8")
+    _write(p, f"---\ntitle: {title.strip()}\ncreated: {_today()}\nupdated: {_today()}\nsource: raphael (voice capture)\n---\n\n"
+                 f"# {title.strip()}\n\n{text.strip()}\n")
     rel = p.relative_to(_root()).as_posix()
     _log("create", rel, "Captured by Raphael from voice; unfiled (inbox).")
     return f"Saved to {rel}."
+
+
+def save_daily_note(bullets):
+    """Append one session summary to raphael/daily/YYYY-MM-DD.md (Raphael's own folder, outside the wiki index)."""
+    lines = [l.strip() for l in bullets.strip().splitlines() if l.strip()]
+    if not lines:
+        return None
+    rel = f"{config.DAILY_DIR}/{_today()}.md"
+    p = _vault_path(rel)
+    if not p.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        _write(p, f"---\ntitle: Raphael daily {_today()}\ncreated: {_today()}\nupdated: {_today()}\ntype: summary\n"
+                     f"area: projects\ntags: [reference]\n---\n\n# Raphael sessions {_today()}\n")
+    body = "\n".join(l if l.startswith("- ") else f"- {l.lstrip('-* ')}" for l in lines)
+    _append(p, f"\n## {datetime.datetime.now():%H:%M} session\n{body}\n")
+    _log("update", rel, "Raphael session summary added.")
+    return rel
+
+
+def last_session_summary():
+    """The most recent session summary (for continuity next time), or ''."""
+    try:
+        files = sorted(_vault_path(config.DAILY_DIR).glob("*.md"))
+    except (OSError, PermissionError):
+        return ""
+    if not files:
+        return ""
+    text = files[-1].read_text(encoding="utf-8")
+    last = text.rsplit("\n## ", 1)[-1] if "\n## " in text else ""
+    return f"{files[-1].stem} {last}".strip()[:600]
 
 
 # ---------- capstone Kanban board (Obsidian Kanban plugin format; rules from the vault's AGENTS.md) ----------
@@ -254,7 +296,7 @@ def kanban_move(card, column, note=""):
     gap = 1 if a > 0 and lines[a - 1] == "" else 0  # take the blank line before the card with it
     del lines[a - gap:b]
     _insert(lines, dst, block)
-    p.write_text("\n".join(lines), encoding="utf-8")
+    _write(p, "\n".join(lines))
     return f"Moved to {dst}: {block[0][6:90]}"
 
 
@@ -267,7 +309,7 @@ def kanban_add(text, column="To Do"):
     p, lines = _board()
     dst = _column(lines, _target(column))[0]
     _insert(lines, dst, [f"- [ ] {' '.join(text.split())}"])
-    p.write_text("\n".join(lines), encoding="utf-8")
+    _write(p, "\n".join(lines))
     return f"Added to {dst}: {text.strip()[:90]}"
 
 
@@ -281,7 +323,10 @@ def memory_prompt():
             if index.exists() else []
     except OSError:
         return ""
-    return ((f" What you remember about the user (from their Obsidian vault). These preferences override the style "
+    last = last_session_summary()
+    recap = (f" Last session ({last.splitlines()[0]}):\n" + "\n".join(last.splitlines()[1:]) + "\n") if last else ""
+    return (recap + " Older session summaries are in raphael/daily/YYYY-MM-DD.md (use vault_read)."
+            + (f" What you remember about the user (from their Obsidian vault). These preferences override the style "
              f"rules above:\n{facts}\n" if facts else
              " You have no remembered facts yet. ")
             + (f" Topics in the user's Obsidian vault (use vault_search/vault_read): {', '.join(topics)}." if topics else ""))
@@ -329,6 +374,21 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
         assert "title: Startup idea!" in (tmp / "inbox" / "startup-idea.md").read_text(encoding="utf-8")
         log = (tmp / "log.md").read_text(encoding="utf-8")
         assert log.count("## [") == 6 and "| Raphael memory" in log and "| inbox/startup-idea.md" in log
+        # line endings: LF files stay LF, CRLF files stay CRLF; a log without a final newline still gets a clean entry
+        (tmp / "log.md").write_bytes(b"# Wiki Log\n\nlast line without newline")
+        _log("update", "x", "y")
+        assert (tmp / "log.md").read_bytes() == b"# Wiki Log\n\nlast line without newline\n\n## [" + _today().encode() + b"] update | x\n- y\n"
+        crlf = tmp / "crlf.md"
+        crlf.write_bytes(b"a\r\nb\r\n")
+        _append(crlf, "c\n")
+        assert crlf.read_bytes() == b"a\r\nb\r\nc\r\n"
+        assert save_daily_note("") is None
+        rel = save_daily_note("- Asked about LPMS\n* set a reminder")
+        rel2 = save_daily_note("- Second session")
+        daily = (tmp / rel).read_text(encoding="utf-8")
+        assert rel == rel2 and daily.startswith("---\ntitle: Raphael daily") and daily.count("\n## ") == 2, daily
+        assert "- set a reminder" in daily and "Second session" in last_session_summary()
+        assert "Last session" in memory_prompt() and "capstone is LPMS" in memory_prompt()
         print("vault OK")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

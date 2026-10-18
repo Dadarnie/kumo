@@ -140,14 +140,40 @@ def main():
         voice.on_level = app.level            # Voice panel: mic bars
         voice.on_speak = app.speak_envelope   # Voice panel: Raphael's speech bars
         tools.on_activity = app.activity      # Activity panel: every tool step
+        app.on_text = voice.typed.put         # "Type to Raphael" box
+        app.on_toggle_mute = voice.toggle_mute
+        voice.on_mute = app.set_muted
         if config.WAKE_WORD_ENABLED and config.WAKE_PHRASE:
             app.note("I'm listening. Just talk." if config.ALWAYS_LISTEN else
                      f"Say '{config.WAKE_PHRASE}' and then your request.")
         threading.Thread(target=converse, args=(voice_mode, app), daemon=True).start()
         print(f"{config.ASSISTANT_NAME} window open. Confirmations (y/n) are asked in this terminal.")
         app.mainloop()
+        save_session()  # window closed: write today's session summary to Obsidian
     else:
         converse(voice_mode)
+
+
+TRANSCRIPT = []  # (who, text) for this run, summarized into the Obsidian daily note at the end
+_saved = []
+
+
+def save_session():
+    """Summarize this run into raphael/daily/YYYY-MM-DD.md (once). Skipped if nothing was asked."""
+    if _saved or not any(who == "you" for who, _ in TRANSCRIPT):
+        return
+    _saved.append(True)
+    convo = "\n".join(f"{who}: {text}" for who, text in TRANSCRIPT[-40:])
+    try:
+        r = client.chat.completions.create(model=config.MODEL, max_tokens=300, **EXTRA, messages=[
+            {"role": "system", "content": "You write short, factual session logs."},
+            {"role": "user", "content": "Summarize this conversation between the user and Raphael (their assistant) for "
+                                        "the user's Obsidian daily log: 2 to 6 short bullet points starting with '- ': what "
+                                        "was asked, what was done, open follow-ups. No preamble.\n\n" + convo}])
+        rel = vault.save_daily_note(r.choices[0].message.content or "")
+        print(f"(session summary saved to {rel} in your vault)")
+    except Exception as e:  # never block closing
+        print(f"(could not save the session summary: {e})")
 
 
 def start_reminders(voice_module=None, app=None):
@@ -174,6 +200,11 @@ def converse(voice_mode, app=None):
     if voice_mode:
         import voice
         tools.announce = voice.speak_async
+        try:
+            import keyboard
+            keyboard.add_hotkey(config.MUTE_HOTKEY, voice.toggle_mute)
+        except Exception as e:
+            print(f"(mute hotkey {config.MUTE_HOTKEY} not set: {e})")
         print(f"{name} voice mode ({config.MODEL}). Hold '{config.HOTKEY}' to talk, say 'exit' or Ctrl+C to quit.")
     else:
         print(f"{name} ({config.MODEL}). Type 'exit' to quit.")
@@ -217,6 +248,7 @@ def converse(voice_mode, app=None):
                 if voice_mode:
                     voice.interrupted.clear()
                 reply = ask(history, text, say if voice_mode else None, voice.interrupted if voice_mode else None)
+                TRANSCRIPT.extend([("you", text), ("raphael", reply)])
                 if app:
                     app.show(reply=reply)
                 if voice_mode:
@@ -228,7 +260,9 @@ def converse(voice_mode, app=None):
         print(f"{LLM_DOWN}\n({e})")
     finally:
         if app:
-            app.close()
+            app.close()  # main() saves the session summary once the window is gone
+        else:
+            save_session()
 
 
 if __name__ == "__main__":
