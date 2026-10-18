@@ -480,14 +480,63 @@ def describe_send_message(person, message):
     return "", False
 
 
+def _window_rect(h):
+    r = _Rect()
+    user32.GetWindowRect(HWND(h), ctypes.byref(r))
+    return r.left, r.top, r.right - r.left, r.bottom - r.top
+
+
+def _click(x, y):
+    """One left click at screen x, y, then put the mouse back where it was."""
+    pt = (ctypes.c_long * 2)()
+    user32.GetCursorPos(pt)
+    user32.SetCursorPos(int(x), int(y))
+    user32.mouse_event(0x0002, 0, 0, 0, 0)  # left down
+    user32.mouse_event(0x0004, 0, 0, 0, 0)  # left up
+    time.sleep(0.15)
+    user32.SetCursorPos(pt[0], pt[1])
+
+
 def send_message(person, message):
-    """Open the Messenger chat, wait for it, ask the user, then type and send. Always asks, whatever the settings."""
+    """Open the Messenger chat, read WHO it is with (vision), ask the user, click the message box, send, then check.
+    Always asks, whatever the settings. The approval shows the name of the chat that really opened, so a wrong
+    username can't silently send to someone else."""
     username = _contact_username(person)
-    if not confirm("send_message", f"THIS WILL SEND A MESSAGE to {person} on Messenger (messenger.com/t/{username}):\n"
-                                   f"{message[:400]}", True):
-        return "DECLINED: the user did not approve. Nothing was opened, typed or sent."
     open_url(f"https://www.messenger.com/t/{username}")
-    return type_text("Messenger", message, enter="yes", _approved=True)
+    h, title, exe = _find_window("Messenger", wait=15)
+    _bring_to_front(h)
+    _settled_title(h, exe)
+    time.sleep(2)  # let the conversation render
+    rect = _window_rect(h)
+    who = (_vision("This is Messenger. Reply with ONLY the name shown at the top of the open conversation "
+                   "(the person or group the messages go to), nothing else. If no conversation is open, reply NONE.",
+                   rect, max_tokens=20) or "").strip().strip("*\"'.") or "NONE"
+    if who.upper() == "NONE":
+        return f"Error: no conversation opened for messenger.com/t/{username}. The username may be wrong; nothing was sent."
+    if not confirm("send_message", f"THIS WILL SEND A MESSAGE\nTo: {who}  (the chat that opened for '{person}')\n"
+                                   f"Message: {message[:400]}\nIf '{who}' is not {person}, click Deny.", True):
+        return f"DECLINED: the user did not approve sending to {who}. Nothing was typed or sent."
+    _bring_to_front(h)
+    x, y, w, hh = _window_rect(h)
+    box = (x + w * 0.68, y + hh - 45)  # the 'Aa' message box sits along the bottom of the conversation
+    try:
+        on_action(int(box[0]), int(box[1]), "sending…")
+        time.sleep(cursor_glide)
+        _click(*box)
+        time.sleep(0.3)
+        keyboard.write(message, delay=config.TYPING_DELAY)
+        time.sleep(0.2)
+        keyboard.send("enter")
+    finally:
+        on_action(None, None, None)
+    time.sleep(1.5)
+    check = _vision(f'Does this conversation show a sent message that says "{message[:200]}" (small differences in '
+                    "capitals or punctuation are fine)? Ignore the text box at the bottom. Answer only YES or NO.",
+                    _window_rect(h), max_tokens=5) or ""
+    if check.strip().upper().startswith("YES"):
+        return f"Sent to {who}: {message}"
+    return (f"Typed the message in the chat with {who} and pressed Enter, but I could not see it in the conversation "
+            "afterwards. It may NOT have been sent: ask the user to check Messenger.")
 
 
 def type_text(window, text, before="", enter="no", _approved=False):
@@ -569,8 +618,6 @@ def _work_window():
 
 def look_at_screen(question, window=""):
     """Screenshot (your working window, a named window, or 'screen') and ask the local vision model about it."""
-    import base64
-    from openai import OpenAI
     if window.strip().lower() in ("screen", "whole screen", "desktop", "all"):
         target, rect = "the whole screen", None
     elif window.strip():
@@ -581,17 +628,25 @@ def look_at_screen(question, window=""):
     else:
         found = _work_window()
         target, rect = (f"window '{found[1]}'", found[2]) if found else ("the whole screen", None)
+    answer = _vision(question or "What is on the screen?", rect)
+    return f"(Looked at {target})\n{answer}" if answer is not None else "Error: could not take a screenshot."
+
+
+def _vision(question, rect=None, max_tokens=400):
+    """Ask the local vision model about a screenshot of rect (x, y, w, h) or the whole screen. None if no screenshot."""
+    import base64
+    from openai import OpenAI
     png = _screenshot(rect)
     if not png:
-        return "Error: could not take a screenshot."
+        return None
     client = OpenAI(base_url=config.BASE_URL, api_key=config.API_KEY)
     extra = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
-    r = client.chat.completions.create(model=config.MODEL, max_tokens=400, **extra, messages=[
+    r = client.chat.completions.create(model=config.MODEL, max_tokens=max_tokens, **extra, messages=[
         {"role": "system", "content": "You look at a screenshot for the user. Answer their question precisely and briefly. "
                                       "Quote error messages and code exactly. If something is unreadable, say so."},
-        {"role": "user", "content": [{"type": "text", "text": question or "What is on the screen?"},
+        {"role": "user", "content": [{"type": "text", "text": question},
                                      {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}}]}])
-    return f"(Looked at {target})\n{r.choices[0].message.content or ''}"
+    return r.choices[0].message.content or ""
 
 
 MEDIA_KEYS = {"play": "play/pause media", "pause": "play/pause media", "play_pause": "play/pause media",
