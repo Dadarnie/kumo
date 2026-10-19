@@ -26,10 +26,10 @@ validation live in `windows/src/island/hooks.ts`.
 
 For command results, the relay extracts a bounded `mimo_tests` summary before
 shortening output. It recognizes reported Node, Jest/Vitest, Cargo and pytest
-totals and keeps at most 32 available test/suite names. A PASS suite is not an
-individual test count. The Terminal workspace shows edits above command output.
-Its compact result card shows reported totals and duration, with available
-test names under Details. Missing results and durations stay unknown.
+totals and keeps at most 32 available test/suite names. Suite totals are kept
+separate from individual test counts. Terminal brings together file changes,
+command output and results, with further details when available. Missing results
+and durations stay unknown.
 
 When an agent reports tokens, the result card labels the scope: prompt tokens
 when a session counter was observed before that prompt, response tokens for an

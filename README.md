@@ -62,12 +62,9 @@ done, it settles back into a compact companion.
   back to the terminal. The Home card keeps the active task close to your work.
   Switch sessions when you need another project; its requests and answers stay
   separate from the others.
-- 🖥️ **Live terminal.** Open the coding card to inspect commands and output, copy
-  results. The session stays attached to the agent that produced it. Edits stay
-  above command output in one workspace. Passing tests show a compact PASS card
-  with reported totals and duration. Open Details to see the available test names.
-  When an agent supplies token counts, the card labels them by prompt, response
-  or session.
+- 🖥️ **Live terminal.** Review commands, output and results from your coding
+  sessions in one place. Open available details or copy results without
+  switching back to the terminal.
 - 📝 **File edits.** Review the files your agent changes, with added and removed
   lines, syntax colors and source line numbers when the agent reports them. The
   coding panel groups changes by file so you can understand an edit before going
