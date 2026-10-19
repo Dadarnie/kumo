@@ -1844,10 +1844,9 @@ test("integration icons reflow opens a compact whole-tab code preview and hides 
   })()`;
   const permissionLayout = `(() => {
     const code=document.querySelector('.approval-view .code');
-    const reason=document.querySelector('.coding-approval-reason');
     const island=document.querySelector('#island').getBoundingClientRect();
     return {height:island.height,overflow:code.scrollHeight-code.clientHeight,
-      bars:[code,reason].every(el=>getComputedStyle(el).scrollbarWidth==='none'
+      bars:[code].every(el=>getComputedStyle(el).scrollbarWidth==='none'
         &&getComputedStyle(el,'::-webkit-scrollbar').display==='none'),
       actions:[...document.querySelectorAll('.approval-view .actions button')].every(el=>{
         const r=el.getBoundingClientRect();return r.height>=28&&r.top>=island.top&&r.bottom<=island.bottom;})};
@@ -5852,12 +5851,12 @@ test("One hook subscription handles both assistants, owned approvals, and sessio
   assert.equal(await evaluate("mediaPreview.state.focusId"), "session_codex_codex-session");
   await evaluate(settled);
   assert.equal(await evaluate("document.querySelector('.coding-approval-provider').textContent"), 'Codex');
-  assert.match(await evaluate("document.querySelector('.coding-approval-status').textContent"), /Codex.*Permission needed/);
-  assert.equal(await evaluate("document.querySelector('.coding-approval-status .ui-icon path').getAttribute('d').startsWith('M12 3.5')"),true);
+  assert.match(await evaluate("document.querySelector('.coding-approval-status').textContent"), /Codex.*needs permission/);
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-approval-dot')).backgroundColor"),'rgb(255, 255, 255)');
   assert.equal(await evaluate("document.querySelector('.coding-approval-request,.coding-approval-title')===null"),true,'Only the permission status line changes');
   await capture('codex-permission-status');
   assert.match(await evaluate("document.querySelector('.view.on').textContent"), /npm test -- --runInBand/);
-  assert.match(await evaluate("document.querySelector('.view.on').textContent"), /Run the invoice test suite/);
+  assert.match(await evaluate("document.querySelector('.approval-view .code').title"), /Run the invoice test suite/);
   assert.equal(await evaluate("(()=>{const c=document.querySelector('.approval-view .card').getBoundingClientRect();return [...document.querySelectorAll('.approval-view .code,.approval-view .coding-approval-status,.approval-view .actions button')].every(el=>{const r=el.getBoundingClientRect();return r.left>=c.left&&r.right<=c.right&&r.top>=c.top&&r.bottom<=c.bottom})})()"), true);
   assert.equal(await evaluate("hookCalls.filter(c=>c.cmd==='approval_ack'&&c.requestId==='codex-owned').length"), 1);
   await evaluate("emitHook('codex','PostToolUse',{tool_name:'Read',tool_use_id:'old-read',mimo_preview:{text:'stale result'}})");
@@ -5916,7 +5915,7 @@ test("One hook subscription handles both assistants, owned approvals, and sessio
   assert.equal(await evaluate("hookCalls.filter(c=>c.cmd==='approval_decision'&&c.requestId==='codex-deny'&&c.decision==='deny').length"), 1);
   await evaluate("mediaPreview.open('overview');emitHook('claude','PermissionRequest',{request_id:'claude-owned',tool_name:'Read',tool_input:{file_path:'review.ts'}})");
   await evaluate(settled);
-  assert.match(await evaluate("document.querySelector('.coding-approval-status').textContent"), /Claude.*Permission needed/);
+  assert.match(await evaluate("document.querySelector('.coding-approval-status').textContent"), /Claude.*needs permission/);
   await evaluate("emitHook('claude','StopFailure')");
   assert.equal(await evaluate("mediaPreview.state.pendingApproval"), null);
   assert.equal(await evaluate("hookCalls.filter(c=>c.cmd==='approval_decline'&&c.requestId==='claude-owned').length"), 1);

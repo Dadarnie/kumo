@@ -1,6 +1,6 @@
 # Promo media
 
-The silent GIFs come from the approved launch master,
+The silent GIFs come from the current verified launch master,
 `product-launch/export/export-4k.mp4`: 3840 x 2160, 60 fps, 74 seconds.
 The full production stays local. The footage uses Mimo's production UI,
 mascot and assets with local demo records.
@@ -12,9 +12,9 @@ mascot and assets with local demo records.
 | `mimo-intro.gif` | 0.1-14.7 and 15.05-23.5 s | 960 x 528, about 23 s, 15 fps |
 | `mimo-coding.gif` | 2.8-14.8 s | 960 x 528, about 12 s, 15 fps |
 
-The main GIF keeps the original greeting, permission review, terminal, GitHub
-and Stripe frames, removing only the final triple-tap scene. The coding GIF
-is unchanged from the original rectangular version. Both loop continuously.
+The main GIF includes the greeting, permission review, terminal, GitHub and
+Stripe. The coding GIF shows the latest permission design, code-writing motion
+and compact PASS result. Both preserve the rectangular framing and loop continuously.
 [previews.json](previews.json) records source and output hashes, decoded
 durations and frame counts.
 
@@ -32,7 +32,8 @@ source files. Other captures and production material stay local.
 
 ## Refresh the media
 
-Requires the local master and Python with Pillow and imageio-ffmpeg.
+Requires the local master, its matching successful verification report, and
+Python with Pillow and imageio-ffmpeg.
 From the repository root:
 
 ~~~powershell

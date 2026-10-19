@@ -15,7 +15,7 @@
     "test:performance": "node scripts/mimo-performance.mjs",
     "test:reference-ui": "node --test --test-concurrency=1 --test-timeout=60000 scripts/reference-ui.test.mjs scripts/chat-reaction-ui.test.mjs",
     "test:island": "node --test scripts/island-state.test.mjs",
-    "test:workflow": "node --test scripts/workflow.test.mjs",
+    "test:workflow": "node --test scripts/workflow.test.mjs scripts/permission-memory.test.mjs",
     "test:icons": "node --test scripts/mimo-icons.test.mjs",
     "test:mimo": "node --test scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs",
     "test:runtime": "node --test scripts/activity-runtime.test.mjs scripts/integration-workspace.test.mjs scripts/integration-notifications.test.mjs scripts/runtime-lifecycle.test.mjs scripts/island-state.test.mjs",

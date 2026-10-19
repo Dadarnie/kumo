@@ -12,6 +12,8 @@ source=root/'product-launch/export/export-4k.mp4'
 output=root/'docs/media'
 sha=lambda p:hashlib.file_digest(p.open('rb'),'sha256').hexdigest()
 expected=sha(source)
+verification=json.loads((root/'product-launch/reviews/signature-verification.json').read_text(encoding='utf-8'))
+assert verification['checks_passed'] and verification['sha256']==expected,'Verify the freshly rendered master before regenerating GIFs'
 reader=imageio_ffmpeg.read_frames(str(source));metadata=next(reader);reader.close()
 assert tuple(metadata['size'])==(3840,2160) and metadata['fps']==60
 assert abs(metadata['duration']-74)<.1

@@ -68,6 +68,11 @@ Keep the npm and Cargo lockfiles in sync with the application version. Tag the
 commit containing the matching installer, checksum and build record. Published
 tags stay fixed; the next update receives a new version and tag.
 
+Automatic tag builds currently validate the Windows build without uploading
+artifacts or creating a GitHub Release because the workflow sets `PUBLISH` to
+`false`. Manual workflow runs can upload build artifacts. The installer under
+`downloads/` is updated separately with its checksum and build record.
+
 ## Export a clean public copy
 
 After merging the reviewed release into the private repository's `main`, switch

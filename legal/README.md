@@ -11,6 +11,7 @@ recordings have [separate asset terms](../LICENSE-ASSETS.md).
 | Earlier Mimo asset grants | [Historical MIT notice](legacy/MIMO-ASSETS-MIT.md) |
 | Inter font | [SIL Open Font License](../windows/src/assets/fonts/Inter-LICENSE.txt) |
 | Fira Code font | [SIL Open Font License](../windows/src/assets/fonts/FiraCode-LICENSE.txt) |
+| JetBrains Mono font | [SIL Open Font License](../windows/src/assets/fonts/JetBrainsMono-LICENSE.txt) |
 | Vendor marks | [Artwork notices](../windows/src/mimo/brands/README.md) |
 | Supported-agent icons | [Sources and notices](../docs/media/agents/README.md) |
 

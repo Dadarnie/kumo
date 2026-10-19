@@ -12,6 +12,18 @@ This patch packages the recent UI and feature update as `windows-v1.0.1`.
 - The last command result stays available while the agent continues editing.
   File identities, source gutters and completed-action counts stay tied to the
   selected coding session.
+- Terminal results use a compact gray card with a centered PASS label, reported
+  test counts and duration. Open Details for the available test names. The card
+  uses medium-weight JetBrains Mono, a bold black PASS label on green, and comma-separated
+  counts. Reported tokens are labeled by prompt, response or session; missing
+  values remain hidden. The footer no longer repeats the passed count.
+  The agent name, Mimo and stage icons
+  share a left edge, and Bash uses the rounded terminal glyph.
+- Permission requests use a compact centered glow and a white status dot.
+  The coding agent name is bold gray.
+  The workflow description appears below the command. Deny, Allow and Always
+  appear in that order with their keyboard shortcuts; Always remembers only
+  the exact action in the same agent session and workspace.
 
 ## Spotify and Windows audio
 

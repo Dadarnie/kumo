@@ -1,7 +1,7 @@
 {
   "method": "Unmodified screenshots of production Mimo components in isolated Chrome. Drop Shelf uses three local example files; Settings uses default local preferences. No service or account data was read.",
-  "capturedAt": "2026-10-19T08:21:17.973Z",
-  "sourceReference": "77f5c3345c9582dd422bbc1cf6969a811dad7db6",
+  "capturedAt": "2026-10-19T16:09:52.457Z",
+  "sourceReference": "e1e637ab5444bb2c0441cb5a900909fb945c6492",
   "sourceHashNormalization": "UTF-8 with CRLF normalized to LF",
   "sources": {
     "windows/dev/media-preview.html": "9a2e468881c85a87fa7ce7ca4535a7fed6a2474366f9762650485506f4759dea",
@@ -19,9 +19,9 @@
       "fixturePage": "windows/dev/media-preview.html",
       "width": 2064,
       "height": 984,
-      "sha256": "8e62b1888262fd87ece6921bcf14b4d17d3afe33ebc3551c36688901ebe854c8",
-      "bytes": 74390,
-      "localSource": "windows/target/readme-release-captures-2026-10-19T08-21-12-765Z/shelf.png"
+      "sha256": "8f4ba5917123219a18d429de49aa152cd54782e59b7b0b917db49ad0e8972199",
+      "bytes": 74410,
+      "localSource": "windows/target/readme-release-captures-2026-10-19T16-09-45-553Z/shelf.png"
     },
     {
       "file": "settings.png",
@@ -32,7 +32,7 @@
       "height": 1728,
       "sha256": "31e6bbdb06a78d8e13b88a05ba7ae71f882a5dd843663971ce1225eb64f3f835",
       "bytes": 119351,
-      "localSource": "windows/target/readme-release-captures-2026-10-19T08-21-12-765Z/settings.png"
+      "localSource": "windows/target/readme-release-captures-2026-10-19T16-09-45-553Z/settings.png"
     }
   ]
 }

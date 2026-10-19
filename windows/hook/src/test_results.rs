@@ -27,6 +27,28 @@ fn after(line: &str, label: &str) -> Option<u64> {
         .filter(|n| *n <= 1_000_000)
 }
 
+fn duration_ms(text: &str, node_ms: bool) -> Option<f64> {
+    let mut words = text.split_whitespace();
+    let token = words.next()?.trim_end_matches([',', ';', '=']);
+    let digits = token
+        .bytes()
+        .take_while(|b| b.is_ascii_digit() || *b == b'.')
+        .count();
+    let number = token[..digits].parse::<f64>().ok()?;
+    let unit = if digits < token.len() {
+        &token[digits..]
+    } else {
+        words.next().unwrap_or(if node_ms { "ms" } else { "" })
+    };
+    let factor = match unit.trim_end_matches([',', ';', '=']) {
+        "ms" => 1.0,
+        "s" => 1000.0,
+        _ => return None,
+    };
+    let value = number * factor;
+    (value.is_finite() && (0.0..=86_400_000.0).contains(&value)).then_some(value)
+}
+
 pub fn parse(text: &str) -> Option<Value> {
     let mut fields = Map::new();
     let mut cases = Vec::new();
@@ -84,6 +106,28 @@ pub fn parse(text: &str) -> Option<Value> {
                 fields.insert("total".into(), json!(total));
             }
         }
+        let duration = node
+            .strip_prefix("duration_ms ")
+            .and_then(|s| duration_ms(s, true))
+            .or_else(|| {
+                lower
+                    .strip_prefix("time:")
+                    .and_then(|s| duration_ms(s, false))
+            })
+            .or_else(|| {
+                lower
+                    .strip_prefix("duration ")
+                    .and_then(|s| duration_ms(s, false))
+            })
+            .or_else(|| {
+                summary
+                    .then(|| lower.rsplit_once(" in "))
+                    .flatten()
+                    .and_then(|(_, s)| duration_ms(s, false))
+            });
+        if let Some(value) = duration {
+            fields.insert("durationMs".into(), json!(value));
+        }
         let result = line
             .strip_prefix("PASS ")
             .map(|name| (name, "passed", "suite"))
@@ -106,7 +150,7 @@ pub fn parse(text: &str) -> Option<Value> {
         }
     }
     // A PASS suite is never counted as an individual passed test.
-    if fields.is_empty() && cases.is_empty() {
+    if !fields.keys().any(|key| key != "durationMs") && cases.is_empty() {
         return None;
     }
     fields.insert("cases".into(), json!(cases));
@@ -216,5 +260,30 @@ mod tests {
         let result = parse(&text).unwrap();
         assert_eq!(result["cases"].as_array().unwrap().len(), 32);
         assert_eq!(result["cases"][0]["name"], "a.test.ts");
+    }
+    #[test]
+    fn duration_is_reported_in_milliseconds_and_never_invents_a_test_run() {
+        for (text, expected) in [
+            ("ℹ tests 10\nℹ pass 10\nℹ duration_ms 644.226", 644.226),
+            (
+                "Tests: 2 passed, 2 total\nTime: 1.234 s, estimated 2 s",
+                1234.0,
+            ),
+            ("Tests: 2 passed, 2 total\nDuration 250ms", 250.0),
+            (
+                "test result: ok. 2 passed; 0 failed; finished in 0.02s",
+                20.0,
+            ),
+            ("=== 2 passed in 1.25s ===", 1250.0),
+        ] {
+            assert_eq!(parse(text).unwrap()["durationMs"], expected);
+        }
+        assert!(parse("Time: 1.25 s").is_none());
+        for bad in ["-1", "NaN", "inf", "86400001"] {
+            assert!(parse(&format!("ℹ tests 2\nℹ duration_ms {bad}"))
+                .unwrap()
+                .get("durationMs")
+                .is_none());
+        }
     }
 }

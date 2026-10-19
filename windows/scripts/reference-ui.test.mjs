@@ -57,7 +57,8 @@ test('Terminal prioritizes edits, reveals actual command output and exposes repo
   assert.equal(await browser.evaluate(`document.querySelectorAll('.coding-view-switch,.coding-open').length`),0);
   const alignment=await browser.evaluate(`(()=>{const label=document.querySelector('.coding-sidebar .coding-project').getBoundingClientRect(),shell=document.querySelector('#island').getBoundingClientRect();
    return Math.abs(label.left+label.width/2-shell.left-mediaPreview.island.botCx.target);})()`);
-  assert.ok(alignment<1,'The provider label centers under Mimo');
+  const leftAligned=await browser.evaluate(`(()=>{const label=document.querySelector('.coding-sidebar .coding-project').getBoundingClientRect(),stage=document.querySelector('.coding-stage .coding-indicator').getBoundingClientRect();return Math.abs(label.left-stage.left)<1;})()`);
+  assert.ok(leftAligned,'The provider label aligns with the stage icons');
   const icons=await browser.evaluate(`([...document.querySelectorAll('.coding-stage')].map(stage=>{
    const glyph=stage.querySelector('.ui-icon'),label=stage.querySelector('span:not(.coding-indicator)');
    return {size:glyph.getBoundingClientRect().width,text:parseFloat(getComputedStyle(stage).fontSize)};}))`);
@@ -68,24 +69,37 @@ test('Terminal prioritizes edits, reveals actual command output and exposes repo
   assert.equal(bounds.runHidden,false);assert.ok(bounds.edits.height>0);assert.ok(bounds.edits.bottom<=bounds.run.top+1);
   await browser.evaluate(`(()=>{referenceTask.activity=referenceActivity({hook_event_name:'PostToolUse',tool_name:'Bash',tool_use_id:'run-1',tool_input:{command:'npm test'},
    mimo_preview:{text:'PASS tests/invoice.test.ts\\nTests: 48 passed, 48 total'},
-   mimo_tests:{passed:48,failed:0,total:48,cases:[{name:'tests/invoice.test.ts',status:'passed',kind:'suite'}]}},referenceTask.activity);mediaPreview.state.notify()})()`);
+   mimo_tests:{passed:48,failed:0,total:48,durationMs:512.5,cases:[{name:'tests/invoice.test.ts',status:'passed',kind:'suite'}]}},referenceTask.activity);referenceTask.usage={promptTokens:2450};mediaPreview.state.notify()})()`);
   await browser.settle();
-  assert.match(await browser.evaluate(`document.querySelector('.coding-result-button:not([hidden])').parentElement.textContent`),/48 passed/);
-  await browser.click('.coding-result-button[aria-expanded]');await browser.settle();
   assert.equal(await browser.evaluate(`document.querySelector('.coding-test-cases').hidden`),false);
+  assert.equal(await browser.evaluate(`document.querySelector('.coding-test-totals').textContent`),'Tests: 48 passed, Total: 48');
+  assert.equal(await browser.evaluate(`document.querySelector('.coding-test-duration').textContent`),'Duration: 513 ms');
+  assert.match(await browser.evaluate(`document.querySelector('.coding-test-usage').textContent`),/^Prompt tokens: 2.?450$/);
+  assert.equal(await browser.evaluate(`document.querySelector('.coding-editor-footer').textContent.includes('passed')`),false);
+  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-label')).color`),'rgb(0, 0, 0)');
+  assert.equal(await browser.evaluate(`document.fonts.check('700 10px "JetBrains Mono"')&&getComputedStyle(document.querySelector('.coding-test-label')).fontFamily.includes('JetBrains Mono')`),true);
+  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-cases')).fontWeight`),'500');
+  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-passed')).color===getComputedStyle(document.querySelector('.coding-test-label')).backgroundColor`),true);
+  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-duration .ui-icon')).color===getComputedStyle(document.querySelector('.coding-test-passed')).color`),true);
+  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-case')).display`),'none');
+  await browser.click('.coding-test-more');await browser.settle();
+  assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('.coding-test-case')).display`),'none');
   assert.match(await browser.evaluate(`document.querySelector('.coding-test-cases').textContent`),/Suite · tests\/invoice/);
+  await browser.click('.coding-test-more');await browser.settle();
   const colors=await browser.evaluate(`(()=>{const text=document.querySelector('.coding-run-output');return {base:getComputedStyle(text).color,
     number:[...text.querySelectorAll('[data-token=number]')].map(e=>getComputedStyle(e).color),command:getComputedStyle(text.querySelector('[data-command=true]')).color};})()`);
   assert.ok(colors.number.every(color=>color===colors.base));
   assert.equal(colors.command,colors.base);
   await browser.capture('reference-terminal-results-'+scale+'x');
-  await browser.click('.coding-result-button[aria-expanded]');
   await browser.evaluate(`(()=>{referenceTask.activity=referenceActivity({hook_event_name:'PreToolUse',tool_name:'Edit',tool_use_id:'edit-2',tool_input:{file_path:'src/invoice.ts',old_string:'42',new_string:'43'}},referenceTask.activity);mediaPreview.state.notify()})()`);
-  await browser.settle();assert.equal(await browser.evaluate(`document.querySelector('.coding-run-region').hidden`),true);
-  await browser.click('.coding-result-button[aria-expanded]');await browser.settle();
+  await browser.settle();
   assert.equal(await browser.evaluate(`document.querySelector('.coding-run-region').hidden`),false);
+  await browser.evaluate(`referenceTask.usage=undefined;mediaPreview.state.notify()`);await browser.settle();
+  assert.equal(await browser.evaluate(`document.querySelector('.coding-test-usage').hidden`),true);
   await browser.click('.coding-expand');await browser.settle();
   assert.equal(await browser.evaluate(`document.querySelector('.coding-card').dataset.expanded`),'false');
+  await browser.evaluate(`mediaPreview.open('usage')`);await browser.settle();
+  assert.equal(await browser.evaluate(`(()=>{const dot=document.querySelector('.usage-agent-name .audio-device-dot');return dot.getBoundingClientRect().width===6&&getComputedStyle(dot).backgroundColor==='rgb(79, 178, 158)';})()`),true);
  }
 });
 

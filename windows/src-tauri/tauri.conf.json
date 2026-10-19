@@ -59,6 +59,7 @@
       "../../legal/NOTICE.md": "licenses/legal/NOTICE.md",
       "../src/assets/fonts/Inter-LICENSE.txt": "licenses/Inter-LICENSE.txt",
       "../src/assets/fonts/FiraCode-LICENSE.txt": "licenses/FiraCode-LICENSE.txt",
+      "../src/assets/fonts/JetBrainsMono-LICENSE.txt": "licenses/JetBrainsMono-LICENSE.txt",
       "../src/mimo/brands/README.md": "licenses/INTEGRATION-ARTWORK.md",
       "../../THIRD_PARTY_NOTICES": "licenses/THIRD_PARTY_NOTICES",
       "../../legal/Coucou-MIT.txt": "licenses/legal/Coucou-MIT.txt",

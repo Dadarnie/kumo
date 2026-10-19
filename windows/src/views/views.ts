@@ -41,7 +41,7 @@ export interface ViewActions {
   /** The ↗ button: opens whatever the focused pill points at. */
   openTarget(): void;
   openUrl(url: string): void;
-  decide(d: "allow" | "deny"): void;
+  decide(d: "allow" | "deny" | "always"): void;
   answerQuestion(requestId:string,answers:Record<string,string>): Promise<void>;
   returnQuestion(): void;
   toggleSound(): void;
@@ -360,21 +360,20 @@ function buildEmpty(actions: ViewActions): ViewHost {
 // ── Approval ──────────────────────────────────────────────────────────────────
 
 function buildApproval(actions: ViewActions): ViewHost {
-  const project = h("span", { class: "coding-project" });
   const status = h("span");
-  const providerName = h("span", { class: "coding-approval-provider" });
+  const providerName = h("b", { class: "coding-approval-provider" });
   const dangerTitle = h("b", { class: "danger-title", text: "Danger zone", hidden: true });
   const dangerDetail = h("div", { class: "danger-detail", hidden: true });
   const code = h("div", { class: "code", tabindex: "0", "aria-label": "Requested action" });
-  const reason = h("div", { class: "coding-approval-reason", hidden: true,
-    tabindex: "0", "aria-label": "Permission details" });
+  const reason = h("div", {class:"coding-approval-reason",hidden:true,tabindex:"0","aria-label":"Permission details"});
+  const always = btn("Always", "secondary", () => actions.decide("always"), "A");
+  always.title = "Always allow this exact action for this session";
   // Keep the decision controls mounted across notifications and pointer events.
   const row = h("div", { class: "actions" },
     btn("Deny", "secondary", () => actions.decide("deny"), "N"),
-    btn("Allow", "primary", () => actions.decide("allow"), "Y"));
+    btn("Allow", "primary", () => actions.decide("allow"), "Y"), always);
   const body = h("div", { class: "coding-approval" },
-      h("div", { class: "coding-approval-heading" }, project, dangerTitle),
-      h("div", { class: "coding-approval-status" }, icon(ICONS.permission, 13), providerName, status),
+      h("div", { class: "coding-approval-status" }, h("span", {class:"coding-approval-dot", "aria-hidden":"true"}), providerName, status, dangerTitle),
       code, reason, dangerDetail, row);
   const surface = card("amber", body);
   const el = h("div", { class: "view approval-view" }, surface);
@@ -401,15 +400,15 @@ function buildApproval(actions: ViewActions): ViewHost {
       dangerDetail.textContent = risk === "danger" ? assessment.detail : "";
       surface.style.setProperty("--wash", washRGBA(risk === "danger" ? "red" : "amber"));
       const task = State.tasks.find(task => task.id === request?.taskId) ?? State.focusTask;
-      project.textContent = task?.name || "Coding session";
-      project.title = task?.sessionCwd || "";
-      status.textContent = "Permission needed";
+      status.textContent = "needs permission";
       const provider = request?.provider === "claude" || !request?.provider ? "Claude" : codingDefinition(request.provider).name;
       providerName.textContent = provider;
+      providerName.title = task?.sessionCwd || "";
+      always.toggleAttribute('disabled', !request?.sessionId || !request.cwd || !request.inputKey);
       el.setAttribute("aria-label", `${provider}: permission needed`);
       code.textContent = request?.command || request?.tool || "…";
+      code.title = request?.reason || "";
       reason.textContent = request?.reason || "";
-      reason.title = request?.reason || "";
       reason.hidden = !request?.reason;
       const key = JSON.stringify([body.offsetWidth, code.textContent, reason.textContent, risk]);
       if (key !== measured) {

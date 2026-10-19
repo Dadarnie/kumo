@@ -37,7 +37,9 @@ export class UsagePanel {
     class: "agent-usage-refresh", type: "button", "aria-label": "Refresh usage",
     title: "Refresh usage",
   }, icon(ICONS.refresh, 16));
-  private providerName = h("span", { class: "usage-agent-name" });
+  private providerDot = h("span", {class:"audio-device-dot", "aria-hidden":"true"});
+  private providerLabel = h("span");
+  private providerName = h("span", { class: "usage-agent-name" }, this.providerDot, this.providerLabel);
   private windows = [this.meter("Session limit"), this.meter("Weekly limit")];
   private picker = new CompactDropdown("Agent", "usage-agent-select", value => {
     Sound.play("tick"); State.usageProvider = value as CodingProvider; this.select(value as CodingProvider); State.notify();
@@ -97,7 +99,8 @@ export class UsagePanel {
     this.picker.update(available.map(id => ({ id, name: codingDefinition(id).name, color: codingAccountColor(id) })), this.provider, available.length > 1);
     this.picker.el.hidden = available.length < 2;
     this.providerName.hidden = available.length > 1;
-    this.providerName.textContent = codingDefinition(this.provider).name;
+    this.providerLabel.textContent = codingDefinition(this.provider).name;
+    this.providerDot.style.background = codingAccountColor(this.provider);
     this.render();
   }
 

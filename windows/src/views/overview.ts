@@ -109,7 +109,7 @@ export class ModuleOverview implements ViewHost {
     const codingPreview = !!codingProvider(this.companionTask) && this.codingCard.previewExpanded;
     return {
       height: plan.height,
-      botX: this.detailOpen ? 27 : codingPreview ? 84 : 68,
+      botX: this.detailOpen ? 27 : codingPreview ? 62 : 68,
       botY: this.detailOpen ? 24 : 96,
       botDiameter: this.detailOpen ? 18 : codingPreview ? 64 : codingProvider(this.companionTask) ? 60 : 52,
       agentMode: "pills",
@@ -251,7 +251,7 @@ export class ModuleOverview implements ViewHost {
     this.sessionFooter.hidden = this.sessions.el.hidden;
     const key = JSON.stringify([
       this.selected, this.detailOpen, task.id, task.name, task.state, task.steps,
-      task.stepIndex, task.activity, State.integrations[task.id], State.paused, codingQuiet(task, State.paused), providers, sessionOptions, State.selectedCodingId, integrationActivityKey(task.id),
+      task.stepIndex, task.activity, task.usage, State.integrations[task.id], State.paused, codingQuiet(task, State.paused), providers, sessionOptions, State.selectedCodingId, integrationActivityKey(task.id),
     ]);
     if (this.cardKey === key) return;
     this.cardKey = key;

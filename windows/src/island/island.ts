@@ -29,6 +29,7 @@ import {
 import { Sound } from "../core/sound";
 import { CODING_IDS, codingConnections, codingProvider } from "../core/coding";
 import { State, type AgentTask } from "../core/state";
+import { permissionKey, rememberPermission } from "../core/permission-memory";
 import { prefersReducedMotion, reducedMotionQuery } from "../core/motion";
 import { attachChatFiles, MAX_CHAT_FILES } from "../core/chat-attachments";
 import { BotEngine, hexToRGB, type RGB } from "../mimo/engine";
@@ -896,13 +897,16 @@ export class Island {
     Visibility.setPinned(false);
   }
 
-  private decideApproval(decision: "allow" | "deny") {
+  private decideApproval(decision: "allow" | "deny" | "always") {
     const request = State.pendingApproval;
     if (!request || request.questions) return;
+    if (decision === "always" && !permissionKey(request)) return;
     if ((request.deadline ?? Infinity)<=Date.now()) {expireApprovals(this);return;}
     cancelApprovalTimeout(request.requestId);
     Sound.play(decision === "deny" ? "blip" : "approve");
-    void Bridge.approvalDecision(request.requestId, decision);
+    void Bridge.approvalDecision(request.requestId, decision === "always" ? "allow" : decision).then(() => {
+      if (decision === "always" && !State.paused && State.tasks.some(task => task.sessionId === request.sessionId && codingProvider(task) === request.provider)) rememberPermission(request);
+    });
     State.finishApproval(request.requestId);
     State.isPinned = State.pendingApprovals.length > 0;
     Visibility.setPinned(State.isPinned);
@@ -1306,9 +1310,9 @@ export class Island {
       if (State.view === "approval" && State.visibility === "expanded" &&
         !this.hoverExpanded && State.pendingApproval && !editable &&
         !e.defaultPrevented && !e.repeat && !e.isComposing &&
-        !e.ctrlKey && !e.metaKey && !e.altKey && (key === "y" || key === "n")) {
+        !e.ctrlKey && !e.metaKey && !e.altKey && (key === "y" || key === "n" || key === "a")) {
         e.preventDefault();
-        this.decideApproval(key === "y" ? "allow" : "deny");
+        this.decideApproval(key === "y" ? "allow" : key === "a" ? "always" : "deny");
       }
       if (e.key === "Escape" && !e.defaultPrevented && !State.isPinned) this.collapse();
       State.lastActivity = performance.now();

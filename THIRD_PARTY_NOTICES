@@ -45,3 +45,11 @@ Copyright 2014-2020 The Fira Code Project Authors.
 Source: https://github.com/tonsky/FiraCode/releases/tag/6.2
 Distributed under the SIL Open Font License 1.1.
 See windows/src/assets/fonts/FiraCode-LICENSE.txt.
+
+JetBrains Mono font
+-------------------
+Copyright 2020 The JetBrains Mono Project Authors.
+Source: https://github.com/JetBrains/JetBrainsMono/releases/tag/v2.304
+Distributed under the SIL Open Font License 1.1.
+See windows/src/assets/fonts/JetBrainsMono-LICENSE.txt.
+Bundled as: licenses/JetBrainsMono-LICENSE.txt

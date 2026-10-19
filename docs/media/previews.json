@@ -1,11 +1,11 @@
 {
   "source": "product-launch/export/export-4k.mp4",
-  "source_sha256": "c5e17e9cffc43e3029cc377769611700f203fcec0114c4c36b7de0ea629f683a",
-  "source_description": "Final Mimo Signature master: 3840x2160, 60 fps, 74 seconds. All GIF images are decoded from this export.",
-  "encoder": "Original GIFs; main loop losslessly trimmed with Pillow",
+  "source_sha256": "5bfb668c7847525609ef2587a405b64740d4ef8a33313a824fb62a62ae96d86f",
+  "source_description": "Final Mimo Signature master: 3840x2160, 60 fps, 74 seconds. Product footage is decoded from this export.",
+  "presentation": "Original 960 x 528 rectangular crop. The main loop omits only the appended triple-tap scene.",
+  "encoder": "FFmpeg with lossless Pillow frame optimization",
   "fps": 15,
   "max_colors": 192,
-  "presentation": "Original 960 x 528 rectangular framing, with only the appended triple-tap scene removed.",
   "clips": [
     {
       "file": "mimo-intro.gif",
@@ -20,7 +20,7 @@
         }
       ],
       "shows": [
-        "Opening and permissions",
+        "Greeting and permissions",
         "Terminal",
         "GitHub activity",
         "Stripe balance count-up"
@@ -35,12 +35,10 @@
       "width": 960,
       "height": 528,
       "frames": 346,
-      "decoded_duration_ms": 23070,
+      "decoded_duration_ms": 23010,
       "loop": 0,
-      "bytes": 9160491,
-      "sha256": "e9cc7e43c0c40190f2f97d17434585ca4352c14aac50dc622ae9c99407ec1b1a",
-      "original_gif_sha256": "7fd892f94f55beca77770cc8e25ca43da0698950e31f1f66a04a1c20327bef8c",
-      "retained_frames_pixel_identical": true
+      "bytes": 8541741,
+      "sha256": "ac321350924189fb2d0f94412ba031c563d99725ccbe915993ff0d2de12c7560"
     },
     {
       "file": "mimo-coding.gif",
@@ -65,8 +63,8 @@
       "frames": 180,
       "decoded_duration_ms": 11940,
       "loop": 0,
-      "bytes": 3437255,
-      "sha256": "b4bca14250180e84a4c28319292c226927a5892d82baa2595a1f4b823eb581e2"
+      "bytes": 3546836,
+      "sha256": "93e95b1e782f5227aa502c634a7a2260fd2d9ce4185327da1008f1e3a6a30a9e"
     }
   ]
 }

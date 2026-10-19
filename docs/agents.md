@@ -27,14 +27,27 @@ validation live in `windows/src/island/hooks.ts`.
 For command results, the relay extracts a bounded `mimo_tests` summary before
 shortening output. It recognizes reported Node, Jest/Vitest, Cargo and pytest
 totals and keeps at most 32 available test/suite names. A PASS suite is not an
-individual test count. The Terminal workspace shows edits above Live output;
-its count buttons open available details. Missing results stay unknown.
+individual test count. The Terminal workspace shows edits above command output.
+Its compact result card shows reported totals and duration, with available
+test names under Details. Missing results and durations stay unknown.
+
+When an agent reports tokens, the result card labels the scope: prompt tokens
+when a session counter was observed before that prompt, response tokens for an
+individual model response, or session tokens for a cumulative reading. New prompts
+clear the previous prompt result. Quota percentages remain in Limits.
 
 `PermissionRequest` waits for the existing island acknowledgement and allow/deny
 decision; other events finish promptly. The relay turns a confirmed decision into
 Claude Code's existing `hookSpecificOutput`. If Mimo is closed, unavailable, paused
 or cannot show the request, the terminal takes over. Connection, acknowledgement
 and decision deadlines are unchanged; do not implement a second transport.
+
+The permission panel keeps the command and its supplied workflow description
+together. Deny, Allow and Always appear in that order, with N, Y and A shortcuts.
+Always remembers the exact tool input for the current provider, session and
+workspace in memory. A different command, session or workspace still needs a
+decision. Ending the session or restarting Mimo clears the remembered choice;
+the provider's saved permission policy is unchanged.
 
 Use the app's Settings hook preview/install/uninstall flow. It merges only Mimo's
 entries, backs up the original file and rejects concurrent changes in

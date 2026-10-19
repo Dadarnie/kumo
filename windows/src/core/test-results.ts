@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 export interface CodingTestResults {
   passed?: number; failed?: number; skipped?: number; total?: number;
+  durationMs?: number;
   cases: { name: string; status: "passed" | "failed"; kind: "suite" | "test" }[];
 }
 
@@ -12,6 +13,8 @@ export function reportedTestResults(value: unknown): CodingTestResults | undefin
     const count = source[key];
     if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0 && count <= 1_000_000) result[key] = count;
   }
+  if (typeof source.durationMs === "number" && Number.isFinite(source.durationMs)
+    && source.durationMs >= 0 && source.durationMs <= 86_400_000) result.durationMs = source.durationMs;
   if (Array.isArray(source.cases)) for (const item of source.cases.slice(0, 32)) {
     if (!item || typeof item.name !== "string" || !["passed", "failed"].includes(item.status)
       || !["suite", "test"].includes(item.kind)) continue;
@@ -22,7 +25,7 @@ export function reportedTestResults(value: unknown): CodingTestResults | undefin
     if (index >= 0) result.cases[index] = entry;
     else result.cases.push(entry);
   }
-  return Object.keys(result).length > 1 || result.cases.length ? result : undefined;
+  return ["passed", "failed", "skipped", "total"].some(key => key in result) || result.cases.length ? result : undefined;
 }
 
 /** Older hooks can still display counts explicitly present in their short preview. */
@@ -30,6 +33,10 @@ export function testResultsFromLines(lines: string[]): CodingTestResults | undef
   const result: CodingTestResults = { cases: [] };
   for (const raw of lines.slice(0, 12)) {
     const line = raw.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "").trim();
+    const duration = line.match(/^[#ℹ]\s*duration_ms\s+([\d.]+)\b/i)
+      ?? line.match(/^(?:Time:|Duration)\s*([\d.]+)\s*(ms|s)\b/i)
+      ?? (/^(?:test result:|=)/i.test(line) ? line.match(/\bin\s+([\d.]+)\s*(ms|s)\b/i) : null);
+    if (duration) result.durationMs = Number(duration[1]) * (duration[2]?.toLowerCase() === "s" ? 1000 : 1);
     if (/^(?:Tests(?::|\s)|test result:|[#ℹ]\s*(?:tests|pass|fail|skipped)\s)/i.test(line)) {
       for (const key of ["passed", "failed", "skipped", "total"] as const) {
         const value = line.match(new RegExp(`(\\d+)\\s+${key}\\b`, "i"));

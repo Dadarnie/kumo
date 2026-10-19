@@ -10,6 +10,7 @@ import { codingProgress, codingQuiet, compactCodingProgress } from "../core/codi
 import { codeRow, syncCodeRows } from "./coding-lines";
 import { CodingEdits } from "./coding-edits";
 import { CODING_ICONS, setCodingIdentity } from "./coding-icons";
+import { testResultsFromLines } from "../core/test-results";
 import { HOME_WORKSPACE_HEIGHT, CODING_PREVIEW_CARD_HEIGHT } from "../core/design";
 import type { AgentTask } from "../core/state";
 import "./coding-card.css";
@@ -92,15 +93,8 @@ export class CodingCard {
   private runRows: ReturnType<typeof codeRow>[] = [];
   private runOutput = h("div", { class: "coding-preview coding-run-output", tabindex: "0", role: "region", "aria-label": "Command output", "data-kind": "terminal" });
   private testCases = h("div", { class: "coding-test-cases", role: "region", "aria-label": "Reported test results", hidden: true });
+  private tokenUsage = h("div", { class: "coding-test-metric coding-test-usage", hidden: true });
   private runRegion = h("section", { class: "coding-run-region", "aria-label": "Terminal", hidden: true }, this.runOutput, this.testCases);
-  private testsSummary = h("button", { class: "coding-result-button", type: "button", hidden: true,
-    "aria-expanded": "false", onclick: () => {
-      this.testCases.hidden = !this.testCases.hidden;
-      this.runOpened = !this.testCases.hidden;
-      this.syncEditorView();
-      this.testsSummary.setAttribute("aria-expanded", String(!this.testCases.hidden));
-      if (!this.testCases.hidden) this.testCases.scrollIntoView({ block: "nearest" });
-    } });
   private editsSummary = h("button", { class: "coding-result-button", type: "button", hidden: true,
     onclick: () => { this.edits.reveal(); this.edits.el.focus({ preventScroll: true }); } });
   private editor = h("div", { class: "coding-editor" });
@@ -139,8 +133,6 @@ export class CodingCard {
   private lastRun: CodingActivity["lastRun"];
   private resultKey = "";
   private sourceTask = "";
-  private runOpened = false;
-  private currentIsRun = false;
   private actionKey = "";
   private lastOperation: { task: string; label: string; icon: string; identity: string } | null = null;
   private previousOperation: { label: string; icon: string } | null = null;
@@ -211,7 +203,7 @@ export class CodingCard {
         this.sidebar.replaceChildren(this.heading, this.stageList);
         this.footerMeta.prepend(this.changes);
         this.editorHeader.prepend(this.expand);
-        this.editorActions.append(this.editsSummary, this.testsSummary, this.copyOutput);
+        this.editorActions.append(this.editsSummary, this.copyOutput);
         this.editorContent.append(this.edits.el, this.preview, this.runRegion);
         this.editor.append(this.editorHeader, this.current, this.editorContent, this.editorFooter);
         this.el.replaceChildren(this.sidebar, this.editor);
@@ -237,8 +229,7 @@ export class CodingCard {
     const edits = this.editCount > 0;
     this.preview.hidden = !this.expanded || edits || (!!this.lastRun && !this.sourceOutput);
     this.edits.el.hidden = !this.expanded || !edits;
-    const showRun = !!this.lastRun && (this.currentIsRun || this.lastRun.phase !== "complete" || this.runOpened
-      || this.runRegion.contains(document.activeElement));
+    const showRun = !!this.lastRun;
     this.runRegion.hidden = !this.expanded || !showRun;
     this.editorContent.dataset.combined = String(showRun && (edits || !!this.sourceOutput));
     this.current.hidden = true;
@@ -297,36 +288,58 @@ export class CodingCard {
 
   sync(task: AgentTask, picker?: HTMLElement, animated = true): void {
     const activity = task.activity;
-    this.currentIsRun = activity?.action === "Run";
     if (this.sourceTask !== task.id || activity?.action === "Thinking" && !activity.completedCount && !activity.files?.length && !activity.lastRun) {
       this.sourceOutput = null; this.sourceFile = null;
       this.sourceTask = task.id;
     }
-    const previousRun = this.lastRun;
     this.lastRun = activity?.lastRun ?? (activity?.action === "Run" ? { target: activity.target,
       phase: activity.phase ?? "running", toolUseId: activity.toolUseId, preview: activity.preview } : undefined);
-    if (previousRun?.toolUseId !== this.lastRun?.toolUseId || previousRun?.target !== this.lastRun?.target) {
-      this.runOpened = false; this.testCases.hidden = true; this.testsSummary.setAttribute("aria-expanded", "false");
-    }
-    if (this.lastRun) syncCodeRows(this.runOutput, this.runRows, {
-      lines: [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? [])].slice(0, 12),
-    }, { terminal: true });
     const tests = this.lastRun?.tests;
-    const resultKey = JSON.stringify(tests);
+    if (this.lastRun) syncCodeRows(this.runOutput, this.runRows, {
+      lines: [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? []).filter(line=>!tests || !testResultsFromLines([line]) && !/^[#ℹ]\s*duration_ms\b/i.test(line.trim()))].slice(0, 12),
+    }, { terminal: true });
+    const resultKey = JSON.stringify([task.id, this.lastRun?.toolUseId, this.lastRun?.target, tests]);
     if (resultKey !== this.resultKey) {
       this.resultKey = resultKey;
-      this.testCases.replaceChildren(...(tests?.cases.map(test => h("div", { class: "coding-test-case", "data-result": test.status },
-        h("span", { class: test.status === "passed" ? "coding-test-pass" : "", text: test.status === "passed" ? "PASS" : "FAIL" }),
-        h("span", { text: `${test.kind === "suite" ? "Suite · " : ""}${test.name}` }))) ?? []));
-      if (tests && !tests.cases.length) this.testCases.append(h("span", { text: "Test names were not reported." }));
-      this.testsSummary.replaceChildren(
-        ...(tests?.passed !== undefined ? [h("span", { class: "coding-test-pass", text: `${tests.passed} passed` })] : []),
-        ...(tests?.failed !== undefined && tests.failed > 0 ? [h("span", { text: `${tests.failed} failed` })] : []),
-        ...(tests?.passed === undefined && tests?.failed === undefined ? [h("span", { text: "Test results" })] : []),
-      );
-      this.testsSummary.title = tests?.total !== undefined ? `${tests.total} tests reported · Show results` : "Show reported results";
+      const totals = h('span', {class:'coding-test-totals'});
+      if (tests?.passed !== undefined) totals.append('Tests: ', h('span', {class:'coding-test-passed',text:String(tests.passed)}), ' passed');
+      for (const [label, count] of [['Failed', tests?.failed], ['Skipped', tests?.skipped], ['Total', tests?.total]] as const) {
+        if (count === undefined || label !== 'Total' && !count) continue;
+        if (totals.childNodes.length) totals.append(', ');
+        totals.append(`${label}: ${count}`);
+      }
+      if (!totals.childNodes.length) totals.textContent = 'Counts not reported';
+      const outcome = tests?.failed ? 'failed' : tests?.passed && tests.failed === 0 ? 'passed' : 'reported';
+      this.testCases.dataset.result = outcome;
+      this.testCases.dataset.expanded = 'false';
+      const duration = tests?.durationMs === undefined ? undefined
+        : tests.durationMs < 1000 ? `${Math.round(tests.durationMs)} ms` : `${(tests.durationMs/1000).toFixed(2)} s`;
+      const more = h('button', {class:'coding-test-more',type:'button',hidden:!tests?.cases.length,
+        text:'Details', 'aria-expanded':'false',title:'Show all reported test names',onclick:()=>{
+          const expanded=this.testCases.dataset.expanded!=='true';this.testCases.dataset.expanded=String(expanded);
+          more.setAttribute('aria-expanded',String(expanded));more.textContent=expanded?'Less':'Details';
+        }});
+      this.testCases.replaceChildren(...(tests ? [
+        h('div', {class:'coding-test-report-heading'},
+          h('span', {class:'coding-test-label',text:outcome === 'passed' ? 'PASS' : outcome === 'failed' ? 'FAIL' : 'TESTS'}),
+          more),
+        h('div', {class:'coding-test-metric'}, totals),
+        h('div', {class:'coding-test-metadata'},
+          duration === undefined ? null : h('div', {class:'coding-test-metric coding-test-duration'},icon(ICONS.check,11),
+            h('span', {text:`Duration: ${duration}`})), this.tokenUsage),
+        ...[...tests.cases].sort((a,b)=>Number(b.status==='failed')-Number(a.status==='failed')).map(test => h("div", { class: "coding-test-case", "data-result": test.status, title:test.name },
+          h("span", { class: 'coding-test-check', 'aria-label':test.status }, icon(test.status === 'passed' ? ICONS.check : ICONS.xmark, 12)),
+          h("span", {class:'coding-test-name', text: `${test.kind === "suite" ? "Suite · " : ""}${test.name}` }))),
+      ] : []));
+      this.testCases.hidden = !tests;
     }
-    this.testsSummary.hidden = !tests;
+    const usage = task.usage;
+    const tokens = usage?.promptTokens ?? usage?.responseTokens ?? usage?.sessionTokens;
+    const tokenLabel = usage?.promptTokens !== undefined ? 'Prompt tokens'
+      : usage?.responseTokens !== undefined ? 'Response tokens' : 'Session tokens';
+    this.tokenUsage.hidden = tokens === undefined;
+    this.tokenUsage.textContent = tokens === undefined ? '' : `${tokenLabel}: ${tokens.toLocaleString()}`;
+    this.tokenUsage.title = 'Reported input and output tokens for the selected agent.';
     const editOperations = activity?.stageCounts?.Edit;
     this.editsSummary.hidden = !activity?.files?.length;
     this.editsSummary.textContent = editOperations ? `${editOperations} ${editOperations === 1 ? "edit" : "edits"}`

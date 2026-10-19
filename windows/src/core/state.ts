@@ -9,6 +9,7 @@ import { normalizeAppearance, type Appearance } from "./appearance";
 import { CODING_IDS, CODING_PROVIDERS, codingDefinition, codingInstalled, codingProvider, isCodingProvider, type CodingProvider } from "./coding";
 import { CHAT_PROVIDERS, DEFAULT_CHAT_MODELS, isChatProvider, validChatModel, type ChatProvider, type ChatModels } from "./chat-providers";
 import type { CodingActivity } from "./coding-activity";
+import type { CodingUsage } from "./coding-usage";
 import { normalizePower, type PowerSnapshot } from "./power";
 import { sessionKey, type ReturnTarget } from "./coding-session";
 import type { NoticePreferences } from "./notices";
@@ -34,6 +35,7 @@ export interface AgentTask {
   sessionCwd?: string | null;
   sessionId?: string | null;
   activity?: CodingActivity;
+  usage?: CodingUsage;
   /** Latest real hook observation; no heartbeat polling or saved activity history. */
   lastEventAt?: number;
   returnTarget?: ReturnTarget;
@@ -54,6 +56,7 @@ export interface ApprovalInfo {
   deadline?: number;
   returnTarget?: ReturnTarget;
   questions?: AgentQuestion[];
+  inputKey?: string;
 }
 
 export interface MissedApproval extends ApprovalInfo {

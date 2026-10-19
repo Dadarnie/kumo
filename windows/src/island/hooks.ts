@@ -13,9 +13,11 @@ import { activityText, codingActivity, type CodingActivityEvent } from "../core/
 import { Visibility } from "../core/visibility";
 import { sessionKey } from "../core/coding-session";
 import { Activity } from "../core/activity";
+import { codingUsage } from "../core/coding-usage";
 import { ownsContent } from "../core/sections";
 import { shouldNotify } from "../core/notices";
 import { agentQuestions } from "../core/agent-question";
+import { forgetPermissions, permissionInputKey, permissionRemembered } from "../core/permission-memory";
 
 /** Clears the approval card if no decision was made before the hook gave up. */
 const approvalTimers = new Map<string, number>();
@@ -164,6 +166,7 @@ function approvalInfo(payload: HookPayload): ApprovalInfo {
   return { requestId: payload.request_id ?? "", taskId: payload.session_id ? sessionKey(provider,payload.session_id) : CODING_IDS[provider], provider,
     toolUseId: payload.tool_use_id,
     sessionId: payload.session_id ?? "", tool, command: approvalTarget(tool, input),
+    inputKey: permissionInputKey(input),
     reason: activityText(input.description ?? input.justification, 240) || undefined,
     cwd: payload.cwd || null, project: aliasProjectName(lastPathComponent(payload.cwd ?? "") || "Session"),
     ...(payload.hook_event_name === 'QuestionRequest' ? {questions:agentQuestions(payload.mimo_questions) ?? undefined} : {}) };
@@ -178,6 +181,7 @@ function clearSession(id: string) {
   task.name = provider && provider !== "claude" ? codingDefinition(provider).name : "VS Code";
   task.pillBadge = null;
   task.activity = undefined;
+  task.usage = undefined;
 }
 
 function cancelCompletion(id: string): void {
@@ -187,6 +191,7 @@ function cancelCompletion(id: string): void {
 }
 
 export function resetHookSession(island: Island): void {
+  forgetPermissions();
   cancelApprovalTimeout();
   for (const timer of completionTimers.values()) window.clearTimeout(timer);
   completionTimers.clear();
@@ -202,6 +207,7 @@ export function resetHookSession(island: Island): void {
   if (['approval','question'].includes(State.view)) island.setView(State.defaultView());
 }
 export function resetProviderSession(island: Island, provider: CodingProvider): void {
+  forgetPermissions(provider);
   for (const request of [...State.pendingApprovals]) if (request.provider===provider) {
     cancelApprovalTimeout(request.requestId);State.rememberApproval(request,"Connection removed · Review in tool");
     State.finishApproval(request.requestId);void Bridge.approvalDecline(request.requestId);
@@ -349,6 +355,8 @@ export function handleHook(island: Island, payload: HookPayload) {
   };
 
   if (!current && !["SessionEnd","Interrupt"].includes(name)) ensurePill();
+  const usageTask = State.tasks.find(task => task.id === agentId);
+  if (usageTask && !isExternalAgent) usageTask.usage = codingUsage(payload, usageTask.usage);
   switch (name) {
     case "BackgroundWork":
     case "BeforeModel":
@@ -448,6 +456,7 @@ export function handleHook(island: Island, payload: HookPayload) {
 
     case "SessionEnd":
     case "Interrupt":
+      forgetPermissions(provider, payload.session_id);
       cancelCompletion(agentId);
       if (isExternalAgent) {
         State.removeTask(agentId);
@@ -482,6 +491,11 @@ export function handleHook(island: Island, payload: HookPayload) {
       const first=State.pendingApprovals.length===0;
       const request={...approvalInfo(payload),returnTarget:State.tasks.find(t=>t.id===agentId)?.returnTarget};
       if (request.questions) request.command=request.questions[0].question;
+      if (!request.questions && permissionRemembered(request)) {
+        void Bridge.approvalDecision(requestId,'allow');
+        State.updateTask(agentId,'working');
+        break;
+      }
       State.enqueueApproval(request);State.updateTask(agentId,request.questions ? 'question' : 'approval');
       State.isPinned=true;Visibility.setPinned(true);
       if(first && notify())Sound.play('approval');
@@ -511,6 +525,7 @@ export function handleHook(island: Island, payload: HookPayload) {
     if (ended && retained) {
       retained.state = "idle";
       retained.activity = ended.activity;
+      retained.usage = ended.usage;
       retained.lastEventAt = ended.lastEventAt;
       retained.pillBadge = ended.pillBadge;
       retained.steps = [...ended.steps];

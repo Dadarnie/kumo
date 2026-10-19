@@ -91,7 +91,7 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   usage: { height: 238, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   activity: { height: 200, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   empty: { height: 160, botX: 70, botY: null, botDiameter: 62, agentMode: "none" },
-  approval: { height: 224, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
+  approval: { height: 176, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
   approvals: { height: 240, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   question: { height: 288, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
   error: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },

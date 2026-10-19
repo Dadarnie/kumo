@@ -64,15 +64,18 @@ done, it settles back into a compact companion.
   separate from the others.
 - 🖥️ **Live terminal.** Open the coding card to inspect commands and output, copy
   results. The session stays attached to the agent that produced it. Edits stay
-  above command output in one workspace. Live appears for commands and tests;
-  selecting a reported test count opens its available test or suite details.
+  above command output in one workspace. Passing tests show a compact PASS card
+  with reported totals and duration. Open Details to see the available test names.
+  When an agent supplies token counts, the card labels them by prompt, response
+  or session.
 - 📝 **File edits.** Review the files your agent changes, with added and removed
   lines, syntax colors and source line numbers when the agent reports them. The
   coding panel groups changes by file so you can understand an edit before going
   back to your editor. It shows the changes supplied by the agent, rather than
   guessing what happened.
 - 🛂 **Permissions.** Check the requested tool and command in the notch, then allow
-  or deny supported requests. You keep the final say before the agent continues. A
+  or deny supported requests. Always allows the same exact action again within
+  that agent session and workspace. You keep the final say before the agent continues. A
   pending request opens the relevant panel and waits for your decision. When a tool
   cannot use this reply path, its terminal remains the place to approve the action.
 - ❓ **Agent questions.** Answer a supported agent's question from its session.
@@ -264,7 +267,7 @@ shows the connection steps for your selected provider.
 | Ctrl+Alt+M | Open the next work item that needs attention |
 | Ctrl+Alt+V | Open desktop voice; press again to send |
 | Ctrl+Alt+G | Start native capture |
-| Y / N | Allow or deny a focused permission request |
+| Y / N / A | Allow, deny or always allow a focused permission request |
 | Esc | Cancel the active interaction or minimize one notch step |
 | Tab / Shift+Tab | Move between controls |
 
