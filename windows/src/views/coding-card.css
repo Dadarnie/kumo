@@ -122,7 +122,7 @@
   flex-direction: column;
   gap: 5px;
 }
-.coding-sidebar .coding-heading { flex-direction: column; align-items: flex-start; gap: 3px; overflow: visible; }
+.coding-sidebar .coding-heading { flex-direction: column; align-items: center; text-align:center; gap: 3px; overflow: visible; }
 .coding-sidebar .coding-workspace { flex: 0 0 auto; }
 .coding-sidebar .coding-project, .coding-sidebar .coding-workspace { max-width: 100%; }
 .coding-sidebar .coding-count, .coding-sidebar .coding-provider { display: none; }
@@ -262,9 +262,9 @@
 .coding-file-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .coding-file-path { min-width: 0; margin-left: auto; color: var(--dim); font: 400 9px/12px var(--mono);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.coding-card[data-expanded="true"] .coding-expand { margin: 0; height: 26px; padding: 0 8px; gap: 4px;
+.coding-card[data-expanded="true"] .coding-expand { margin: 0 6px 0 -4px; width:26px; height: 26px; padding: 0; justify-content:center; gap: 0;
   color: var(--ink-2); background: transparent; border: 1px solid var(--hairline); }
-.coding-card[data-expanded="true"] :is(.coding-expand,.coding-open) > .ui-icon { display: none; }
+.coding-card[data-expanded="true"] .coding-expand > .ui-icon { display: block; }
 .coding-workspace { min-width: 0; color: var(--dim); font: 400 11px/17px var(--font-compact);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .coding-workspace[hidden] { display: none; }
@@ -389,7 +389,7 @@
   background: transparent;
   cursor: text;
 }
-.coding-preview[data-kind="terminal"] .coding-line[data-command="true"] { color: var(--mini-work-blue); }
+.coding-preview[data-kind="terminal"] .coding-line[data-command="true"] { color: var(--ink-2); }
 .coding-card[data-expanded="true"] .coding-preview[data-kind="terminal"] .coding-line[data-command="true"] {
   position: sticky;
   top: -8px;
@@ -449,7 +449,7 @@
   display: none;
 }
 .coding-line-number {
-  font-family: Arial, sans-serif;
+  font-family: var(--mono);
   min-width: var(--code-gutter, 2ch);
   flex: 0 0 auto;
   color: var(--dim);
@@ -495,6 +495,29 @@
 .coding-edit-details[hidden] { display: none; }
 .coding-edit-details:hover { color: var(--ink); background: var(--control-fill); }
 .coding-edit-details:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.coding-run-region { display:flex; flex-direction:column; flex:1 1 0; min-height:0; min-width:0; overflow:auto; border-top:1px solid var(--hairline); }
+.coding-run-region[hidden] { display:none; }
+.coding-run-region .coding-run-output { flex:1 0 auto; overflow:visible; }
+.coding-editor-content[data-combined="true"] > .coding-edits { flex:3 1 0; max-height:none; padding:6px 7px; overflow:auto; }
+.coding-editor-content[data-combined="true"] .coding-edit-heading { display:flex; }
+.coding-editor-content[data-combined="true"] > .coding-preview:not([hidden]) { flex:3 1 0; }
+.coding-editor-content[data-combined="true"] > .coding-run-region { flex:2 1 0; min-height:72px; }
+.coding-editor-content > .coding-run-region:not([hidden]):first-child { border-top:0; }
+.coding-preview[data-kind="terminal"] .code-token { color:inherit; }
+.coding-preview[data-kind="terminal"] .code-token[data-result="pass"] { background:var(--coding-success); color:var(--coding-success-ink); }
+.coding-preview[data-kind="terminal"] .code-token[data-result="fail"] { background:transparent; color:var(--ink); font-weight:700; }
+.coding-preview[data-kind="code"],.coding-edit-preview { font-variant-ligatures:contextual; font-feature-settings:"calt" 1; }
+.coding-result-button { display:inline-flex; align-items:center; gap:6px; padding:2px 5px; min-height:24px; border:0; border-radius:5px; background:transparent; color:var(--dim); font:400 10px/16px var(--mono); cursor:pointer; white-space:nowrap; }
+.coding-result-button[hidden] { display:none; }
+.coding-result-button:hover { background:var(--control-fill); color:var(--ink); }
+.coding-result-button:focus-visible { outline:2px solid var(--ink); outline-offset:1px; }
+.coding-test-cases { flex:0 0 auto; padding:6px 8px; color:var(--ink-2); font:400 10px/18px var(--mono); }
+.coding-test-cases[hidden] { display:none; }
+.coding-test-case { display:flex; align-items:baseline; gap:8px; overflow-wrap:anywhere; }
+.coding-test-pass { color:var(--coding-success); }
+.coding-editor-footer { gap:6px; }
+.coding-editor-actions { gap:3px; }
+.coding-stage { gap:7px; height:28px; font-size:12px; line-height:18px; font-weight:500; }
 /* The reference's named pills reuse the existing compact mini-bot controls. */
 .integration-picker[data-labelled="true"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));

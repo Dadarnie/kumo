@@ -133,9 +133,6 @@ async function main() {
         if (State.paused) island.visibility.peek();
         else island.visibility.island();
         break;
-      case "dock":
-        island.visibility.dock();
-        break;
     }
   }));
 

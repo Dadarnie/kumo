@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Drop Shelf follows the reference's quiet file layout within the shared shell. */
-.grab-view { height:262px; padding:0 10px 10px; }
-.grab-view[data-scene=shelf] { height:var(--grab-shelf-height,262px); }
+.grab-view { height:100%; padding:0; }
 .grab-surface { height:100%; display:flex; flex-direction:column; padding:12px; border-radius:var(--radius-card); background:var(--home-workspace-fill); box-shadow:inset 0 0 0 1px var(--hairline); }
 .grab-body { display:flex; flex-direction:column; gap:9px; flex:1; min-height:0; }
 .grab-view .btn { min-height:30px; padding:5px 10px; border:1px solid var(--hairline); border-radius:var(--radius-control); gap:6px; white-space:nowrap; font-size:11px; }
@@ -60,7 +59,6 @@
 .grab-status[data-error=true] { color:var(--red-text); white-space:normal; }
 .grab-option { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:11px; color:var(--ink-2); }
 .grab-view[data-scene=options] .grab-body { gap:14px; }
-.grab-view[data-scene=options] { height:262px; }
 .grab-view[data-scene=options] .grab-footer { margin-top:auto; }
 .grab-detail-fields > input { flex:1; width:0; }
 .grab-tools { display:flex; flex-wrap:wrap; align-items:center; gap:4px; flex-shrink:0; }
@@ -75,7 +73,6 @@
 .grab-annotation-text { flex-shrink:0; }
 @media (prefers-reduced-motion:reduce) { .grab-file-preview,.grab-file-select-hit,.grab-view :is(input,select,textarea) { transition:none; } }
 
-.grab-view[data-scene=detail] { height:var(--grab-detail-height,338px); }
 .grab-tools[hidden],.grab-annotation-text[hidden] { display:none; }
 .grab-resize { display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .grab-resize[hidden] { display:none; }

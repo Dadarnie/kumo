@@ -58,7 +58,8 @@ test("Home, Chat, and Mimo Shelf own their useful detail routes", () => {
   assert.equal(sectionForView("grab"), "grab", "The shelf retains its own tab");
   assert.equal(sectionForView("usage"), "usage", "Limits owns the selected header control");
   assert.equal(sectionForView("voice"), "prompt");
-  for (const view of ["integrations", "approvals", "error", "finished", "media", "upload"])
+  assert.equal(sectionForView("media"), "media", "The media header icon owns its selected state");
+  for (const view of ["integrations", "approvals", "error", "finished", "upload"])
     assert.equal(sectionForView(view), "overview", view);
 });
 

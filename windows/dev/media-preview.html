@@ -86,7 +86,7 @@
       paint.beginPath();
       paint.arc(64, 64, 34, 0, Math.PI * 2);
       paint.fill();
-      mediaStore.setController(async (_sessionId, action) => {
+      mediaStore.setController(async (sessionId, action) => {
         actions.push(action);
         if (window.mediaPreview.controlDelay)
           await new Promise((resolve) =>
@@ -95,6 +95,8 @@
         if (window.mediaPreview.controlError)
           throw new Error("Player unavailable");
         const snapshot = mediaStore.snapshot();
+        if (snapshot.player.sessionId !== sessionId)
+          throw new Error("Media session changed");
         mediaStore.apply({
           ...snapshot,
           revision: snapshot.revision + 1,

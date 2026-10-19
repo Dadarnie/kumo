@@ -92,7 +92,6 @@ export const Bridge = {
   beginIslandMove: (offsetX = 0, offsetY = 0) => call<IslandPositionInfo>("begin_island_move", {offsetX,offsetY}),
   moveIslandAnchor: () => call<IslandPositionInfo>("move_island_anchor"),
   finishIslandMove: () => call<IslandPositionInfo>("finish_island_move"),
-  resetIslandPosition: () => call<IslandPositionInfo>("reset_island_position"),
   cancelIslandMove: () => call<IslandPositionInfo>("cancel_island_move"),
   showMimoMenu: () => call<void>("show_mimo_menu"),
 

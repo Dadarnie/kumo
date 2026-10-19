@@ -109,7 +109,7 @@ export class ModuleOverview implements ViewHost {
     const codingPreview = !!codingProvider(this.companionTask) && this.codingCard.previewExpanded;
     return {
       height: plan.height,
-      botX: this.detailOpen ? 27 : codingPreview ? 78 : 68,
+      botX: this.detailOpen ? 27 : codingPreview ? 84 : 68,
       botY: this.detailOpen ? 24 : 96,
       botDiameter: this.detailOpen ? 18 : codingPreview ? 64 : codingProvider(this.companionTask) ? 60 : 52,
       agentMode: "pills",

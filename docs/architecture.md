@@ -35,6 +35,13 @@ Chat providers are separate from coding connections. Windows media sessions and
 master/app audio have separate native owners. Unknown capability and activity
 readings remain explicit.
 
+The hook extracts bounded `mimo_tests` summaries before truncating command
+previews. `core/test-results` validates reported counts and case/suite names;
+the coding workspace retains the last command result while edits take priority.
+Spotify player volume uses its own UI Automation slider on the media worker.
+Other app volume and Windows master audio retain their CoreAudio owners.
+Lazy panels populate before their first paint; the island owns their transition.
+
 ## Build
 
 Vite builds both HTML entries and their imported code, CSS, fonts and icons.

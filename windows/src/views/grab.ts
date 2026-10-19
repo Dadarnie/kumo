@@ -33,7 +33,7 @@ export function buildGrab(_actions:ViewActions):ViewHost {
     const rowGap=parseFloat(style.rowGap)||0;
     const next=Math.min(PANEL_H,304+(rows-1)*(rowHeight+rowGap)+status.offsetHeight);
     if(next===shelfHeight)return;
-    shelfHeight=next;el.style.setProperty("--grab-shelf-height",`${next-42}px`);State.notify();
+    shelfHeight=next;State.notify();
   }
   function queueShelfMeasure():void {
     if(!active||!visible||scene!=="shelf"||shelfMeasure)return;

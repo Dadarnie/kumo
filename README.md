@@ -63,10 +63,9 @@ done, it settles back into a compact companion.
   Switch sessions when you need another project; its requests and answers stay
   separate from the others.
 - 🖥️ **Live terminal.** Open the coding card to inspect commands and output, copy
-  results or return to your project. The session stays attached to the agent that
-  produced it. Live shows the reported operation and its result, while Edits lets
-  you inspect changed code in the same workspace. You can move between them without
-  losing the session.
+  results. The session stays attached to the agent that produced it. Edits stay
+  above command output in one workspace. Live appears for commands and tests;
+  selecting a reported test count opens its available test or suite details.
 - 📝 **File edits.** Review the files your agent changes, with added and removed
   lines, syntax colors and source line numbers when the agent reports them. The
   coding panel groups changes by file so you can understand an edit before going
@@ -161,10 +160,8 @@ Shelf, then select the files you need and copy their paths.
   that need an answer can still open when they arrive. This keeps the companion out
   of the way during focused work without hiding a decision that needs you. The
   smaller appearance is a preference you can switch in Settings.
-- 📍 **Placement.** Move Mimo, reset its position and choose the primary display or
-  the screen under your pointer. These controls decide which screen Mimo belongs to
-  and help recover a misplaced companion. Resetting its position gives you a
-  predictable place to find it again.
+- 📍 **Placement.** Mimo stays centered at the top of its display. Choose the
+  primary display or the screen under your pointer in Settings.
 - 🕒 **Notch clock.** Show or hide the clock in the compact notch. The clock adds a
   quick time check to the resting view. Turn it off when you prefer the companion
   and activity indicators to have the space to themselves.
@@ -267,7 +264,6 @@ shows the connection steps for your selected provider.
 | Ctrl+Alt+M | Open the next work item that needs attention |
 | Ctrl+Alt+V | Open desktop voice; press again to send |
 | Ctrl+Alt+G | Start native capture |
-| Ctrl+Alt+Home | Reset Mimo's position |
 | Y / N | Allow or deny a focused permission request |
 | Esc | Cancel the active interaction or minimize one notch step |
 | Tab / Shift+Tab | Move between controls |

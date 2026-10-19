@@ -102,9 +102,12 @@ function greetPose(t: number): Pose {
   if (t >= T.pop1 && t < T.tuck1) {
     const w = t - T.pop1;
     const fade = 1 - seg(t, T.tuck0, T.tuck1);
-    x += Math.sin(w * 2 * Math.PI * 0.9) * hb * ASP * 0.05 * fade;
-    tilt = Math.sin(w * 2 * Math.PI * 0.9 + 0.6) * 0.05 * fade;
-    y += Math.sin(w * 2 * Math.PI * 1.8) * 0.8 * fade;
+    const enter = E.out(seg(t, T.pop1, T.pop1 + .2));
+    x += Math.sin(w * 2 * Math.PI * 0.9) * hb * ASP * 0.14 * fade * enter;
+    tilt = Math.sin(w * 2 * Math.PI * 0.9 + 0.6) * 0.085 * fade * enter;
+    y -= Math.sin(w * 2 * Math.PI * 1.8) * 3.2 * fade * enter;
+    sx += Math.sin(w * 2 * Math.PI * 1.8) * .018 * fade * enter;
+    sy -= Math.sin(w * 2 * Math.PI * 1.8) * .018 * fade * enter;
   }
   if (t >= T.tuck0 && t < T.down1) {
     y += hb * 0.12 * Math.sin(Math.PI * seg(t, T.tuck0, T.down1));
@@ -263,7 +266,7 @@ function drawMimo(x: CanvasRenderingContext2D, p: Pose) {
   }
   drawMimoBackdrop(x, p.hb / 2, false, p.haloBlue);
   x.restore();
-  x.rotate(Math.max(-0.06, Math.min(0.06, p.tilt)));
+  x.rotate(Math.max(-0.1, Math.min(0.1, p.tilt)));
   x.scale(p.sx, p.sy);
   drawMimoHands(x, p.hb / 2, p.handL, p.handR, p.wave);
   drawMimoFace(x, {

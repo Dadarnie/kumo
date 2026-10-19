@@ -10,7 +10,7 @@ export const homeFilled = {
 
 export const musicFilled = {
   name: "music-mode", filled: true,
-  path: "M10 5.2a1.5 1.5 0 0 1 1.2-1.47l8-1.6A1.5 1.5 0 0 1 21 3.6v12.65c0 2.05-1.8 3.5-4 3.5s-3.75-1.23-3.75-3 1.8-3.25 4-3.25c.65 0 1.23.1 1.75.28V7.1l-7 1.4v10.25c0 2.05-1.8 3.5-4 3.5s-3.75-1.23-3.75-3 1.8-3.25 4-3.25c.65 0 1.23.1 1.75.28Z",
+  path: "M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20ZM7.25 9a1 1 0 0 0-1 1v3a1 1 0 0 0 2 0v-3a1 1 0 0 0-1-1Zm4 0a1 1 0 0 0-1 1v3a1 1 0 0 0 2 0v-3a1 1 0 0 0-1-1Zm4-3v8.1a2.4 2.4 0 0 0-1-.2c-1.15 0-2.1.7-2.1 1.6s.85 1.5 1.95 1.5c1.3 0 2.4-.8 2.4-2.1V8.5l2.25.75V7.5Z",
 } as const satisfies MimoGlyph;
 
 export const integrationsFilled = {

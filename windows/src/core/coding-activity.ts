@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 /** One bounded, current activity per assistant. No file reads or activity cache. */
+import { reportedTestResults, testResultsFromLines, type CodingTestResults } from "./test-results";
 export interface CodingPreview {
   lines: string[];
   startLine?: number;
@@ -34,8 +35,11 @@ export interface CodingActivity {
   changes?: { added: number; removed: number };
   completedActions?: string[];
   completedCount?: number;
+  completedToolIds?: string[];
   stageCounts?: Partial<Record<CodingStage, number>>;
   files?: CodingFileChange[];
+  lastRun?: { target: string; toolUseId?: string; phase: "running" | "complete" | "failed";
+    preview?: CodingPreview; tests?: CodingTestResults };
   /** At most three upcoming steps explicitly supplied by the agent's plan. */
   nextActions?: string[];
 }
@@ -51,6 +55,7 @@ export interface CodingActivityEvent {
   tool_response?: unknown;
   tool_result?: unknown;
   mimo_edits?: unknown;
+  mimo_tests?: unknown;
   mimo_next_actions?: unknown;
 }
 
@@ -271,7 +276,8 @@ export function codingActivity(event: CodingActivityEvent, previous?: CodingActi
   const completedActions = [...new Set([...(previous?.completedActions ?? []),
     ...(name === "PostToolUse" && ["Read", "Edit", "Run"].includes(stage) ? [stage] : [])])].slice(0, 3);
   // Repeated result metadata may refine a preview, but it is still the same action.
-  const confirmed = name === "PostToolUse" && previous?.phase !== "complete";
+  const completedToolIds = previous?.completedToolIds ?? [];
+  const confirmed = name === "PostToolUse" && (toolUseId ? !completedToolIds.includes(toolUseId) : previous?.phase !== "complete");
   const completedCount = Math.min(1_000_000, (previous?.completedCount ?? previous?.completedActions?.length ?? 0)
     + (confirmed ? 1 : 0));
   const stageCounts = { ...(previous?.stageCounts ?? Object.fromEntries(
@@ -279,6 +285,10 @@ export function codingActivity(event: CodingActivityEvent, previous?: CodingActi
   if (confirmed && ["Read", "Edit", "Run"].includes(stage))
     stageCounts[stage as CodingStage] = Math.min(1_000_000, (stageCounts[stage as CodingStage] ?? 0) + 1);
   const phase = name === "PostToolUseFailure" ? "failed" : result ? "complete" : "running";
+  const lastRun = action === "Run" ? { target: target || (result ? previous?.lastRun?.target ?? previous?.target ?? "" : ""), toolUseId, phase,
+    ...(preview ? { preview } : {}),
+    ...(result ? { tests: reportedTestResults(event.mimo_tests) ?? testResultsFromLines(preview?.lines ?? []) } : {}),
+  } as CodingActivity["lastRun"] : previous?.lastRun;
   const currentTarget = patchFiles[0]?.target || target || (result ? previous?.target ?? "" : "");
   const matchedFiles = result && (toolUseId || previous?.toolUseId)
     ? previous?.files?.filter(file => file.tool === tool && file.toolUseId === (toolUseId || previous?.toolUseId))
@@ -302,8 +312,11 @@ export function codingActivity(event: CodingActivityEvent, previous?: CodingActi
     ...(intent ? { intent } : {}),
     ...(completedActions.length ? { completedActions } : {}),
     ...(completedCount ? { completedCount } : {}),
+    ...(toolUseId && confirmed ? { completedToolIds: [...completedToolIds, toolUseId].slice(-256) }
+      : completedToolIds.length ? { completedToolIds } : {}),
     ...(Object.keys(stageCounts).length ? { stageCounts } : {}),
     ...(files.length ? { files: files.slice(-32) } : {}),
+    ...(lastRun ? { lastRun } : {}),
     ...(nextActions ? { nextActions } : {}),
   };
 }

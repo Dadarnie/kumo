@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-//! Optional app-session volume on the existing MTA media worker. Never changes
-//! endpoint/master volume and never guesses between multiple matching sessions.
+//! Player volume on the existing MTA media worker: Spotify's own slider, and
+//! app-session volume for other sources. Never changes endpoint/master volume.
 use std::sync::{atomic::Ordering, Arc};
 
 use ::windows::core::{implement, Interface, BOOL, GUID, PCWSTR, PWSTR};
@@ -18,6 +18,46 @@ use ::windows::Win32::System::Threading::{
 };
 
 use super::{Signals, WinResult, VOLUME};
+#[path = "spotify_volume.rs"]
+mod spotify;
+
+pub(super) enum VolumeBinding {
+    Session(SessionVolumeBinding),
+    Spotify(spotify::SpotifyVolume),
+}
+impl VolumeBinding {
+    pub(super) fn find(source: &str, signals: &Arc<Signals>, generation: u64) -> Option<Self> {
+        if source.eq_ignore_ascii_case("Spotify.exe")
+            || source
+                .to_ascii_lowercase()
+                .starts_with("spotifyab.spotifymusic")
+        {
+            return spotify::SpotifyVolume::find(signals, generation).map(Self::Spotify);
+        }
+        SessionVolumeBinding::find(source, signals, generation).map(Self::Session)
+    }
+    pub(super) fn spotify(&self) -> bool {
+        matches!(self, Self::Spotify(_))
+    }
+    pub(super) fn step(&self) -> WinResult<u16> {
+        match self {
+            Self::Session(_) => Ok(1),
+            Self::Spotify(binding) => binding.step(),
+        }
+    }
+    pub(super) fn level(&self) -> WinResult<u16> {
+        match self {
+            Self::Session(binding) => binding.level(),
+            Self::Spotify(binding) => binding.level(),
+        }
+    }
+    pub(super) fn set(&self, level: u16) -> Result<(), String> {
+        match self {
+            Self::Session(binding) => binding.set(level),
+            Self::Spotify(binding) => binding.set(level),
+        }
+    }
+}
 
 #[implement(IAudioSessionEvents)]
 struct VolumeEvents {
@@ -68,13 +108,13 @@ impl IAudioSessionEvents_Impl for VolumeEvents_Impl {
     }
 }
 
-pub(super) struct VolumeBinding {
+pub(super) struct SessionVolumeBinding {
     control: IAudioSessionControl,
     volume: ISimpleAudioVolume,
     events: IAudioSessionEvents,
 }
 
-impl VolumeBinding {
+impl SessionVolumeBinding {
     pub(super) fn find(source: &str, signals: &Arc<Signals>, generation: u64) -> Option<Self> {
         let control = find_unique_session(source).ok()??;
         let volume = control.cast::<ISimpleAudioVolume>().ok()?;
@@ -125,7 +165,7 @@ impl VolumeBinding {
     }
 }
 
-impl Drop for VolumeBinding {
+impl Drop for SessionVolumeBinding {
     fn drop(&mut self) {
         unsafe {
             let _ = self
@@ -227,28 +267,34 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "changes real Spotify app volume by one percent, then restores it; run explicitly"]
+    #[ignore = "changes real Spotify volume by one supported step, then restores it; run explicitly"]
     fn live_spotify_volume_settles_and_restores() {
         let _apartment = super::super::Apartment::initialize().unwrap();
         let (signals, _) = Signals::new();
         let binding =
-            VolumeBinding::find("Spotify.exe", &signals, 0).expect("One Spotify audio session");
+            VolumeBinding::find("Spotify.exe", &signals, 0).expect("Spotify's own volume slider");
         let original = binding.level().unwrap();
-        let restore = std::env::var("MIMO_MEDIA_RESTORE_VOLUME")
-            .ok()
-            .map(|value| value.parse::<u16>().expect("Restore percent"))
-            .unwrap_or(original);
-        let alternate = if original == 0 { 1 } else { original - 1 };
+        let mixer = SessionVolumeBinding::find("Spotify.exe", &signals, 0);
+        let mixer_original = mixer.as_ref().and_then(|mixer| mixer.level().ok());
+        let restore = original;
+        let step = binding.step().unwrap();
+        let alternate = if original < step {
+            step
+        } else {
+            original - step
+        };
         let changed = binding.set(alternate);
         std::thread::sleep(std::time::Duration::from_millis(250));
         let observed = binding.level();
         let restored = binding.set(restore);
         std::thread::sleep(std::time::Duration::from_millis(250));
         let final_level = binding.level().unwrap();
-        println!("Live Spotify app volume: {original} -> {observed:?} -> {final_level}; restore={restore}");
+        let mixer_final = mixer.as_ref().and_then(|mixer| mixer.level().ok());
+        println!("Live Spotify internal volume: {original} -> {observed:?} -> {final_level}; Windows mixer: {mixer_original:?} -> {mixer_final:?}");
         assert!(changed.is_ok() && restored.is_ok());
         assert_eq!(observed.unwrap(), alternate);
         assert_eq!(final_level, restore);
+        assert_eq!(mixer_final, mixer_original);
     }
 
     #[test]

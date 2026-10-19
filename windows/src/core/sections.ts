@@ -61,7 +61,7 @@ export function sectionEnabled(
 
 export function sectionForView(view: IslandViewName): IslandSection | null {
   if (view === "settings" || view === "greeting") return null;
-  return view === "grab" ? "grab" : view === "usage" ? "usage"
+  return view === "media" ? "media" : view === "grab" ? "grab" : view === "usage" ? "usage"
     : view === "prompt" || view === "voice" ? "prompt" : "overview";
 }
 

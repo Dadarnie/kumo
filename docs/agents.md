@@ -24,6 +24,12 @@ truncates long strings and forwards newline-delimited JSON. Supported installed
 events are defined in `windows/src-tauri/src/hooks.rs`; frontend routing and agent
 validation live in `windows/src/island/hooks.ts`.
 
+For command results, the relay extracts a bounded `mimo_tests` summary before
+shortening output. It recognizes reported Node, Jest/Vitest, Cargo and pytest
+totals and keeps at most 32 available test/suite names. A PASS suite is not an
+individual test count. The Terminal workspace shows edits above Live output;
+its count buttons open available details. Missing results stay unknown.
+
 `PermissionRequest` waits for the existing island acknowledgement and allow/deny
 decision; other events finish promptly. The relay turns a confirmed decision into
 Claude Code's existing `hookSpecificOutput`. If Mimo is closed, unavailable, paused

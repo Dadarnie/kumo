@@ -34,15 +34,6 @@
   inset: 0 24px;
   gap: 10px;
 }
-#island[data-core="island"] .activity-strip[data-kind="idle"]::before {
-  left: 34px;
-  top: 11px;
-  bottom: 11px;
-  background: rgb(255 255 255 / 14%);
-}
-#island[data-core="island"] .activity-strip[data-kind="idle"]:has(.activity-time[hidden])::before {
-  display: none;
-}
 .activity-time {
   position: absolute;
   left: 50%;

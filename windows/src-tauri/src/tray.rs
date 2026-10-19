@@ -9,14 +9,13 @@ use crate::island::WINDOW_LABEL;
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open Mimo", true, None::<&str>)?;
-    let dock = MenuItem::with_id(app, "quick-dock", "Return to top", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause", "Pause", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let sep1 = PredefinedMenuItem::separator(app)?;
     let sep2 = PredefinedMenuItem::separator(app)?;
 
-    let menu = Menu::with_items(app, &[&open, &dock, &sep1, &settings, &pause, &sep2, &quit])?;
+    let menu = Menu::with_items(app, &[&open, &sep1, &settings, &pause, &sep2, &quit])?;
 
     let mut builder = TrayIconBuilder::with_id("mimo")
         .tooltip("Mimo")
@@ -45,7 +44,6 @@ pub fn popup(app: &AppHandle) -> tauri::Result<()> {
         .lock()
         .unwrap()
         .clone();
-    let dock = MenuItem::with_id(app, "quick-dock", "Return to top", true, None::<&str>)?;
     let working = CheckMenuItem::with_id(
         app,
         "quick-working",
@@ -79,18 +77,10 @@ pub fn popup(app: &AppHandle) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let settings_item = MenuItem::with_id(app, "quick-settings", "Settings…", true, None::<&str>)?;
-    let separator = PredefinedMenuItem::separator(app)?;
+    let refresh = MenuItem::with_id(app, "quick-refresh", "Refresh", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
-        &[
-            &dock,
-            &separator,
-            &working,
-            &sound,
-            &usage,
-            &clock,
-            &settings_item,
-        ],
+        &[&working, &sound, &usage, &clock, &refresh, &settings_item],
     )?;
     if let Some(win) = crate::island::window(app) {
         win.popup_menu(&menu)?;
@@ -99,9 +89,10 @@ pub fn popup(app: &AppHandle) -> tauri::Result<()> {
 }
 
 pub fn quick_action(app: &AppHandle, id: &str) {
-    if id == "quick-dock" {
-        crate::island::finish_move(app, true);
-        let _ = app.emit_to(WINDOW_LABEL, "tray", "dock".to_string());
+    if id == "quick-refresh" {
+        if let Some(win) = crate::island::window(app) {
+            let _ = win.reload();
+        }
         return;
     }
     if id == "quick-settings" {

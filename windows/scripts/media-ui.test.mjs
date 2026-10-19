@@ -3771,7 +3771,7 @@ test("Spotify volume beside its percentage controls only the current app and ret
   const setVolume=value=>evaluate(`(()=>{const slider=document.querySelector('.media-session-volume-slider');slider.value='${value}';slider.dispatchEvent(new Event('input'));slider.dispatchEvent(new Event('change'));})()`);
   await setVolume(39);
   await setVolume(52);
-  assert.equal(await evaluate("document.querySelector('.media-session-volume-value').textContent"),'69%','Percentage waits for native confirmation');
+  assert.equal(await evaluate("document.querySelector('.media-session-volume-value').textContent"),'52%','The latest drag value is shown immediately while native confirmation is pending');
   await evaluate(settled);
   assert.deepEqual(await evaluate('mediaPreview.actions'),[{volume:39},{volume:52}]);
   assert.equal(await evaluate("document.querySelector('.media-session-volume-value').textContent"),'52%');
@@ -3783,10 +3783,11 @@ test("Spotify volume beside its percentage controls only the current app and ret
   assert.equal(await evaluate("document.querySelector('.media-session-volume-value').textContent"),'52%','Failed writes retain confirmed app volume');
   assert.equal(await evaluate("document.querySelector('.media-session-volume-slider').value"),'52');
   await evaluate(`mediaPreview.controlError=false;mediaPreview.actions.length=0;
-    const slider=document.querySelector('.media-session-volume-slider');slider.value='11';slider.dispatchEvent(new Event('input'));
+    const slider=document.querySelector('.media-session-volume-slider');
+    for(const value of ['11','12']){slider.value=value;slider.dispatchEvent(new Event('input'));}
     mediaPreview.publish('playing','Other track','Other artist',{sourceAppId:'chrome.exe',sessionId:'other-volume',volume:22,controls:{play:true,pause:true,volume:true}});`);
   await evaluate(settled);
-  assert.deepEqual(await evaluate('mediaPreview.actions'),[],'A queued value cannot be sent to a replacement session');
+  assert.deepEqual(await evaluate('mediaPreview.actions'),[{volume:11}],'The first write starts immediately, and the queued value is discarded when the session changes');
   assert.equal(await evaluate("document.querySelector('.media-session-volume-value').textContent"),'22%');
   assert.equal(await evaluate("document.querySelector('.media-session-volume-slider').getAttribute('aria-label')"),'Chrome volume');
   await evaluate("mediaPreview.publish('playing','Track','Artist',{sourceAppId:'Spotify.exe',volume:null,controls:{play:true,pause:true,volume:false}})");
@@ -4452,14 +4453,14 @@ test("Home keeps a crisp Mimo when Spotify plays with peek enabled or disabled",
   await evaluate(settled);
 });
 
-test("Glass idle bar has no stray vertical line beside Mimo", async () => {
+test("idle bar has no stray vertical line beside Mimo", async () => {
   await scene("none", "", "", "compact");
   for (const appearance of ["dark"]) {
     await evaluate(`mediaPreview.preferences({appearance:${JSON.stringify(appearance)},peekEnabled:false});mediaPreview.compact()`);
     await evaluate(settled);
     assert.equal(await evaluate("document.querySelector('.activity-strip').dataset.kind"), "idle");
     const separator = await evaluate("getComputedStyle(document.querySelector('.activity-strip'),'::before').content");
-    assert.equal(separator, appearance === "glass" ? "none" : '""');
+    assert.equal(separator, "none");
   }
   await evaluate("mediaPreview.preferences({appearance:'dark'})");
 });
@@ -4503,9 +4504,9 @@ test("idle bar centers the clock with zero to four real integration miniatures, 
   }
   for(const clockEnabled of [false,true]) {
     await evaluate(`mediaPreview.preferences({clockEnabled:${clockEnabled}})`);await evaluate(settled);
-    const divider=await evaluate(`(()=>{const strip=document.querySelector('.activity-strip');return {clockHidden:document.querySelector('.activity-time').hidden,dividerHidden:getComputedStyle(strip,'::before').display==='none'}})()`);
+    const divider=await evaluate(`(()=>{const strip=document.querySelector('.activity-strip'),style=getComputedStyle(strip,'::before');return {clockHidden:document.querySelector('.activity-time').hidden,dividerHidden:style.content==='none'||style.display==='none'}})()`);
     assert.equal(divider.clockHidden,!clockEnabled);
-    assert.equal(divider.dividerHidden,!clockEnabled,'The divider only separates a visible clock');
+    assert.equal(divider.dividerHidden,true,'The clock never adds a vertical divider');
     if(!clockEnabled)await capture('idle-island-clock-off-no-divider');
   }
   await evaluate("mediaPreview.preferences({modules:{media:false,vscode:false,developerIntegrations:false},activeIntegrations:[]});mediaPreview.publish('playing','Background','Artist')");
@@ -4513,8 +4514,8 @@ test("idle bar centers the clock with zero to four real integration miniatures, 
   assert.equal(await evaluate("document.querySelector('.activity-strip').dataset.kind"),"idle");
   await evaluate("mediaPreview.preferences({peekEnabled:true});mediaPreview.island.visibility.pointerEntered();mediaPreview.island.visibility.pointerLeft()");
   await evaluate("new Promise(resolve=>setTimeout(resolve,1100))");
-  assert.equal(await evaluate("mediaPreview.state.visibility"),"peek");
-  assert.equal(await evaluate("mediaPreview.island.engine.state"),"sleeping");
+  assert.equal(await evaluate("mediaPreview.state.visibility"),"island");
+  assert.equal(await evaluate("mediaPreview.island.engine.state"),"idle");
   await evaluate("mediaPreview.preferences({peekEnabled:false,modules:{media:true,vscode:true,developerIntegrations:true},activeIntegrations:['integration_github']});mediaPreview.publish('paused');mediaPreview.open('media');mediaPreview.island.visibility.pointerLeft()");
   await evaluate(settled);
   assert.equal((await inspect()).ambientVisible,true);
@@ -6023,20 +6024,20 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await evaluate("document.querySelector('.coding-preview').dataset.numbered"), 'false');
   assert.deepEqual(await stages(), ['active', 'inactive', 'inactive', 'inactive']);
   assert.equal(await evaluate("document.querySelectorAll('.coding-stage[aria-current=step]').length"), 1);
-  assert.equal(await rings(), 2, 'Only the current operation and its stage have an animated arc');
+  assert.equal(await rings(), 1, 'Only the current operation in the sidebar has an animated arc');
   assert.deepEqual(await evaluate("[...document.querySelectorAll('.coding-indicator[data-state=active] .ui-icon')].map(el=>getComputedStyle(el).visibility)"),['hidden','hidden'],
     'Loading shows only white rings without operation or IDE icons inside');
-  assert.equal(await evaluate("document.querySelector('.coding-current .coding-indicator').getBoundingClientRect().width"),20);
-  assert.equal(await evaluate("document.querySelector('.coding-stage .coding-indicator').getBoundingClientRect().width"),18);
+  assert.equal(await evaluate("document.querySelector('.coding-current').hidden"),true,'The sidebar owns progress without a duplicate status row');
+  assert.equal(await evaluate("document.querySelector('.coding-stage .coding-indicator').getBoundingClientRect().width"),20);
   assert.equal(await evaluate("document.querySelector('.coding-current .ui-icon').getAttribute('fill')"),'currentColor');
   assert.equal(await evaluate("document.querySelector('.coding-current .ui-icon').getAttribute('stroke')"),'none');
   assert.deepEqual(await evaluate("[...document.querySelectorAll('.coding-indicator[data-state=active]')].map(el=>({ink:getComputedStyle(el).color,arc:getComputedStyle(el.querySelector('.coding-ring-arc')).stroke}))"),
     [{ink:'rgb(255, 255, 255)',arc:'rgb(255, 255, 255)'},{ink:'rgb(255, 255, 255)',arc:'rgb(255, 255, 255)'}],
     'Both the current operation and its rail loader are pure white');
-  assert.ok(await evaluate("Number(document.querySelector('.coding-current .coding-ring-arc').getAttribute('stroke-width'))>=2.4"));
-  const rotation = await evaluate("getComputedStyle(document.querySelector('.coding-current .coding-ring-arc')).transform");
+  assert.ok(await evaluate("Number(document.querySelector('.coding-stage[data-state=active] .coding-ring-arc').getAttribute('stroke-width'))>=2.4"));
+  const rotation = await evaluate("getComputedStyle(document.querySelector('.coding-stage[data-state=active] .coding-ring-arc')).transform");
   await evaluate("new Promise(resolve=>setTimeout(resolve,160))");
-  assert.notEqual(await evaluate("getComputedStyle(document.querySelector('.coding-current .coding-ring-arc')).transform"), rotation);
+  assert.notEqual(await evaluate("getComputedStyle(document.querySelector('.coding-stage[data-state=active] .coding-ring-arc')).transform"), rotation);
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-current .ui-icon')).transform"), 'none');
   await capture('coding-progress-reading-dark');
   await emit('claude', 'PostToolUse', { tool_name: 'Read', tool_use_id: 'progress-read-1',
@@ -6045,7 +6046,7 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await evaluate("document.querySelector('.coding-current-label').textContent"), 'Read complete');
   assert.equal(await evaluate("document.querySelector('.coding-current-hint').textContent"), 'Waiting for next action');
   assert.equal(await evaluate("document.querySelector('.coding-current-count').textContent"), '1 action completed');
-  assert.equal(await rings(), 1, 'The agent continues working between tool results');
+  assert.equal(await rings(), 0, 'Completed operations park their rings while the agent waits for the next reported action');
   assert.deepEqual(await stages(), ['complete', 'inactive', 'inactive', 'inactive']);
   const completedBadge = await evaluate(`(() => {
     const badge=document.querySelector('.coding-stage[data-stage=Read] .coding-indicator'),
@@ -6059,13 +6060,13 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(completedBadge.width,'2.8px','Our own checkmark has a thick stroke');
   assert.deepEqual([completedBadge.cap,completedBadge.join],['round','round'],'Rounded ends and joins keep the check soft');
   assert.deepEqual([completedBadge.check,completedBadge.fallback],['block','hidden']);
-  assert.ok(Math.abs(completedBadge.diameter-13)<.1,'Completion stays in the reference-sized circle');
+  assert.ok(Math.abs(completedBadge.diameter-14.5)<.1,'Completion stays inside the sidebar indicator');
   await evaluate("mediaPreview.state.paused=true;mediaPreview.state.notify()"); await nextFrame();
   assert.equal(await rings(),0);
   assert.equal(await evaluate("document.querySelector('.coding-current-label').textContent"),'Updates paused');
   assert.equal((await stages())[0],'complete');
   await evaluate("mediaPreview.state.paused=false;mediaPreview.state.notify()"); await nextFrame();
-  assert.equal(await rings(),1);
+  assert.equal(await rings(),0,'Resuming updates does not invent an active operation');
   await emit('claude', 'PostToolUse', { tool_name: 'Read', tool_use_id: 'progress-read-1' });
   assert.equal(await evaluate("document.querySelector('.coding-current-count').textContent"), '1 action completed');
   await emit('claude', 'PreToolUse', { tool_name: 'Read', tool_use_id: 'progress-read-2',
@@ -6081,7 +6082,7 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await evaluate("document.querySelector('.coding-current-label').textContent"), 'Edit');
   assert.deepEqual(await stages(), ['complete', 'active', 'inactive', 'inactive']);
   assert.equal(await evaluate("document.querySelector('.coding-current-count').textContent"), '2 actions completed');
-  assert.equal(await evaluate("document.querySelector('#island').getBoundingClientRect().height"), 332);
+  assert.ok(await evaluate("document.querySelector('#island').getBoundingClientRect().height") <= PANEL_H,'The expanded Terminal stays within the native panel cap');
   await capture('coding-progress-editing-glass-2x');
   await emit('claude', 'PostToolUseFailure', { tool_name: 'Edit', tool_use_id: 'progress-edit-1' });
   await nextFrame();
@@ -6092,7 +6093,6 @@ test("Coding Preview identifies current work with truthful completion rings and 
   await emit('claude', 'PreToolUse', { tool_name: 'Edit', tool_use_id: 'progress-edit-2',
     tool_input: { file_path: 'C:/work/claude/src/invoice.ts', old_string: 'return sum;', new_string: 'return sum * 1.196;' } });
   await emit('claude', 'PostToolUse', { tool_name: 'Edit', tool_use_id: 'progress-edit-2' });
-  await pointerClick('.coding-view-button:nth-child(2)');
   await emit('claude', 'PreToolUse', { tool_name: 'Bash', tool_use_id: 'progress-run',
     tool_input: { command: 'npm test -- --runInBand' } });
   await nextFrame();
@@ -6109,11 +6109,11 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await rings(), 0);
   await evaluate("mediaPreview.state.paused=false;mediaPreview.state.notify()");
   await nextFrame();
-  assert.equal(await rings(), 2);
+  assert.equal(await rings(), 1);
   await command("Emulation.setEmulatedMedia", { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   await nextFrame();
   assert.equal(await rings(), 0);
-  assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-current .coding-ring-arc')).display"), 'block');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-stage[data-state=active] .coding-ring-arc')).display"), 'block');
   assert.equal(await evaluate("document.querySelector('.coding-current-label').textContent"), 'Bash');
   await command("Emulation.setEmulatedMedia", { features: [] });
   await evaluate("mediaPreview.preferences({appearance:'dark'})");
@@ -6121,7 +6121,8 @@ test("Coding Preview identifies current work with truthful completion rings and 
   await nextFrame();
   await capture('coding-progress-running-dark');
   await emit('claude', 'PostToolUse', { tool_name: 'Bash', tool_use_id: 'progress-run',
-    mimo_preview: { text: 'PASS invoice.test.ts\nTests: 48 passed, 48 total' } });
+    mimo_preview: { text: 'PASS invoice.test.ts\nTests: 48 passed, 48 total' },
+    mimo_tests: { passed:48, failed:0, total:48, cases:[{name:'invoice.test.ts',status:'passed',kind:'suite'}] } });
   await emit('claude', 'Stop', { message: 'Invoice totals updated. All 48 tests passed.' });
   await evaluate("new Promise(resolve=>setTimeout(resolve,400))");
   const finishedMimo = await evaluate(`(()=>{const engine=mediaPreview.island.engine;return {
@@ -6150,9 +6151,9 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await rings(), 0);
   assert.equal(await evaluate("progressCard===document.querySelector('.coding-card') && progressStatus===document.querySelector('.coding-current') && progressEdits===document.querySelector('.coding-edits')"), true);
   await capture('coding-progress-done-dark');
-  await pointerClick('.coding-view-button:first-child'); await nextFrame();
-  assert.deepEqual(await evaluate("[document.querySelector('.coding-view-switch'),...document.querySelectorAll('.coding-view-button')].map(el=>getComputedStyle(el).borderRadius)"),['999px','999px','999px'],'Live and Edits use soft capsule outlines');
-  assert.equal(await evaluate("document.querySelector('.coding-preview [data-result=pass]').parentElement.textContent"),'PASS invoice.test.ts');
+  await pointerClick('.coding-result-button[aria-expanded]'); await nextFrame();
+  assert.equal(await evaluate("document.querySelector('.coding-test-cases').hidden"),false,'Reported test cases open from the result summary');
+  assert.equal(await evaluate("document.querySelector('.coding-run-output [data-result=pass]').parentElement.textContent"),'PASS invoice.test.ts');
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-stage[data-stage=Done]')).color"),'rgb(79, 178, 158)');
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-current-label')).color"),'rgb(79, 178, 158)');
   assert.equal(await evaluate("document.querySelector('.coding-editor-content').dataset.combined"),'true','Live shows reported edits above their command results');
@@ -6162,7 +6163,7 @@ test("Coding Preview identifies current work with truthful completion rings and 
   await command("Emulation.setDeviceMetricsOverride", { width: 720, height: PANEL_H, deviceScaleFactor: 2, mobile: false });
   await nextFrame();
   await capture('coding-progress-done-glass');
-  assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-preview [data-result=pass]')).backgroundColor"),'rgb(79, 178, 158)');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.coding-run-output [data-result=pass]')).backgroundColor"),'rgb(79, 178, 158)');
   assert.ok(await evaluate("[...document.querySelectorAll('.coding-indicator[data-state=complete] .coding-ring-check')].every(el=>getComputedStyle(el).strokeLinecap==='round'&&getComputedStyle(el).strokeWidth==='2.8px')"));
   await capture('coding-terminal-reference-pass-glass-2x');
   await command("Emulation.setDeviceMetricsOverride", { width: 720, height: PANEL_H, deviceScaleFactor: 1, mobile: false });
@@ -6209,7 +6210,7 @@ test("Coding Preview identifies current work with truthful completion rings and 
   assert.equal(await evaluate("document.querySelector('.coding-card').dataset.expanded"), 'false');
   await pointerClick('.coding-preview-trigger');
   await nextFrame();
-  assert.equal(await rings(), 2);
+  assert.equal(await rings(), 1);
   await emit('codex', 'PostToolUse', { tool_name: 'Read', tool_use_id: 'codex-read' });
   await emit('codex', 'Stop', { message: 'Read complete' });
   await nextFrame();
@@ -6219,7 +6220,7 @@ test("Coding Preview identifies current work with truthful completion rings and 
   await nextFrame();
   assert.equal(await evaluate("document.querySelector('.coding-current-label').textContent"), 'Thinking');
   assert.deepEqual(await stages(), ['inactive', 'inactive', 'inactive', 'inactive']);
-  assert.equal(await rings(), 1, 'Thinking has one activity indicator and no invented active tool stage');
+  assert.equal(await rings(), 0, 'Thinking does not invent an active tool stage');
   await command("Input.dispatchKeyEvent", { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await command("Input.dispatchKeyEvent", { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await nextFrame();

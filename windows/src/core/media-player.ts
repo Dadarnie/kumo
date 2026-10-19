@@ -26,8 +26,10 @@ export interface MediaPlayerState {
   /** Native data URL on the wire; the store publishes a shared, owned blob URL. */
   readonly artwork: { readonly dataUrl: string } | null;
   readonly timeline?: MediaTimeline | null;
-  /** App audio-session volume in percent; unavailable/ambiguous matches are null. */
+  /** Spotify's own volume, or another app's session volume; unknown is null. */
   readonly volume?: number | null;
+  /** Smallest adjustment exposed by this player's volume provider. */
+  readonly volumeStep?: number;
   readonly shuffle?: boolean | null;
   readonly repeatMode?: RepeatMode | null;
 }
@@ -70,6 +72,7 @@ export function freezeMediaPlayer(
     artwork: player.artwork ? Object.freeze({ ...player.artwork }) : null,
     timeline: player.timeline ? Object.freeze({ ...player.timeline }) : null,
     volume: player.volume ?? null,
+    ...(Number.isInteger(player.volumeStep) && player.volumeStep! > 0 && player.volumeStep! <= 100 ? { volumeStep: player.volumeStep } : {}),
     shuffle: typeof player.shuffle === "boolean" ? player.shuffle : null,
     repeatMode: ["off", "list", "track"].includes(player.repeatMode ?? "") ? player.repeatMode : null,
   });

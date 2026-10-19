@@ -30,9 +30,15 @@ neutral Home. Attention owns its expression and interrupts lower-priority play.
 Startup greeting waits for the first eligible hover; compact and Working lip
 states do not wave. Native cursor gaze stays bounded and settles when parked.
 Three pokes retain the brief confused reaction; cancellation clears old gestures.
+The main card expands left while enabled service Mimos move into the same
+overlapping circular rail used during file intake. This rail is decorative.
+The greeting keeps its original particle effect with a stronger entry sway,
+body tilt and gentle bob from the supplied video; it adds no noise sound.
 Happy closed lids belong to dancing, whistling and confirmed completion.
 Only the visible Media panel performs for music. Confirmed Spotify playback
 uses the soft mint body tint; paused playback and other players return to silver.
+With nothing playing, the same Mimo moves above the empty-state label. Playback
+returns him to the right-hand position; there is no duplicate mascot icon.
 
 Sleeping mode is removed. Preserve compact coding activity and explicit Review,
 keyboard and approval routes. Reuse clocks and buffers; park hidden or settled

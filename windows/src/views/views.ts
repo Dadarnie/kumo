@@ -6,7 +6,7 @@ import { SECTIONS, sectionEnabled, sectionForView } from "../core/sections";
 import { ICONS, icon } from "./icons";
 import { integrationsFilled, usageFilled,
   soundFilled, soundOffFilled } from "../icons/filled";
-import { notchHome, notchSettings } from "../icons/notch";
+import { notchHome, notchSettings, notchMedia } from "../icons/notch";
 import { mimoIcon } from "../icons/render";
 import { State, type AgentTask } from "../core/state";
 import { chatAssistantName, codingDefinition, codingConnections, detectedCodingProviders, codingLabel, codingProvider, codingAccountColor, preferredUsageProvider, type CodingProvider } from "../core/coding";
@@ -17,7 +17,9 @@ import { CompactDropdown } from "./device-picker";
 import { Sound } from "../core/sound";
 import { PANEL_H, VIEW_LAYOUTS, washRGBA, type IslandViewName, type Wash } from "../core/layout";
 import type { ViewLayout } from "../core/layout";
-import { createMiniBot, miniNotificationLabel } from "../mimo/minibots";
+import { createMiniBot, miniNotificationLabel, pruneMiniBots } from "../mimo/minibots";
+import { MIMO_PICKER_COLORS } from "../mimo/palette";
+import { prefersReducedMotion } from "../core/motion";
 import { buildPrompt } from "./chat";
 import { buildChoose, buildUpload, buildUploading } from "./upload";
 import { naturalHeight } from "./content-size";
@@ -146,6 +148,8 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const limitsBtn = h("button", { class: "header-limits", type: "button", hidden: true,
     "aria-label": "Limits", "data-section": "usage", title: "Limits", onclick: () => go("usage") },
     limitsProvider, limitsLabel, capacity);
+  const mediaBtn = h("button", { class: "header-media", type: "button", title: "Now Playing",
+    "aria-label": "Now Playing", "data-home-media": "", onclick: () => go("media") }, mimoIcon(notchMedia, 18));
   const account = new CompactDropdown("Limits account", "header-agent-select", id => {
     Sound.play("tick"); State.usageProvider = id as CodingProvider; State.notify();
   });
@@ -225,7 +229,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       { class: "tabs", "aria-label": "Island sections" },
       ...navigation.map((item) => item.button),
     ),
-    h("div", { class: "header-actions" }, account.el, limitsBtn, gearBtn, soundBtn, approvalBtn),
+    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, gearBtn, soundBtn, approvalBtn),
   );
 
   return {
@@ -233,6 +237,10 @@ export function buildHeader(actions: ViewActions): ViewHost {
     sync() {
       const v = State.view;
       syncCapacity();
+      mediaBtn.hidden = !State.settings.modules.media;
+      mediaBtn.classList.toggle("on", v === "media");
+      if (v === "media") mediaBtn.setAttribute("aria-current", "page");
+      else mediaBtn.removeAttribute("aria-current");
       approvalBtn.hidden = State.approvalInboxCount === 0;
       approvalBtn.classList.toggle("has-pending", State.approvalCount > 0);
       approvalBtn.classList.toggle("on", v === "approvals");
@@ -427,11 +435,6 @@ function buildError(actions: ViewActions): ViewHost {
   const row = h(
     "div",
     { class: "actions" },
-    h("button", { class: "btn secondary return-to-work", type: "button", title: "Back to work",
-      "aria-label": "Back to work", onclick: () => {
-        const task = State.focusTask;
-        actions.returnToWork(task?.sessionCwd ?? null, task?.returnTarget, codingProvider(task));
-      } }, icon(ICONS.arrowUpRight, 16), h("span", { text: "Back to work" })),
     btn("Open details", "secondary", () => actions.openTarget()),
   );
   const el = h(
@@ -464,10 +467,6 @@ function buildFinished(actions: ViewActions): ViewHost {
   const row = h(
     "div",
     { class: "actions" },
-    btn("Back to work", "primary", () => {
-      const task = State.focusTask;
-      actions.returnToWork(task?.sessionCwd ?? null, task?.returnTarget, codingProvider(task));
-    }),
     btn("OK", "secondary", () => actions.collapse()),
   );
   const el = h(
@@ -497,7 +496,57 @@ function buildConfused(): ViewHost {
       text: "Give me a moment to find my bearings.",
     }),
   );
-  return { el: h("div", { class: "view confused-view" }, card("indigo", body)), sync() {} };
+  const main = card("indigo", body);
+  main.classList.add("confused-main");
+  const rail = h("div", { class: "confused-integrations", role: "group", "aria-label": "Your integrations" });
+  const el = h("div", { class: "view confused-view" }, main, rail);
+  let key = "", visible = false, frame = 0;
+  const stop = () => {
+    cancelAnimationFrame(frame); frame = 0;
+    for (const element of [main, body, ...rail.children]) element.getAnimations().forEach(animation => animation.cancel());
+  };
+  return {
+    el,
+    sync() {
+      const tasks = State.tasks.filter(task => task.isIntegration && !codingProvider(task)
+        && State.settings.modules.developerIntegrations && State.settings.activeIntegrations.includes(task.id));
+      const next = tasks.map(task => task.id).join("|");
+      rail.hidden = !tasks.length;
+      if (next === key) return;
+      key = next;
+      rail.style.setProperty("--upload-stack-overlap", tasks.length > 5 ? "12px" : "7px");
+      rail.replaceChildren(...tasks.map((task, index) => h("div", {
+        class: "confused-integration mimo-stack-item", "data-integration": task.id,
+        title: task.name, "aria-hidden": "true",
+        style: `--integration-color:${MIMO_PICKER_COLORS[task.id] ?? task.color};z-index:${tasks.length - index}`,
+      }, createMiniBot(task, 20, false, MIMO_PICKER_COLORS[task.id]))));
+      pruneMiniBots();
+    },
+    setVisible(value) {
+      if (visible === value) return;
+      visible = value; stop();
+      if (!value || prefersReducedMotion()) return;
+      const origins = new Map([...document.querySelectorAll<HTMLElement>(".home-view .integration-tile[data-integration]")]
+        .map(node => [node.dataset.integration, node.getBoundingClientRect()]));
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (!visible) return;
+        main.animate([{ transform: "scaleX(.55)" }, { transform: "none" }], {
+          duration: 280, easing: "cubic-bezier(.16,1,.3,1)",
+        });
+        body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 100, fill: "backwards" });
+        for (const node of rail.querySelectorAll<HTMLElement>(".confused-integration")) {
+          const to = node.getBoundingClientRect(), from = origins.get(node.dataset.integration);
+          const dx = from ? from.x + from.width / 2 - to.x - to.width / 2 : -100;
+          const dy = from ? from.y + from.height / 2 - to.y - to.height / 2 : 0;
+          node.animate([{ transform: `translate(${dx}px,${dy}px)`, opacity: .5 }, { transform: "none", opacity: 1 }], {
+            duration: 340, easing: "cubic-bezier(.16,1,.3,1)",
+          });
+        }
+      });
+    },
+    destroy() { visible = false; stop(); rail.replaceChildren(); pruneMiniBots(); },
+  };
 }
 
 // ── Note ──────────────────────────────────────────────────────────────────────

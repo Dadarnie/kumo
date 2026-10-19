@@ -831,16 +831,27 @@ impl Worker {
         let Some(selected) = self.selected.as_mut() else {
             return;
         };
-        selected.volume = selected
-            .data
-            .source_app_id
-            .as_deref()
-            .and_then(|source| VolumeBinding::find(source, &self.signals, self.generation));
+        // Keep Spotify's UIA subscription while dragging. Rediscovering its
+        // window tree on every value notification stalls successive changes.
+        if !selected.volume.as_ref().is_some_and(VolumeBinding::spotify) {
+            selected.volume = selected
+                .data
+                .source_app_id
+                .as_deref()
+                .and_then(|source| VolumeBinding::find(source, &self.signals, self.generation));
+        }
         selected.player.volume = selected
             .volume
             .as_ref()
             .and_then(|binding| binding.level().ok());
         selected.player.controls.volume = selected.player.volume.is_some();
+        selected.player.volume_step = selected
+            .volume
+            .as_ref()
+            .and_then(|binding| binding.step().ok());
+        if selected.player.volume.is_none() {
+            selected.volume = None;
+        }
     }
 
     fn refresh_timeline(&mut self) {

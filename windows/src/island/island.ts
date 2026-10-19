@@ -1120,7 +1120,7 @@ export class Island {
       return;
     }
     this.quickMenu ??= new MimoQuickMenu(id => {
-      if (id === "dock") { this.resetPosition(); return; }
+      if (id === "refresh") { location.reload(); return; }
       if (id === "settings") { void Bridge.openSettingsWindow(); return; }
       const fields = {working:"workingModeEnabled",sound:"soundEnabled",usage:"usageEnabled",clock:"clockEnabled"} as const;
       const field = fields[id as keyof typeof fields];
@@ -1130,11 +1130,11 @@ export class Island {
       void Bridge.saveSettings(State.settings);
     }, open => Visibility.setDragging(open));
     this.quickMenu.open([
-      {id:"dock",label:"Return to top"},
       {id:"working",label:"Working mode",checked:State.settings.workingModeEnabled},
       {id:"sound",label:"Sound",checked:State.settings.soundEnabled},
       {id:"usage",label:"Limits",checked:State.settings.usageEnabled},
       {id:"clock",label:"Island clock",checked:State.settings.clockEnabled},
+      {id:"refresh",label:"Refresh"},
       {id:"settings",label:"Settings…"},
     ],x,y,this.restoreTarget.hidden ? this.patTarget : this.restoreTarget);
   }
@@ -1269,14 +1269,6 @@ export class Island {
     this.animateGeometry(false);
   }
 
-  resetPosition(): void {
-    void Bridge.resetIslandPosition().then(position => {
-      if (this.disposed) return;
-      this.setPosition(position ?? { anchorX: window.innerWidth / 2, anchorY: 0, ratio: null });
-      Visibility.island();
-    });
-  }
-
   private wireInput() {
     document.addEventListener("keydown",event=>{
       if(event.key==="Control")this.setGrabModifier(true);
@@ -1309,10 +1301,6 @@ export class Island {
       }
       const editable = e.target instanceof Element &&
         e.target.closest("input,textarea,select,[contenteditable=true]");
-      if (key === "home" && e.ctrlKey && e.altKey && !e.metaKey && !e.shiftKey && !e.repeat && !editable) {
-        e.preventDefault();
-        this.resetPosition();
-      }
       // A background request never takes focus or accepts another app's typing.
       // The visible shortcuts become active after the user clicks the island.
       if (State.view === "approval" && State.visibility === "expanded" &&

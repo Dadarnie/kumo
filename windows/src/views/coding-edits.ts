@@ -38,6 +38,14 @@ export class CodingEdits {
   readonly el = h("div", { class: "coding-edits", tabindex: "0", role: "region", "aria-label": "File edits", hidden: true },
     this.description, this.list);
 
+  reveal(): void {
+    for (const row of this.files.values()) {
+      row.el.dataset.expanded = "true";
+      row.details.setAttribute("aria-expanded", "true");
+      row.details.querySelector("span")!.textContent = "Hide details";
+    }
+  }
+
   sync(changes: CodingFileChange[], intent: string, cwd?: string | null): void {
     this.description.textContent = intent;
     this.description.hidden = !intent;

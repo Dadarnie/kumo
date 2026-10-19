@@ -187,7 +187,8 @@ export class UploadCanvas {
       const item = retained.find(item => item.dataset.integration === task.id) ?? document.createElement("span");
       if (!item.firstChild) item.append(createMiniBot(task, 20, false, MIMO_PICKER_COLORS[task.id]));
       const status = miniNotificationLabel(task);
-      item.className = "upload-integration";
+      item.className = "upload-integration mimo-stack-item";
+      item.style.setProperty("--integration-color", MIMO_PICKER_COLORS[task.id] ?? task.color);
       item.dataset.integration = task.id;
       item.style.zIndex = String(tasks.length - index);
       item.setAttribute("role", "listitem");

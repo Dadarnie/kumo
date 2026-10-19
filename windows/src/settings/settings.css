@@ -3,12 +3,12 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* The separate Settings window carries the reference's black shell and charcoal panels. */
+/* Settings shares the island's barely separated black card surfaces. */
 html:root {
   color-scheme: dark;
   --bg: #060606;
-  --card: #121212;
-  --card-flat: #0e0e0e;
+  --card: #090909;
+  --card-flat: #070707;
   --ink: #ededed;
   --ink-2: #d6d6d6;
   --dim: #a7a7a7;

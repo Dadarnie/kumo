@@ -74,6 +74,7 @@ Run from `windows/`:
 ~~~powershell
 npm run test:unit
 npm run test:media-ui
+npm run test:reference-ui
 npm run test:agents
 npm run build
 cargo check --workspace --locked
@@ -85,6 +86,8 @@ git diff --check
 Run `npm run pack` when packaging or bundled assets change. Browser fixtures
 verify DOM and controller behavior; native desktop behavior needs a built app.
 Live media tests need an active supported player.
+Spotify volume targets its own accessible slider, including the step size it
+reports (10% in the current desktop player), independently of Windows mixer volume.
 
 `dev/media-preview.html`, `dev/icon-preview.html` and `dev/upload-preview.html`
 are local test fixtures. `npm run test:performance` records a browser switching

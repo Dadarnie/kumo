@@ -4,7 +4,7 @@ import { icon, ICONS } from "./icons";
 /** Soft operation contours from the terminal references, in the shared 24px frame. */
 export const CODING_ICONS = {
   read: "M13 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9ZM13 3.5v6h6M8.5 13h7M8.5 16.5h5",
-  edit: "m15.6 4.4 4 4M4.5 19.5l4.6-1.2L20 7.4a2.1 2.1 0 0 0-3-3L6.1 15.3Z",
+  edit: "M4.5 19.5l4.6-1.2L20 7.4a2.1 2.1 0 0 0-3-3L6.1 15.3Z",
   bash: "M4.5 4.5h15a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2ZM7 9l3.5 3L7 15M13.5 15h4",
   done: ICONS.check,
 } as const;

@@ -5,7 +5,7 @@ import { Sound } from "../core/sound";
 import { prefersReducedMotion } from "../core/motion";
 import { icon, ICONS } from "./icons";
 import { codingLabel, codingProvider } from "../core/coding";
-import { codingTarget, type CodingPreview } from "../core/coding-activity";
+import { codingTarget, type CodingPreview, type CodingActivity } from "../core/coding-activity";
 import { codingProgress, codingQuiet, compactCodingProgress } from "../core/coding-progress";
 import { codeRow, syncCodeRows } from "./coding-lines";
 import { CodingEdits } from "./coding-edits";
@@ -32,7 +32,7 @@ function activityIndicator(path: string, size: number) {
   for (const [key, value] of Object.entries({ d: "M7.8 12.2 10.7 15.1 16.4 9.1", class: "coding-ring-check",
     fill: "none", "stroke-width": "2.8", "stroke-linecap": "round", "stroke-linejoin": "round" })) check.setAttribute(key, value);
   ring.append(check);
-  const glyph = icon(path, size >= 20 ? 11 : 15);
+  const glyph = icon(path, Math.max(14, size - 2));
   const el = h("span", { class: "coding-indicator", "data-state": "inactive", "aria-hidden": "true" }, ring, glyph);
   el.style.setProperty("--coding-ring-size", size + "px");
   return { el, glyph };
@@ -49,11 +49,10 @@ export class CodingCard {
   private added = h("span", { class: "coding-added" });
   private removed = h("span", { class: "coding-removed" });
   private changes = h("span", { class: "coding-changes", hidden: true }, this.added, this.removed);
-  private expandText = h("span", { text: "Back" });
   private expandIcon = icon(ICONS.chevronLeft, 12);
   private expand = h("button", { class: "coding-expand", type: "button",
     "aria-label": "Back to Home", "aria-expanded": "true",
-    onclick: backAction(() => this.togglePreview()) }, this.expandText, this.expandIcon);
+    onclick: backAction(() => this.togglePreview()) }, this.expandIcon);
   private actionIcon = icon(ICONS.doc, 16);
   private action = h("span", { class: "coding-action" });
   private target = h("span", { class: "coding-target" });
@@ -73,20 +72,13 @@ export class CodingCard {
     ...this.rows.map(row => row.el));
   private heading: HTMLElement;
   private actionRow: HTMLElement;
-  private open: HTMLButtonElement;
   private sidebar = h("div", { class: "coding-sidebar" });
   private fileName = h("span", { class: "coding-file-name" });
   private liveMark = h("span", { class: "coding-live-mark", "aria-hidden": "true" });
   private fileIcon = h("span", { class: "coding-file-icon", "aria-hidden": "true" });
   private filePath = h("span", { class: "coding-file-path" });
   private fileTab = h("div", { class: "coding-file-tab" }, this.fileIcon, this.fileName, this.liveMark);
-  private liveView = h("button", { class: "coding-view-button", type: "button", text: "Live", "aria-pressed": "true",
-    onclick: () => { Sound.play("blip"); this.editorView = "live"; this.syncEditorView(); } });
-  private editsView = h("button", { class: "coding-view-button", type: "button", text: "Edits", "aria-pressed": "false",
-    onclick: () => { Sound.play("blip"); this.editorView = "edits"; this.syncEditorView(); } });
-  private viewSwitch = h("div", { class: "coding-view-switch", role: "group", "aria-label": "Preview content", hidden: true },
-    this.liveView, this.editsView);
-  private editorTitle = h("div", { class: "coding-editor-title" }, this.fileTab, this.viewSwitch);
+  private editorTitle = h("div", { class: "coding-editor-title" }, this.fileTab);
   private editorDetails = h("div", { class: "coding-editor-details" }, this.editorTitle, this.filePath);
   private editorActions = h("div", { class: "coding-editor-actions" });
   private copyIcon = icon(ICONS.copy, 14);
@@ -97,6 +89,20 @@ export class CodingCard {
   private footerMeta = h("div", { class: "coding-footer-meta" }, this.footerCount);
   private editorFooter = h("div", { class: "coding-editor-footer" }, this.footerMeta, this.editorActions);
   private editorContent = h("div", { class: "coding-editor-content" });
+  private runRows: ReturnType<typeof codeRow>[] = [];
+  private runOutput = h("div", { class: "coding-preview coding-run-output", tabindex: "0", role: "region", "aria-label": "Command output", "data-kind": "terminal" });
+  private testCases = h("div", { class: "coding-test-cases", role: "region", "aria-label": "Reported test results", hidden: true });
+  private runRegion = h("section", { class: "coding-run-region", "aria-label": "Terminal", hidden: true }, this.runOutput, this.testCases);
+  private testsSummary = h("button", { class: "coding-result-button", type: "button", hidden: true,
+    "aria-expanded": "false", onclick: () => {
+      this.testCases.hidden = !this.testCases.hidden;
+      this.runOpened = !this.testCases.hidden;
+      this.syncEditorView();
+      this.testsSummary.setAttribute("aria-expanded", String(!this.testCases.hidden));
+      if (!this.testCases.hidden) this.testCases.scrollIntoView({ block: "nearest" });
+    } });
+  private editsSummary = h("button", { class: "coding-result-button", type: "button", hidden: true,
+    onclick: () => { this.edits.reveal(); this.edits.el.focus({ preventScroll: true }); } });
   private editor = h("div", { class: "coding-editor" });
   private currentIndicator = activityIndicator(ICONS.doc, 20);
   private currentLabel = h("span", { class: "coding-current-label" });
@@ -111,7 +117,7 @@ export class CodingCard {
   private stages = [
     ["Read", CODING_ICONS.read], ["Edit", CODING_ICONS.edit], ["Run", CODING_ICONS.bash], ["Done", CODING_ICONS.done],
   ].map(([name, path]) => {
-    const indicator = activityIndicator(path, 18);
+    const indicator = activityIndicator(path, 20);
     const label = h("span", { text: name === "Run" ? "Bash" : name });
     const count = h("span", { class: "coding-stage-count", hidden: true });
     const el = h("div", { class: "coding-stage", role: "listitem", "data-stage": name, "data-state": "inactive" },
@@ -122,25 +128,27 @@ export class CodingCard {
     ...this.stages.map(stage => stage.el));
   private expanded = false;
   private edits = new CodingEdits();
-  private editorView: "live" | "edits" = "live";
   private editCount = 0;
-  private completed = false;
   private hasChanges = false;
   private liveFile = { name: "", path: "", title: "", icon: ICONS.doc as string };
   private lineCount = 0;
   private outputText = "";
   private latestOutput: { preview: CodingPreview; message: boolean; terminal: boolean } | null = null;
+  private sourceOutput: typeof this.latestOutput = null;
+  private sourceFile: typeof this.liveFile | null = null;
+  private lastRun: CodingActivity["lastRun"];
+  private resultKey = "";
+  private sourceTask = "";
+  private runOpened = false;
+  private currentIsRun = false;
   private actionKey = "";
   private lastOperation: { task: string; label: string; icon: string; identity: string } | null = null;
   private previousOperation: { label: string; icon: string } | null = null;
   private outgoing: HTMLElement | null = null;
   readonly el: HTMLElement;
 
-  constructor(open: () => void, private reflow: () => void = () => {}, private returnHome: () => void = () => {}) {
+  constructor(_open: () => void, private reflow: () => void = () => {}, private returnHome: () => void = () => {}) {
     this.heading = h("div", { class: "coding-heading" }, this.project, this.providerSlot, this.workspace, this.counter);
-    this.open = h("button", { class: "jump coding-open", type: "button", title: "Open VS Code",
-      "aria-label": "Open VS Code", onclick: open },
-      icon(ICONS.arrowUpRight, 14), h("span", { class: "coding-open-label", text: "Open VS Code" }));
     this.actionRow = h("div", { class: "coding-action-row", role: "status", "aria-live": "polite" },
       this.actionIcon, this.actionCopy, this.changes);
     this.actionViewport.append(this.actionRow);
@@ -186,12 +194,11 @@ export class CodingCard {
     const returnFocus = this.expanded && this.el.contains(document.activeElement);
     const enterWithFocus = !this.expanded && this.trigger === document.activeElement;
     this.expanded = !this.expanded;
-    if (this.expanded) this.editorView = this.completed && this.editCount ? "edits" : "live";
     this.preview.scrollTop = 0;
     this.edits.el.scrollTop = 0;
     this.syncExpansion();
     if (returnFocus) this.trigger.focus({ preventScroll: true });
-    else if (enterWithFocus) (this.editorView === "edits" ? this.edits.el : this.preview).focus({ preventScroll: true });
+    else if (enterWithFocus) (this.editCount ? this.edits.el : this.preview).focus({ preventScroll: true });
     if (returningHome) this.returnHome();
     this.reflow();
   }
@@ -203,8 +210,9 @@ export class CodingCard {
       if (this.expanded) {
         this.sidebar.replaceChildren(this.heading, this.stageList);
         this.footerMeta.prepend(this.changes);
-        this.editorActions.append(this.copyOutput, this.expand, this.open);
-        this.editorContent.append(this.edits.el, this.preview);
+        this.editorHeader.prepend(this.expand);
+        this.editorActions.append(this.editsSummary, this.testsSummary, this.copyOutput);
+        this.editorContent.append(this.edits.el, this.preview, this.runRegion);
         this.editor.append(this.editorHeader, this.current, this.editorContent, this.editorFooter);
         this.el.replaceChildren(this.sidebar, this.editor);
       } else {
@@ -217,7 +225,6 @@ export class CodingCard {
     }
     this.el.dataset.expanded = String(this.expanded);
     this.context.hidden = this.expanded || this.el.dataset.visible !== "true" || !this.providerSlot.querySelector(".coding-session-picker");
-    this.expandText.textContent = "Back";
     this.expand.title = "Back to Home";
     this.expand.setAttribute("aria-label", this.expand.title);
     this.expand.setAttribute("aria-expanded", String(this.expanded));
@@ -227,31 +234,30 @@ export class CodingCard {
   }
 
   private syncEditorView(): void {
-    if (!this.editCount) this.editorView = "live";
-    const edits = this.editorView === "edits";
-    const combined = !edits && this.liveFile.icon === ICONS.terminal && this.editCount > 0;
-    this.viewSwitch.hidden = !this.editCount;
-    this.liveView.setAttribute("aria-pressed", String(!edits));
-    this.editsView.setAttribute("aria-pressed", String(edits));
-    this.editsView.title = `${this.editCount} edited ${this.editCount === 1 ? "file" : "files"} in this turn`;
-    this.preview.hidden = !this.expanded || edits;
-    this.edits.el.hidden = !this.expanded || (!edits && !combined);
-    this.editorContent.dataset.combined = String(combined);
-    this.current.hidden = this.completed || (!edits && this.liveFile.icon === ICONS.terminal
-      && ["active", "complete"].includes(this.current.dataset.state ?? ""));
+    const edits = this.editCount > 0;
+    this.preview.hidden = !this.expanded || edits || (!!this.lastRun && !this.sourceOutput);
+    this.edits.el.hidden = !this.expanded || !edits;
+    const showRun = !!this.lastRun && (this.currentIsRun || this.lastRun.phase !== "complete" || this.runOpened
+      || this.runRegion.contains(document.activeElement));
+    this.runRegion.hidden = !this.expanded || !showRun;
+    this.editorContent.dataset.combined = String(showRun && (edits || !!this.sourceOutput));
+    this.current.hidden = true;
     this.changes.hidden = !this.hasChanges;
-    this.copyOutput.hidden = !this.expanded || edits;
-    this.liveMark.hidden = edits || this.liveFile.icon !== ICONS.terminal;
-    this.fileName.textContent = edits ? `${this.editCount} ${this.editCount === 1 ? "file" : "files"}` : this.liveFile.name;
-    this.filePath.textContent = edits ? "Latest edits" : this.liveFile.path;
-    this.filePath.title = edits ? "Latest edit per file in this turn" : this.liveFile.title;
-    setCodingIdentity(this.fileIcon, edits ? "" : this.liveFile.title, edits ? ICONS.edit : this.liveFile.icon,
-      14, !edits && this.liveFile.icon === ICONS.terminal);
+    this.copyOutput.hidden = !this.expanded;
+    this.liveMark.hidden = !this.lastRun || this.lastRun.phase !== "running";
+    const source = this.sourceFile ?? this.liveFile;
+    this.fileName.textContent = source.name;
+    this.filePath.textContent = edits ? "Edits" : source.path;
+    this.filePath.title = source.title;
+    setCodingIdentity(this.fileIcon, source.title, source.icon, 14, source.icon === ICONS.terminal);
+    this.renderOutput();
   }
 
   private renderOutput(): void {
-    if (!this.latestOutput) return;
-    const { preview, message, terminal } = this.latestOutput;
+    const output = this.expanded ? this.sourceOutput ?? this.latestOutput : this.latestOutput;
+    if (!output) return;
+    const { preview, message, terminal } = output;
+    this.preview.dataset.kind = message ? "message" : terminal ? "terminal" : "code";
     const nextText = preview.lines.join("\n");
     if (nextText !== this.outputText) {
       this.copyOutput.title = "Copy output";
@@ -264,7 +270,9 @@ export class CodingCard {
 
   private async copyRenderedOutput(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(this.outputText);
+      await navigator.clipboard.writeText(this.lastRun && !this.runRegion.hidden && this.expanded
+        ? [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? [])].join("\n")
+        : this.editCount && this.expanded ? this.edits.el.innerText : this.outputText);
       this.copyOutput.title = "Copied";
       this.copyOutput.setAttribute("aria-label", "Output copied");
       this.copyIcon.querySelector("path")?.setAttribute("d", ICONS.check);
@@ -288,16 +296,46 @@ export class CodingCard {
   }
 
   sync(task: AgentTask, picker?: HTMLElement, animated = true): void {
-    const returnLabel = task.returnTarget ? "Back to work in your window" : task.sessionCwd ? "Back to work in your project" : "Back to work in VS Code";
-    this.open.title = returnLabel;
-    this.open.setAttribute("aria-label", returnLabel);
-    this.open.querySelector(".coding-open-label")!.textContent = "Back to work";
     const activity = task.activity;
+    this.currentIsRun = activity?.action === "Run";
+    if (this.sourceTask !== task.id || activity?.action === "Thinking" && !activity.completedCount && !activity.files?.length && !activity.lastRun) {
+      this.sourceOutput = null; this.sourceFile = null;
+      this.sourceTask = task.id;
+    }
+    const previousRun = this.lastRun;
+    this.lastRun = activity?.lastRun ?? (activity?.action === "Run" ? { target: activity.target,
+      phase: activity.phase ?? "running", toolUseId: activity.toolUseId, preview: activity.preview } : undefined);
+    if (previousRun?.toolUseId !== this.lastRun?.toolUseId || previousRun?.target !== this.lastRun?.target) {
+      this.runOpened = false; this.testCases.hidden = true; this.testsSummary.setAttribute("aria-expanded", "false");
+    }
+    if (this.lastRun) syncCodeRows(this.runOutput, this.runRows, {
+      lines: [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? [])].slice(0, 12),
+    }, { terminal: true });
+    const tests = this.lastRun?.tests;
+    const resultKey = JSON.stringify(tests);
+    if (resultKey !== this.resultKey) {
+      this.resultKey = resultKey;
+      this.testCases.replaceChildren(...(tests?.cases.map(test => h("div", { class: "coding-test-case", "data-result": test.status },
+        h("span", { class: test.status === "passed" ? "coding-test-pass" : "", text: test.status === "passed" ? "PASS" : "FAIL" }),
+        h("span", { text: `${test.kind === "suite" ? "Suite · " : ""}${test.name}` }))) ?? []));
+      if (tests && !tests.cases.length) this.testCases.append(h("span", { text: "Test names were not reported." }));
+      this.testsSummary.replaceChildren(
+        ...(tests?.passed !== undefined ? [h("span", { class: "coding-test-pass", text: `${tests.passed} passed` })] : []),
+        ...(tests?.failed !== undefined && tests.failed > 0 ? [h("span", { text: `${tests.failed} failed` })] : []),
+        ...(tests?.passed === undefined && tests?.failed === undefined ? [h("span", { text: "Test results" })] : []),
+      );
+      this.testsSummary.title = tests?.total !== undefined ? `${tests.total} tests reported · Show results` : "Show reported results";
+    }
+    this.testsSummary.hidden = !tests;
+    const editOperations = activity?.stageCounts?.Edit;
+    this.editsSummary.hidden = !activity?.files?.length;
+    this.editsSummary.textContent = editOperations ? `${editOperations} ${editOperations === 1 ? "edit" : "edits"}`
+      : `${activity?.files?.length ?? 0} files`;
+    this.editsSummary.title = `${activity?.files?.length ?? 0} changed files · Show edits`;
     const progress = codingProgress(task, !animated);
     const quiet = codingQuiet(task, !animated);
     const compact = compactCodingProgress(task, !animated);
     const done = progress.done;
-    this.completed = done;
     this.editCount = activity?.files?.length ?? 0;
     const changes = this.expanded && activity?.files?.some(file => file.changes)
       ? activity.files.reduce((sum, file) => ({ added: sum.added + (file.changes?.added ?? 0),
@@ -437,6 +475,14 @@ export class CodingCard {
     };
     this.latestOutput = { preview: { ...activity?.preview, lines: lines.slice(0, 12) },
       message, terminal: activity?.action === "Run" };
+    if (fileAction && activity?.preview) {
+      this.sourceOutput = this.latestOutput;
+      this.sourceFile = { ...this.liveFile };
+    } else if (!this.sourceFile && activity?.files?.length) {
+      const file = activity.files.at(-1)!;
+      this.sourceFile = { name: file.target.split(/[\\/]/).at(-1) ?? "Edits", path: codingTarget({ ...file, action: "Edit" }, task.sessionCwd),
+        title: file.target, icon: ICONS.doc };
+    }
     this.renderOutput();
     this.syncExpansion();
     if (transition) {

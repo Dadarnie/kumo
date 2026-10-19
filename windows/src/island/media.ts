@@ -228,6 +228,9 @@ export class IslandMedia {
   private unsubscribe: () => void;
   private renderedArt: string | null = null;
   private pendingSession: string | null = null;
+  private pendingTransport = false;
+  private modeTarget: { session: string; shuffle?: boolean; repeatMode?: "off" | "list" | "track" } | null = null;
+  private modeInFlight = false;
   private errorSession: string | null = null;
   private primaryLabel = "";
   private destroyed = false;
@@ -239,7 +242,6 @@ export class IslandMedia {
   private timeKey = "";
   private volumeSession: string | null = null;
   private volumeTarget: { session: string; value: number } | null = null;
-  private volumeTimer: ReturnType<typeof setTimeout> | undefined;
   private volumeFeedbackTimer: ReturnType<typeof setTimeout> | undefined;
   private volumeDragging = false;
   private volumeInFlight = false;
@@ -304,12 +306,18 @@ export class IslandMedia {
       [this.ambientNext, 1],
       [this.primary, 0],
       [this.ambientPrimary, 0],
+      [this.shuffle, 0],
+      [this.repeat, 0],
     ] as const) {
       button.addEventListener("click", () => {
         if (button.getAttribute("aria-disabled") !== "true")
           pressFeedback(button, x);
       });
     }
+    const repeatAll = icon(ICONS.repeat, 17), repeatOne = icon(ICONS.repeatOne, 17);
+    repeatAll.classList.add("media-repeat-all-glyph");
+    repeatOne.classList.add("media-repeat-one-glyph");
+    this.repeat.replaceChildren(repeatAll, repeatOne);
     this.unsubscribe = store.subscribe(() => this.render());
     this.image.addEventListener("load", () => {
       if (this.image.getAttribute("src") === this.renderedArt)
@@ -343,13 +351,24 @@ export class IslandMedia {
           : "play",
       );
     });
-    this.shuffle.addEventListener("click", () => {
-      const shuffle = this.store.snapshot().player.shuffle;
-      if (shuffle != null) void this.perform({ shuffle: !shuffle });
+    this.shuffle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const player = this.store.snapshot().player;
+      const shuffle = this.modeTarget?.session === player.sessionId ? this.modeTarget.shuffle ?? player.shuffle : player.shuffle;
+      if (this.shuffle.disabled || shuffle == null || !player.sessionId) return;
+      this.modeTarget = { ...(this.modeTarget?.session === player.sessionId ? this.modeTarget : {}), session: player.sessionId, shuffle: !shuffle };
+      this.render();
+      this.flushModes();
     });
-    this.repeat.addEventListener("click", () => {
-      const mode = this.store.snapshot().player.repeatMode;
-      if (mode != null) void this.perform({ repeatMode: mode === "off" ? "list" : mode === "list" ? "track" : "off" });
+    this.repeat.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const player = this.store.snapshot().player;
+      const mode = this.modeTarget?.session === player.sessionId ? this.modeTarget.repeatMode ?? player.repeatMode : player.repeatMode;
+      if (this.repeat.disabled || mode == null || !player.sessionId) return;
+      this.modeTarget = { ...(this.modeTarget?.session === player.sessionId ? this.modeTarget : {}), session: player.sessionId,
+        repeatMode: mode === "off" ? "list" : mode === "list" ? "track" : "off" };
+      this.render();
+      this.flushModes();
     });
     this.volumeSlider.addEventListener("pointerdown", (event) => {
       this.volumeDragging = true;
@@ -483,9 +502,9 @@ export class IslandMedia {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    clearTimeout(this.volumeTimer);
     clearTimeout(this.volumeFeedbackTimer);
     this.volumeTarget = null;
+    this.modeTarget = null;
     this.endVolumeDrag();
     this.lifetime.destroy();
     this.audio.destroy();
@@ -501,6 +520,7 @@ export class IslandMedia {
     const session = this.store.snapshot().player.sessionId;
     if (!session || this.pendingSession === session) return;
     this.pendingSession = session;
+    this.pendingTransport = typeof action === "string" || "seekMs" in action;
     this.errorSession = null;
     this.render();
     try {
@@ -509,10 +529,37 @@ export class IslandMedia {
       if (this.store.snapshot().player.sessionId === session)
         this.errorSession = session;
     } finally {
-      if (this.pendingSession === session) this.pendingSession = null;
+      if (this.pendingSession === session) {
+        this.pendingSession = null;
+        this.pendingTransport = false;
+      }
       this.render();
+      this.flushModes();
       this.flushVolume();
     }
+  }
+
+  private flushModes(): void {
+    if (this.destroyed || !this.modeTarget || this.modeInFlight || this.pendingSession) return;
+    const target = this.modeTarget;
+    if (target.session !== this.store.snapshot().player.sessionId) {
+      this.modeTarget = null;
+      return;
+    }
+    const field = target.shuffle !== undefined ? "shuffle" : "repeatMode";
+    const value = target[field];
+    if (value === undefined) return;
+    this.modeInFlight = true;
+    void this.perform(field === "shuffle" ? { shuffle: value as boolean } : { repeatMode: value as "off" | "list" | "track" }).finally(() => {
+      this.modeInFlight = false;
+      if (this.modeTarget?.session === target.session && this.modeTarget[field] === value) {
+        delete this.modeTarget[field];
+        if (this.modeTarget.shuffle === undefined && this.modeTarget.repeatMode === undefined) this.modeTarget = null;
+      }
+      this.render();
+      this.flushModes();
+      this.flushVolume();
+    });
   }
 
   private endVolumeDrag(): void {
@@ -535,13 +582,14 @@ export class IslandMedia {
     }, 1100);
     this.sessionVolume.style.setProperty("--volume-fill", `${this.volumeSlider.value}%`);
     this.volumeSlider.setAttribute("aria-valuetext", `${this.volumeSlider.value}%`);
-    clearTimeout(this.volumeTimer);
-    this.volumeTimer = setTimeout(() => this.flushVolume(), 60);
+    this.volumeValue.textContent = `${this.volumeSlider.value}%`;
+    // Start on the leading edge, then send only the newest value while native
+    // confirmation is in flight. Dragging never waits for a quiet debounce gap.
+    this.flushVolume();
   }
 
   private flushVolume(): void {
     if (this.destroyed || !this.volumeTarget || this.volumeInFlight || this.pendingSession) return;
-    clearTimeout(this.volumeTimer);
     const target = this.volumeTarget;
     this.volumeTarget = null;
     if (target.session !== this.store.snapshot().player.sessionId) return;
@@ -560,6 +608,9 @@ export class IslandMedia {
       this.enabled && this.mode === "expanded" && this.view === "media" && !this.coreMode,
     );
     const { state, player } = this.store.snapshot();
+    if (this.modeTarget && this.modeTarget.session !== player.sessionId) this.modeTarget = null;
+    const shuffle = this.modeTarget?.shuffle ?? player.shuffle;
+    const repeatMode = this.modeTarget?.repeatMode ?? player.repeatMode;
     const ambient =
       this.enabled &&
       !this.compactSuppressed &&
@@ -572,6 +623,7 @@ export class IslandMedia {
     const visible = ambient || row;
     const busy =
       visible &&
+      this.pendingTransport &&
       this.pendingSession !== null &&
       this.pendingSession === player.sessionId;
     const error =
@@ -594,9 +646,10 @@ export class IslandMedia {
       visible && state.playbackState,
       visible && player.sessionId,
       visible && player.controls,
-      visible && player.shuffle,
-      visible && player.repeatMode,
+      visible && shuffle,
+      visible && repeatMode,
       row && player.volume,
+      row && player.volumeStep,
       row && state.sourceAppId,
       row && this.view === "media" && player.timeline,
       ambient && this.compactFullControls,
@@ -678,17 +731,18 @@ export class IslandMedia {
     const canVolume = row && canControl && !!player.controls.volume && player.volume != null;
     if (this.volumeSession !== player.sessionId || !canVolume) {
       this.volumeSession = player.sessionId;
-      clearTimeout(this.volumeTimer);
       this.volumeTarget = null;
       this.endVolumeDrag();
     }
     const volumeName = `${this.source.textContent || "Player"} volume`;
     this.sessionVolume.classList.toggle("is-unavailable", !canVolume);
-    this.volumeValue.textContent = canVolume ? `${player.volume}%` : "—";
+    this.volumeValue.textContent = canVolume ? `${this.volumeDragging || this.volumeTarget || this.volumeInFlight ? this.volumeSlider.value : player.volume}%` : "—";
     this.sessionVolume.setAttribute("aria-label", volumeName);
-    this.sessionVolume.title = canVolume ? volumeName : "App volume is unavailable from this player";
+    this.sessionVolume.title = canVolume ? volumeName : this.source.dataset.source === "spotify"
+      ? "Open Spotify to make its volume slider available" : "App volume is unavailable from this player";
     this.volumeSlider.setAttribute("aria-label", volumeName);
     this.volumeSlider.disabled = !canVolume;
+    this.volumeSlider.step = String(player.volumeStep ?? 1);
     if (!this.volumeDragging && !this.volumeTarget && !this.volumeInFlight) {
       this.volumeSlider.value = String(player.volume ?? 0);
       this.sessionVolume.style.setProperty("--volume-fill", `${player.volume ?? 0}%`);
@@ -714,15 +768,15 @@ export class IslandMedia {
     this.next.disabled = !canControl || !player.controls.next;
     this.shuffle.disabled = !canControl || !player.controls.shuffle || player.shuffle == null;
     this.repeat.disabled = !canControl || !player.controls.repeat || player.repeatMode == null;
-    this.shuffle.setAttribute("aria-pressed", String(player.shuffle === true));
-    this.repeat.setAttribute("aria-pressed", String(player.repeatMode != null && player.repeatMode !== "off"));
-    const repeatMode = player.repeatMode ?? "";
-    if (this.repeat.dataset.mode !== repeatMode) {
-      this.repeat.dataset.mode = repeatMode;
-      this.repeat.replaceChildren(icon(repeatMode === "track" ? ICONS.repeatOne : ICONS.repeat, 17));
+    const spotify = this.source.dataset.source === "spotify";
+    this.shuffle.hidden = this.repeat.hidden = !spotify;
+    this.shuffle.setAttribute("aria-pressed", String(shuffle === true));
+    this.repeat.setAttribute("aria-pressed", String(repeatMode != null && repeatMode !== "off"));
+    if (this.repeat.dataset.mode !== (repeatMode ?? "")) {
+      this.repeat.dataset.mode = repeatMode ?? "";
     }
-    const shuffleLabel = player.shuffle === true ? "Shuffle on" : "Shuffle off";
-    const repeatLabel = player.repeatMode === "track" ? "Repeat one" : player.repeatMode === "list" ? "Repeat all" : "Repeat off";
+    const shuffleLabel = shuffle === true ? "Shuffle on" : "Shuffle off";
+    const repeatLabel = repeatMode === "track" ? "Repeat one" : repeatMode === "list" ? "Repeat all" : "Repeat off";
     this.shuffle.setAttribute("aria-label", shuffleLabel); this.shuffle.title = this.shuffle.disabled ? "Shuffle is not available from this player" : shuffleLabel;
     this.repeat.setAttribute("aria-label", repeatLabel); this.repeat.title = this.repeat.disabled ? "Repeat is not available from this player" : repeatLabel;
     this.ambientPrevious.disabled =

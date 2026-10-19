@@ -16,10 +16,10 @@
   --dim-4: var(--dim-2);
   --dim-5: var(--dim-2);
   --bg: #000000;
-  --card: #121212;
-  --card-flat: #0e0e0e;
+  --card: #090909;
+  --card-flat: #070707;
   --tab-on: #252525;
-  --hairline: rgba(255, 255, 255, 0.055);
+  --hairline: rgba(255, 255, 255, 0.035);
   --accent: var(--mini-work-blue);
   /* Local Home identity colors sampled from the supplied video at 8 seconds. */
   --mini-work-blue: #2da4f9;
@@ -55,8 +55,8 @@
   --motion-fast: 120ms;
   --motion-enter: 180ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 55%);
-  --terminal-fill: #101010;
+  --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.004), transparent 55%);
+  --terminal-fill: #080808;
   --terminal-glow: radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
   --shadow-shell: 0 8px 24px rgba(0, 0, 0, 0.32);
   --shell-fill: var(--bg);

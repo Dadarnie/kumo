@@ -26,7 +26,6 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 const SUBCLASS: usize = 0x4d49_5746;
 const HOTKEY: i32 = 0x4d49;
-const RESET_POSITION_HOTKEY: i32 = 0x4d4a;
 const VOICE_HOTKEY: i32 = 0x4d4b;
 const GRAB_CONTROL: u32 = WM_APP + 0x44;
 const GRAB_CANCEL: u32 = WM_APP + 0x45;
@@ -253,18 +252,6 @@ pub(crate) fn observe(win: &WebviewWindow, value: &str) {
         Ok(hook) => unsafe { (*app).control_hook = Some(hook) },
         Err(error) => crate::log::line(format!("Grab Control shortcut unavailable: {error}")),
     }
-    if unsafe {
-        RegisterHotKey(
-            Some(HWND(raw.0)),
-            RESET_POSITION_HOTKEY,
-            MOD_CONTROL | MOD_ALT | MOD_NOREPEAT,
-            0x24,
-        )
-    }
-    .is_err()
-    {
-        crate::log::line("Island position shortcut is in use. Use Return to top in the Mimo menu.");
-    }
 }
 unsafe extern "system" fn control_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     if code >= 0 {
@@ -335,7 +322,6 @@ unsafe extern "system" fn shortcut_proc(
 ) -> LRESULT {
     if message == WM_NCDESTROY {
         let _ = unsafe { UnregisterHotKey(Some(hwnd), HOTKEY) };
-        let _ = unsafe { UnregisterHotKey(Some(hwnd), RESET_POSITION_HOTKEY) };
         let _ = unsafe { UnregisterHotKey(Some(hwnd), VOICE_HOTKEY) };
         VOICE_ACTIVE.store(false, Ordering::SeqCst);
         CONTROL_TARGET.store(0, Ordering::SeqCst);
@@ -380,9 +366,6 @@ unsafe extern "system" fn shortcut_proc(
     } else if message == GRAB_CANCEL {
         let app = unsafe { &*(data as *const Shortcuts) }.app.clone();
         tauri::async_runtime::spawn_blocking(move || crate::grab::return_to_panel(&app));
-    } else if message == WM_HOTKEY && wparam.0 == RESET_POSITION_HOTKEY as usize {
-        let app = &unsafe { &*(data as *const Shortcuts) }.app;
-        crate::island::finish_move(app, true);
     } else if message == WM_HOTKEY && wparam.0 == HOTKEY as usize {
         let app = &unsafe { &*(data as *const Shortcuts) }.app;
         if let Some(win) = crate::island::window(app) {

@@ -198,7 +198,7 @@ export class MasterAudioController {
     }
   >();
   private visible = false;
-  private opened = true;
+  private opened = false;
   private body: HTMLElement;
   private disclosure: HTMLButtonElement;
   private summary = h("span", { class: "audio-disclosure-summary" });
@@ -221,7 +221,7 @@ export class MasterAudioController {
     );
     const id = `windows-audio-${++panelSequence}`;
     try {
-      this.opened = localStorage.getItem("mimo.audio.expanded") !== "false";
+      this.opened = localStorage.getItem("mimo.audio.expanded") === "true";
     } catch {
       /* Storage may be unavailable in a preview. */
     }

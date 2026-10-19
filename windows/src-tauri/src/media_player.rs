@@ -75,6 +75,8 @@ pub struct MediaPlayerState {
     pub artwork: Option<Arc<MediaArtwork>>,
     pub timeline: Option<MediaTimeline>,
     pub volume: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub volume_step: Option<u16>,
     pub shuffle: Option<bool>,
     pub repeat_mode: Option<RepeatMode>,
 }

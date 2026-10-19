@@ -55,6 +55,7 @@ mod coding;
 mod mcp;
 mod providers;
 mod questions;
+mod test_results;
 mod win;
 use win::connect;
 
@@ -290,6 +291,7 @@ fn prepare_event(mut raw: Vec<u8>, args: impl Iterator<Item = String>) -> Option
     let next_actions = coding::next_actions(&payload);
     let activity_usage = prepare_activity_usage(&payload, &provider);
     let preview = prepare_preview(&payload);
+    let tests = test_results::prepare(&payload);
     // Both providers supply the final response directly on Stop. Keep just the
     // card's short summary; transcripts and the complete response stay local.
     let completion = (payload.get("hook_event_name").and_then(|v| v.as_str()) == Some("Stop"))
@@ -314,6 +316,9 @@ fn prepare_event(mut raw: Vec<u8>, args: impl Iterator<Item = String>) -> Option
     }
     if let Some(preview) = preview {
         map.insert("mimo_preview".into(), preview);
+    }
+    if let Some(tests) = tests {
+        map.insert("mimo_tests".into(), tests);
     }
     if let Some(edits) = edits {
         if map.get("tool_name").and_then(|v| v.as_str()) == Some("apply_patch") {

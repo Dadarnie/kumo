@@ -231,7 +231,7 @@ pub fn position_info(_app: &AppHandle, _pref: &str) -> PositionInfo {
 pub fn begin_move(_app: &AppHandle, _offset_x: f64, _offset_y: f64) {}
 pub fn move_anchor(_app: &AppHandle) {}
 pub fn cancel_move(_app: &AppHandle) {}
-pub fn finish_move(app: &AppHandle, _reset: bool) {
+pub fn finish_move(app: &AppHandle) {
     let Some(shared) = app.try_state::<crate::Shared>() else {
         return;
     };

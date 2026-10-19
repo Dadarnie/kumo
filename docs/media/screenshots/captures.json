@@ -1,11 +1,15 @@
 {
   "method": "Unmodified screenshots of production Mimo components in isolated Chrome. Drop Shelf uses three local example files; Settings uses default local preferences. No service or account data was read.",
+  "capturedAt": "2026-10-19T08:21:17.973Z",
+  "sourceReference": "77f5c3345c9582dd422bbc1cf6969a811dad7db6",
   "sourceHashNormalization": "UTF-8 with CRLF normalized to LF",
   "sources": {
-    "windows/dev/media-preview.html": "13b3ebc0f2c6f5b6d765cb7ae91daeb70a57e657491594e6b84eec20c957830c",
-    "windows/src/design/tokens.css": "9e30eaadf78e556205029a683462151af81b7fc6820ed8029383acee23bcc227",
-    "windows/src/views/grab.ts": "accbd54dba4814c344aff7abb0c13d00e4bceb6c17ab18b06e8e26db2a798651",
-    "windows/src/settings/main.ts": "51da1b84981f14607c68a3747ef7461b77f62e7cf62fef3b85ae7593466c08c9"
+    "windows/dev/media-preview.html": "9a2e468881c85a87fa7ce7ca4535a7fed6a2474366f9762650485506f4759dea",
+    "windows/src/design/tokens.css": "9aeddfa513378711145f9893c7b71a34b469fea683cc2a797b24a7cea8d696af",
+    "windows/src/views/grab.ts": "cbbefe05389db6c03b4c560fd2e4a8a1caeb501ad489eb356ac43139afeed0d8",
+    "windows/src/views/grab.css": "aba654e0fd6037eb9dbc1da5557c492caf0ecfd360ff38e61f53c4a9d9b19078",
+    "windows/src/settings/main.ts": "51da1b84981f14607c68a3747ef7461b77f62e7cf62fef3b85ae7593466c08c9",
+    "windows/src/settings/settings.css": "3ecc5130088fcc681e6c370635c7d6362df0807d747404ff06899d27daf26eeb"
   },
   "captures": [
     {
@@ -15,9 +19,9 @@
       "fixturePage": "windows/dev/media-preview.html",
       "width": 2064,
       "height": 984,
-      "sha256": "1f43dd2de59f76378a2c8e271e14e6bb0137234911a6432bed25cf7ca59b8cf5",
-      "bytes": 79376,
-      "localSource": "windows/target/readme-captures/shelf.png"
+      "sha256": "8e62b1888262fd87ece6921bcf14b4d17d3afe33ebc3551c36688901ebe854c8",
+      "bytes": 74390,
+      "localSource": "windows/target/readme-release-captures-2026-10-19T08-21-12-765Z/shelf.png"
     },
     {
       "file": "settings.png",
@@ -26,9 +30,9 @@
       "fixturePage": "windows/settings.html",
       "width": 2144,
       "height": 1728,
-      "sha256": "ae7fe8538848e4d0ef83291251f1bce1caa4b119746a8ffa9fac57460b6ce24d",
-      "bytes": 121618,
-      "localSource": "windows/target/readme-captures/settings.png"
+      "sha256": "31e6bbdb06a78d8e13b88a05ba7ae71f882a5dd843663971ce1225eb64f3f835",
+      "bytes": 119351,
+      "localSource": "windows/target/readme-release-captures-2026-10-19T08-21-12-765Z/settings.png"
     }
   ]
 }

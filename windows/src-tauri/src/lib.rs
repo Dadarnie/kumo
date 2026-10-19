@@ -316,7 +316,7 @@ async fn move_island(
             0 => island::begin_move(&handle, offset.0, offset.1),
             1 => island::move_anchor(&handle),
             4 => island::cancel_move(&handle),
-            _ => island::finish_move(&handle, action == 3),
+            _ => island::finish_move(&handle),
         }
         let pref = handle
             .state::<Shared>()
@@ -346,10 +346,6 @@ async fn move_island_anchor(app: AppHandle) -> Result<PositionInfo, String> {
 #[tauri::command]
 async fn finish_island_move(app: AppHandle) -> Result<PositionInfo, String> {
     move_island(app, 2, (0.0, 0.0)).await
-}
-#[tauri::command]
-async fn reset_island_position(app: AppHandle) -> Result<PositionInfo, String> {
-    move_island(app, 3, (0.0, 0.0)).await
 }
 #[tauri::command]
 async fn cancel_island_move(app: AppHandle) -> Result<PositionInfo, String> {
@@ -1042,7 +1038,6 @@ pub fn run() {
             begin_island_move,
             move_island_anchor,
             finish_island_move,
-            reset_island_position,
             cancel_island_move,
             show_mimo_menu,
             open_url,

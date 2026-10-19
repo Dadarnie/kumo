@@ -2,15 +2,15 @@
   "file": "Mimo-Windows-setup.exe",
   "version": "1.0.0",
   "platform": "windows-x86_64",
-  "sourceReference": "60012733c6e41501a099e15ed81b83c1bf84c04b",
+  "sourceReference": "77f5c3345c9582dd422bbc1cf6969a811dad7db6",
   "sourceSnapshot": {
     "algorithm": "git-tree-sha256-v1",
-    "files": 309,
-    "sha256": "76cf99caa89a61af29c190b090d47b063edb4021f0122c502a7ac0b327f594e3"
+    "files": 314,
+    "sha256": "8634984ac0c9dc6984b3312dd66a3df80f02ab97e6c59d5d40cc4ebebef7aba0"
   },
-  "builtAt": "2026-10-18T19:29:59.146Z",
-  "bytes": 4632468,
-  "sha256": "31707ac2707ffa077cc13ecf0b56bc939b5d2f0c54ad454c69873b5ffd7bb615",
+  "builtAt": "2026-10-19T08:18:11.677Z",
+  "bytes": 4641528,
+  "sha256": "4573e71155a59cc2986e6103e99f61315a43f7a78ab7d6033d68b62fcfcfd5eb",
   "signatureStatus": "NotSigned",
   "note": "Built with npm run pack. The source fingerprint also identifies the equivalent source in a public repository with fresh history. No fresh installation was performed."
 }
