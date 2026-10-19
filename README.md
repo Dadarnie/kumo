@@ -11,7 +11,7 @@
 
 <p align="center">
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square">
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-4FB29E?style=flat-square">
+  <img alt="Version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-4FB29E?style=flat-square">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-FFC131?style=flat-square">
   <img alt="MIT code" src="https://img.shields.io/badge/code-MIT-74B087?style=flat-square">
 </p>
@@ -22,7 +22,7 @@
   · <a href="https://github.com/Jiocode1/mimo/issues">Report a bug</a>
 </p>
 
-> **Windows 10 / 11 · v1.0.0 · 64-bit.** The installer is **not code-signed yet**.
+> **Windows 10 / 11 · v1.0.1 · 64-bit.** The installer is **not code-signed yet**.
 > Windows may show an unknown-publisher or SmartScreen notice.
 > [SHA-256 checksum](downloads/SHA256SUMS.txt) · [Build from source](#build-and-run)
 
@@ -32,7 +32,7 @@
 
 | Platform | Availability |
 | --- | --- |
-| Windows 10 / 11, 64-bit | [Download v1.0.0](https://github.com/Jiocode1/mimo/raw/refs/heads/main/downloads/Mimo-Windows-setup.exe) |
+| Windows 10 / 11, 64-bit | [Download v1.0.1](https://github.com/Jiocode1/mimo/raw/refs/heads/main/downloads/Mimo-Windows-setup.exe) |
 | Android | Coming soon |
 
 1. [Download Mimo-Windows-setup.exe](https://github.com/Jiocode1/mimo/raw/refs/heads/main/downloads/Mimo-Windows-setup.exe).

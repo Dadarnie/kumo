@@ -1,6 +1,6 @@
 # Windows downloads and builds
 
-Mimo runs on Windows 10 or 11 with WebView2. The current version is **1.0.0**.
+Mimo runs on Windows 10 or 11 with WebView2. The current version is **1.0.1**.
 An Android version is coming soon.
 
 ## Download and verify
@@ -56,6 +56,17 @@ the required [licenses and notices](../legal/README.md).
 Keep `windows/package.json`, `windows/Cargo.toml` and
 `windows/src-tauri/tauri.conf.json` in sync. Follow the
 [contribution guide](../.github/CONTRIBUTING.md) before packaging.
+
+## Versions and tags
+
+Application versions use `MAJOR.MINOR.PATCH`. Windows tags use
+`windows-v<version>`, so version `1.0.1` has the tag `windows-v1.0.1`.
+Small fixes and UI refinements increment the patch number. Larger feature
+releases increment the minor number; breaking changes increment the major number.
+
+Keep the npm and Cargo lockfiles in sync with the application version. Tag the
+commit containing the matching installer, checksum and build record. Published
+tags stay fixed; the next update receives a new version and tag.
 
 ## Export a clean public copy
 

@@ -2,7 +2,7 @@
 name: Windows
 
 # Builds the Windows app and publishes the installer.
-# Triggered by tags like `windows-v0.1.0`.
+# Triggered by tags like `windows-v1.0.1`.
 
 on:
   push:

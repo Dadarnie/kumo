@@ -85,3 +85,23 @@ __pycache__/
 /windows/.smoke-artifacts/
 .DS_Store
 Thumbs.db
+
+# Capture screenshots and visual references are local by default.
+*.png
+**/reference/
+**/references/
+**/captures/
+**/screenshots/
+
+# Selected public README media and application build assets.
+!docs/media/icon.png
+!docs/media/agents/*.png
+!docs/media/agents/marks/*.png
+!docs/media/screenshots/
+!docs/media/screenshots/shelf.png
+!docs/media/screenshots/settings.png
+!docs/media/screenshots/captures.json
+!windows/mimo-app--icon/mimo-app-icon.png
+!windows/src/assets/app-icon.png
+!windows/src/assets/app-icon-ui.png
+!windows/src-tauri/icons/*.png

@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.1
+
+Packages the recent UI and feature update under its own patch version.
+[Full release notes](releases/windows-v1.0.1.md).
+
+- Rework Terminal into one workspace with file edits above command output,
+  reported test counts and expandable test or suite details.
+- Make Spotify volume, shuffle and repeat respond immediately, coalesce rapid
+  input and recover from failed changes. Volume uses Spotify's own slider.
+- Simplify Home with a circular Now Playing shortcut, remove the idle clock
+  divider and align the darker card surfaces across the island and Settings.
+- Refine the Media empty and playing states, use a compact Windows audio pill,
+  and let Shelf fill the available panel with scrolling at its height limit.
+- Reuse the overlapping service-Mimo stack during confusion, preserve the
+  return to Chat, and refine the greeting's sway, tilt and bob.
+- Add Refresh to the right-click menu, remove obsolete position-reset controls,
+  and populate lazy panels before their first paint.
+- Refresh the Windows installer, checksums, build record and README screenshots.
+
 ## 1.0.0
 
 - Present one MIT code license and one Mimo asset license; retain supporting

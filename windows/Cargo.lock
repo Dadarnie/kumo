@@ -2102,7 +2102,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mimo"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "base64 0.22.1",
  "keyring",
@@ -2125,7 +2125,7 @@ dependencies = [
 
 [[package]]
 name = "mimo-hook"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "serde_json",
  "windows 0.61.3",
