@@ -52,7 +52,7 @@ and reach your coding activity, conversations, files and music. When you are
 done, it settles back into a compact companion.
 
 <p align="center">
-  <img src="docs/media/mimo-intro.gif" alt="Mimo greeting, permission review, terminal, GitHub and Stripe" width="760" height="418">
+  <img src="docs/media/mimo-intro.gif?v=ac3213509241" alt="Mimo greeting, permission review, terminal, GitHub and Stripe" width="760" height="418">
 </p>
 
 ### Coding agents
