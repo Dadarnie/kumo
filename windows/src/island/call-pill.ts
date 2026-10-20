@@ -6,9 +6,9 @@ import { ICONS, icon } from "../views/icons";
 import { Bridge, type CallState } from "../core/bridge";
 import { Lifetime } from "../core/lifetime";
 
-// ponytail: polls the registry every 2s; switch to a registry change
+// ponytail: polls the registry every 4s; switch to a registry change
 // notification if the poll ever shows up in CPU or battery numbers.
-const POLL_MS = 2000;
+const POLL_MS = 4000;
 
 export class CallPill {
   private dot = h("span", { class: "call-dot", "aria-hidden": "true" });
@@ -39,7 +39,8 @@ export class CallPill {
 
   private async refresh(): Promise<void> {
     if (!this.lifetime.active) return;
-    const next = await Bridge.callState().catch(() => null);
+    // Hidden window (screen locked, minimized session): skip the check entirely.
+    const next = document.hidden ? this.state : await Bridge.callState().catch(() => null);
     const changed = (next === null) !== (this.state === null);
     this.state = next;
     this.render();

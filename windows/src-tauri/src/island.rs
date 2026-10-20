@@ -339,7 +339,17 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
             gate.wait_until_active();
             let mut last = (f64::MIN, f64::MIN);
             let mut last_control = false;
-            let mut last_raw = (f64::NAN, f64::NAN, false, false, 0.0, 0.0, 0.0, 0.0, u8::MAX);
+            let mut last_raw = (
+                f64::NAN,
+                f64::NAN,
+                false,
+                false,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                u8::MAX,
+            );
             let mut ticks: u32 = 0;
             while gate.is_active() {
                 std::thread::sleep(Duration::from_millis(16));
@@ -373,7 +383,17 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 // The island shape and state count too: it can resize under a still cursor.
                 let shape = *gate.rect.lock().unwrap();
                 let state = *gate.visibility.lock().unwrap();
-                let raw = (cx, cy, down, control, shape.x, shape.y, shape.w, shape.h, state as u8);
+                let raw = (
+                    cx,
+                    cy,
+                    down,
+                    control,
+                    shape.x,
+                    shape.y,
+                    shape.w,
+                    shape.h,
+                    state as u8,
+                );
                 if raw == last_raw {
                     continue;
                 }

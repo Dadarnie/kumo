@@ -242,6 +242,7 @@ export class Island {
   private hoverExpanded = false;
   /** Opened by agent work, not by you: it must not take keyboard focus from your app. */
   private autoOpened = false;
+  private lipGaze = "";
   private cursorPosition: { x: number; y: number } | null = null;
   private cursorDesktop = false;
 
@@ -1200,7 +1201,9 @@ export class Island {
       : this.media.heightFor(State.visibility, State.view);
     return {
       w: (State.visibility === "island" && this.media.available &&
-        (mediaStore.snapshot().state.playbackState === "paused" || this.compactControlsHeld) ? 288 : w)
+        (mediaStore.snapshot().state.playbackState === "paused" || this.compactControlsHeld) ? 288
+        // Room for the title beside Deny / Allow while an approval waits in the pill.
+        : State.visibility === "island" && State.pendingApproval && !State.pendingApproval.questions ? 320 : w)
         +(State.visibility === "island"&&this.grabReturnHover?16:0),
       h: Math.min(PANEL_H, bodyHeight + reserve+(State.visibility === "island"&&this.grabReturnHover?6:0)),
       r: State.visibility === "peek" ? PEEK_H/2 : State.visibility === "island" ? 20 : r,
@@ -1471,7 +1474,13 @@ export class Island {
     if (sample?.down && inIsland && this.autoOpened) { this.autoOpened = false; State.notify(); }
     if (State.visibility === "peek") {
       // The peeking mascot follows the cursor; redraw only when it moves.
-      if (moved) { this.dirty = true; this.ensureRunning(); }
+      // Redraw only when the gaze visibly changes, not on every mouse move.
+      if (moved) {
+        const rect = this.islandRect();
+        const gaze = mimoCursorGaze(x, y, rect.x + this.botCx.value, rect.y + this.botCy.value);
+        const key = Math.round(gaze.x * 40) + "," + Math.round(gaze.y * 40);
+        if (key !== this.lipGaze) { this.lipGaze = key; this.dirty = true; this.ensureRunning(); }
+      }
       if (inIsland && !this.wasInIsland) Visibility.pointerEntered(true);
       if (!inIsland && this.wasInIsland) Visibility.pointerLeft();
       this.wasInIsland = inIsland;

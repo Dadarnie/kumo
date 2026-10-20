@@ -366,3 +366,16 @@
 .call-pill[data-muted="true"] .call-mic { background: var(--red); color: #fff; }
 .call-mic:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
 @media (prefers-reduced-motion: reduce) { .call-dot { animation: none; } }
+/* Calm compact island: one line of work, no extras. Details live in the expanded view. */
+#island[data-visibility="island"] .activity-work-detail,
+#island[data-visibility="island"] .activity-work-metric,
+#island[data-visibility="island"] .activity-work-changes,
+#island[data-visibility="island"] .activity-review { display: none !important; }
+#island[data-visibility="island"] .activity-work-title { font-size: 12px; }
+/* Music controls appear only for paused music; never on top of work or notices. */
+#island[data-activity-kind="music"] .media-ambient.is-compact-transport,
+#island[data-activity-kind="notice"] .media-ambient,
+#island[data-activity-kind="coding"] .media-ambient { visibility: hidden; opacity: 0; pointer-events: none; }
+/* Music pill like the reference: artwork left, waveform right (before the mascot). */
+.activity-strip[data-kind="music"] .activity-art { order: -1; }
+.activity-strip[data-kind="music"] .spotify-equalizer { margin-left: auto; }

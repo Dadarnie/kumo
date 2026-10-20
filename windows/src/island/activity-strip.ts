@@ -60,8 +60,6 @@ export class ActivityStrip {
     this.workStatus,
   );
   private clock: ReturnType<typeof setTimeout> | undefined;
-  private rotation: ReturnType<typeof setTimeout> | undefined;
-  private notification = false;
   private key = "";
   private lifetime = new Lifetime();
   private controlsHeld = false;
@@ -105,8 +103,7 @@ export class ActivityStrip {
     this.controlsHeld = controlsHeld;
     if (document.hidden) {
       clearTimeout(this.clock);
-      clearTimeout(this.rotation);
-      this.clock = this.rotation = undefined;
+      this.clock = undefined;
       this.equalizer.setVisible(false);
       return;
     }
@@ -140,43 +137,17 @@ export class ActivityStrip {
           : task
           ? `${task.name} · ${task.pillBadge ?? task.state}`
           : "";
-    const eligible =
-      baseline &&
-      hasMedia &&
-      !!activity &&
-      media.state.playbackState === "playing";
-    if (!eligible) {
-      clearTimeout(this.rotation);
-      this.rotation = undefined;
-      this.notification = false;
-    } else if (!this.rotation) {
-      this.rotation = setTimeout(
-        () => {
-          this.rotation = undefined;
-          this.notification = !this.notification;
-          this.sync();
-        },
-        this.notification ? 2400 : 8000,
-      );
-    }
-    const music =
-      baseline &&
-      hasMedia &&
-      media.state.playbackState === "playing" &&
-      !controlsHeld;
+    // One thing at a time, by priority: agent work (incl. approvals) > other
+    // agent notices > music > clock. No rotation between them.
+    const music = baseline && hasMedia && !controlsHeld;
     const idle = baseline && !hasMedia;
-    const actionable = coding && (["approval", "question", "ratelimit", "error", "finished"].includes(coding.state)
-      || !!coding.activity?.stopped || coding.pillBadge === "finished"
-      || compactCodingProgress(coding, State.paused).state === "quiet");
-    const shown = this.notification || idle || actionable ? activity : "";
+    const notice = !coding && !!task && !upload ? activity : "";
+    const shown = coding || upload ? activity : notice && !hasMedia ? notice : "";
     const visible = baseline;
-    const kind = shown
-      ? coding ? "coding" : "notice"
-      : music
-        ? "music"
-        : idle
-          ? "idle"
-          : "transport";
+    const kind = coding ? "coding"
+      : shown ? "notice"
+      : music ? media.state.playbackState === "playing" ? "music" : "transport"
+      : idle ? "idle" : "transport";
     this.el.classList.toggle("is-visible", visible);
     this.el.setAttribute("aria-hidden", String(!visible));
     const presentationChanged = this.el.dataset.kind !== kind;
@@ -198,9 +169,7 @@ export class ActivityStrip {
       );
     this.key = key;
     if (this.el.parentElement) {
-      this.el.parentElement.dataset.notification = String(
-        (this.notification || !!actionable) && eligible,
-      );
+      this.el.parentElement.dataset.notification = String(kind === "notice");
       this.el.parentElement.dataset.activityKind = kind;
     }
     this.notice.style.display = shown && kind !== "coding" ? "" : "none";
@@ -208,15 +177,16 @@ export class ActivityStrip {
     this.label.hidden = !shown || kind === "coding";
     // The lip always shows the clock; the island swaps it for coding status.
     const lip = State.visibility === "peek";
-    this.time.hidden = (kind === "coding" && !lip) || !State.settings.clockEnabled;
+    // Clock only when nothing else needs the space (always in the lip).
+    this.time.hidden = (!lip && kind !== "idle") || !State.settings.clockEnabled;
     this.syncWork(kind === "coding" ? coding : null);
     this.progress.hidden = !upload || !visible;
     this.progress.style.setProperty(
       "--activity-progress",
       `${Math.max(0, Math.min(1, State.uploadProgress)) * 100}%`,
     );
-    this.equalizer.el.hidden = !music || !!shown;
-    this.equalizer.setVisible(music && !shown);
+    this.equalizer.el.hidden = kind !== "music";
+    this.equalizer.setVisible(kind === "music");
     const art = kind === "music" && /^blob:/.test(media.player.artwork?.dataUrl ?? "")
       ? media.player.artwork!.dataUrl : null;
     this.art.hidden = !art;
@@ -224,7 +194,8 @@ export class ActivityStrip {
     if (!art) this.art.removeAttribute("src");
     // Rotation changes the mascot and media presentation as well as this strip.
     if (presentationChanged) State.notify();
-    this.syncIntegrations(idle && !shown);
+    // Mini Mimos live in the expanded Home; the compact island stays calm.
+    this.syncIntegrations(false);
     if (visible) this.tick();
     else if (State.visibility === "expanded" && ["overview", "integrations"].includes(State.view) && !State.paused) {
       // Reuse the strip clock for one silence deadline while Home's mini Mimos are visible.
@@ -261,7 +232,7 @@ export class ActivityStrip {
     const progress = work.state === "complete" ? 1 : steps ? Math.min(0.9, (task.stepIndex + 1) / (steps + 1)) : 0.25;
     this.ring.style.setProperty("--p", String(progress));
     this.ring.dataset.state = task.state === "approval" || task.state === "question" ? "attention" : work.state;
-    this.ring.hidden = work.state === "stopped" || work.state === "idle";
+    this.ring.hidden = work.state === "stopped" || work.state === "idle" || (task.state === "approval" && !!State.pendingApproval && !State.pendingApproval.questions);
     const deciding = task.state === "approval" && !!State.pendingApproval && !State.pendingApproval.questions;
     this.deny.hidden = this.allow.hidden = !deciding;
     this.review.hidden = !work.review || deciding;
@@ -344,7 +315,6 @@ export class ActivityStrip {
   destroy(): void {
     this.lifetime.destroy();
     clearTimeout(this.clock);
-    clearTimeout(this.rotation);
     this.equalizer.destroy();
     this.art.removeAttribute("src");
   }
