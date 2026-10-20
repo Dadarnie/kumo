@@ -13,7 +13,7 @@ pub fn target(point: POINT) -> Result<(Pixels, String, RECT), String> {
     unsafe {
         let hwnd = GetAncestor(WindowFromPoint(point), GA_ROOT);
         if hwnd.is_invalid() || !IsWindowVisible(hwnd).as_bool() || IsIconic(hwnd).as_bool() {
-            return Err("Drop Mimo onto a visible app window.".into());
+            return Err("Drop Kumo onto a visible app window.".into());
         }
         let mut pid = 0;
         GetWindowThreadProcessId(hwnd, Some(&mut pid));
@@ -29,7 +29,7 @@ pub fn target(point: POINT) -> Result<(Pixels, String, RECT), String> {
             ]
             .contains(&class.as_str())
         {
-            return Err("Drop Mimo onto an app, rather than the desktop or taskbar.".into());
+            return Err("Drop Kumo onto an app, rather than the desktop or taskbar.".into());
         }
         let mut rect = RECT::default();
         GetClientRect(hwnd, &mut rect).map_err(|_| "This window cannot be captured.")?;

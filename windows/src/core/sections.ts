@@ -41,7 +41,7 @@ export const SECTIONS = [
   { id: "overview", label: "Home" },
   { id: "prompt", label: "Chat" },
   { id: "integrations", label: "Tools" },
-  { id: "grab", label: "Mimo Shelf" },
+  { id: "grab", label: "Kumo Shelf" },
 ] as const;
 
 export function sectionEnabled(

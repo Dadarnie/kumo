@@ -186,7 +186,7 @@ fn configure_slot(
     };
     let Ok(raw) = win.hwnd() else {
         return ShortcutStatus {
-            error: Some("Mimo window is unavailable.".into()),
+            error: Some("Kumo window is unavailable.".into()),
             ..old
         };
     };

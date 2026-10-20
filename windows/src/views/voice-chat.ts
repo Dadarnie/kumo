@@ -86,7 +86,7 @@ export class VoiceChat {
   private change(phase: VoicePhase): void {
     this.phase = phase;
     const labels = { idle: "Start voice chat", connecting: "Connecting voice…", recording: "Listening · tap to send",
-      transcribing: "Transcribing…", waiting: "Waiting for a reply…", speaking: "Mimo is speaking…" };
+      transcribing: "Transcribing…", waiting: "Waiting for a reply…", speaking: "Kumo is speaking…" };
     const action = phase === "recording" ? "Send voice message" : phase === "idle" ? labels.idle : "Stop voice chat";
     this.button.title = action;
     this.button.setAttribute("aria-label", action);

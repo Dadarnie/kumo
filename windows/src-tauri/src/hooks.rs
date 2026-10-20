@@ -85,7 +85,7 @@ pub(crate) fn parse_settings(bytes: &[u8], path: &str) -> Result<Value, String> 
     }
     match serde_json::from_slice::<Value>(text) {
         Ok(v) if v.is_object() => Ok(v),
-        Ok(_) => Err(format!("{path} isn't a JSON object — Mimo won't touch it.")),
+        Ok(_) => Err(format!("{path} isn't a JSON object — Kumo won't touch it.")),
         Err(_) => Err(format!(
             "{path} isn't valid JSON. Fix it before installing hooks."
         )),

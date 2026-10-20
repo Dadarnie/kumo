@@ -141,7 +141,7 @@ export class UploadCanvas {
     this.canvas = document.createElement("canvas");
     this.canvas.id = "upload-canvas";
     this.canvas.setAttribute("role", "img");
-    this.canvas.setAttribute("aria-label", "Drop a file for Mimo");
+    this.canvas.setAttribute("aria-label", "Drop a file for Kumo");
 
     const mk = (x: number, w: number, label: string, text: string, glyph:string|null, onclick: () => void,primary=false) => {
       const b = document.createElement("button");
@@ -216,8 +216,8 @@ export class UploadCanvas {
 
     this.drawScene(ctx, f, wallTime);
     const multiple = State.droppedFiles.length > 1;
-    const label = f.fileVisible ? f.dropped ? "Mimo is eating your files" : "Drop up to 5 files for Mimo"
-      : f.chooseAlpha > 0 ? multiple ? "Files ready. Ask Mimo about them together." : "File ready. Ask Mimo or put it on the Drop Shelf."
+    const label = f.fileVisible ? f.dropped ? "Kumo is eating your files" : "Drop up to 5 files for Kumo"
+      : f.chooseAlpha > 0 ? multiple ? "Files ready. Ask Kumo about them together." : "File ready. Ask Kumo or put it on the Drop Shelf."
       : f.check > 0 ? "Files copied" : "Copying your files";
     if (this.canvas.getAttribute("aria-label") !== label) this.canvas.setAttribute("aria-label", label);
 
@@ -416,7 +416,7 @@ export class UploadCanvas {
     while(name.length>1&&ctx.measureText(name).width>390)name=name.slice(0,-2)+"\u2026";
     const multiple = State.droppedFiles.length > 1;
     text(ctx,`${name} ${multiple ? "are" : "is"} ready.`,114,80,`600 14px ${FONT}`,this.colors.ink);
-    text(ctx,multiple ? "Ask Mimo about them together." : "What do you want to do with it?",114,100,`400 12.5px ${FONT}`,this.colors.dim);
+    text(ctx,multiple ? "Ask Kumo about them together." : "What do you want to do with it?",114,100,`400 12.5px ${FONT}`,this.colors.dim);
     ctx.restore();
   }
 

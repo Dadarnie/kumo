@@ -30,7 +30,7 @@ pub fn validate_context(context: &Option<crate::claude::ChatContext>) -> Result<
             .canonicalize()
             .map_err(|_| "Attach this file again.")?;
         if file.parent() != Some(inbox.as_path()) || !file.is_file() || name.len() > 512 {
-            return Err("Attach the file to Mimo before sending it.".into());
+            return Err("Attach the file to Kumo before sending it.".into());
         }
     }
     Ok(())

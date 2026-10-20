@@ -30,7 +30,7 @@ impl Grab {
         let mut guard = self.library.lock().map_err(|_| "The shelf is busy.")?;
         if guard.is_none() {
             crate::windows::ensure_private_dir(&crate::settings::local_dir())
-                .map_err(|_| "Could not open private Mimo storage.")?;
+                .map_err(|_| "Could not open private Kumo storage.")?;
             let mut library = store::load(&store::root())?;
             store::expire(&store::root(), &mut library)?;
             grab_clipboard::cleanup(library.retention_days)?;
@@ -160,16 +160,16 @@ fn dispatch(app: &AppHandle, action: &str, args: &Value) -> Result<Value, String
         "import" => {
             let path = Path::new(text(args, "path")?)
                 .canonicalize()
-                .map_err(|_| "Drop this file on Mimo again.")?;
+                .map_err(|_| "Drop this file on Kumo again.")?;
             if path.parent()
                 != Some(
                     crate::files::inbox_dir()
                         .canonicalize()
-                        .map_err(|_| "Drop the file on Mimo first.")?
+                        .map_err(|_| "Drop the file on Kumo first.")?
                         .as_path(),
                 )
             {
-                return Err("Drop the file on Mimo before adding it to the shelf.".into());
+                return Err("Drop the file on Kumo before adding it to the shelf.".into());
             }
             if std::fs::metadata(&path)
                 .map_err(|_| "This file is unavailable.")?
@@ -327,10 +327,10 @@ fn detach(app: &AppHandle, args: &Value) -> Result<(), String> {
         .unwrap()
         .grab_enabled
     {
-        return Err("Mimo grabbing is off in Settings.".into());
+        return Err("Kumo grabbing is off in Settings.".into());
     }
     if grab.capturing.load(Ordering::SeqCst) {
-        return Err("Mimo is finishing your capture.".into());
+        return Err("Kumo is finishing your capture.".into());
     }
     let render_size = args["renderSize"]
         .as_f64()
@@ -346,7 +346,7 @@ fn detach(app: &AppHandle, args: &Value) -> Result<(), String> {
         "grab-companion",
         WebviewUrl::App("grab-companion.html".into()),
     )
-    .title("Mimo Shelf")
+    .title("Kumo Shelf")
     .inner_size(104.0, 96.0)
     .decorations(false)
     .transparent(true)
@@ -358,7 +358,7 @@ fn detach(app: &AppHandle, args: &Value) -> Result<(), String> {
     .focusable(false)
     .visible(false)
     .build()
-    .map_err(|_| "Could not pick up Mimo. Try dragging him again.")?;
+    .map_err(|_| "Could not pick up Kumo. Try dragging him again.")?;
     let island = app.get_webview_window("island");
     let scale = island
         .as_ref()

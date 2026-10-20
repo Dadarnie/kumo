@@ -21,7 +21,7 @@ export function buildDesktopVoice(actions: ViewActions): ViewHost {
     onclick: () => actions.openSettingsWindow("chat") });
   const close = h("button", { type: "button", class: "desktop-voice-close", "aria-label": "Close voice control", title: "Close voice control",
     onclick: () => actions.closeVoice() }, icon(ICONS.xmark, 12));
-  const el = h("div", { class: "view desktop-voice-view", "aria-label": "Mimo voice control" },
+  const el = h("div", { class: "view desktop-voice-view", "aria-label": "Kumo voice control" },
     close, h("div", { class: "desktop-voice-copy" }, label, equalizer.el, detail),
     h("div", { class: "desktop-voice-controls" }, action, settings));
   return { el, sync() {

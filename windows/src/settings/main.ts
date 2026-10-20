@@ -183,9 +183,9 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
       h("div", {
         class: "hint",
         text: status.installed
-          ? provider === "cursor" ? "Ready. Start an Agent conversation in Cursor and Mimo will follow along."
-            : observer ? "Installed. Restart your coding app and enable its hooks to see activity." : "Ready. Start coding and Mimo will follow along."
-          : "Bring " + name + " into Mimo. No API key needed.",
+          ? provider === "cursor" ? "Ready. Start an Agent conversation in Cursor and Kumo will follow along."
+            : observer ? "Installed. Restart your coding app and enable its hooks to see activity." : "Ready. Start coding and Kumo will follow along."
+          : "Bring " + name + " into Kumo. No API key needed.",
       }),
       h(
         "div",
@@ -206,7 +206,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
       body.append(
         h("div", {
           class: "notice warn",
-          text: "The connection helper is missing. Restart Mimo to try again.",
+          text: "The connection helper is missing. Restart Kumo to try again.",
         }),
       );
     }
@@ -221,7 +221,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
     // every Claude Code session a broken hook and nothing to show for it.
     if (!status.hookReady) {
       install.disabled = true;
-      install.title = "Restart Mimo to restore the connection helper.";
+      install.title = "Restart Kumo to restore the connection helper.";
     }
     actions.append(install);
     if (status.installed) {
@@ -238,13 +238,13 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
         ? "Install hooks, then start an Agent conversation in Cursor. Restart Cursor if the hooks have not loaded."
         : "Install hooks, restart your assistant in VSCodium, and start coding." }),
       h("p", { class: "hint", text: observer
-        ? "Mimo follows activity. Permissions and sign-in stay in " + name + "."
-        : "All coding tools can stay connected. Approvals return to your terminal when Mimo can’t show them." }),
+        ? "Kumo follows activity. Permissions and sign-in stay in " + name + "."
+        : "All coding tools can stay connected. Approvals return to your terminal when Kumo can’t show them." }),
     );
     if (provider === "hermes")
       body.append(h("p", { class: "hint", text: "After installing, enable the observer: hermes plugins enable mimo-companion" }));
     if (provider === "codex")
-      body.append(h("p", { class: "hint", text: "In Codex, trust Mimo in /hooks." }));
+      body.append(h("p", { class: "hint", text: "In Codex, trust Kumo in /hooks." }));
     const connection = questionConnection(provider, status.hookPath);
     const copyStatus = h("span", { class: "hint", role: "status" });
     const copy = h("button", { type: "button", text: "Copy connection", disabled: !status.hookReady,
@@ -256,7 +256,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
       h("summary", { text: "Follow-up questions" }),
       h("p", { class: "hint", text: provider === "claude"
         ? "Claude's AskUserQuestion already works through its hooks. You can also connect the shared MCP question tool."
-        : "Connect Mimo's question tool to answer this agent's follow-ups in the shared Review queue." }),
+        : "Connect Kumo's question tool to answer this agent's follow-ups in the shared Review queue." }),
       h("p", { class: "hint", text: provider === "codex"
         ? "Add this to your Codex config.toml, then restart Codex."
         : "In your agent's MCP settings, add a local server named Mimo with this command and arguments. Use a tool timeout of at least 120 seconds, then restart the agent." }),
@@ -303,7 +303,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
         class: "hint",
         text: install
           ? "Review the changes to " + file + ". Your own hooks stay as they are."
-          : "Only Mimo's hooks will be removed. Your own hooks stay as they are.",
+          : "Only Kumo's hooks will be removed. Your own hooks stay as they are.",
       }),
       renderDiff(preview.diff),
       h(
@@ -328,12 +328,12 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
         body.append(
           h("div", {
             class: "notice ok",
-            text: install ? "All set. Restart " + name + " and Mimo will follow along." : "Hooks removed.",
+            text: install ? "All set. Restart " + name + " and Kumo will follow along." : "Hooks removed.",
           }),
           h("span", { class: "path", text: "Backup: " + backup }),
         );
         if (provider === "codex" && install)
-          body.append(h("p", { class: "hint", text: "In Codex, trust Mimo in /hooks." }));
+          body.append(h("p", { class: "hint", text: "In Codex, trust Kumo in /hooks." }));
         if (provider === "hermes" && install)
           body.append(h("p", { class: "hint", text: "Enable the observer: hermes plugins enable mimo-companion" }));
         lifetime.after(() => void rebuild(), 2600);
@@ -411,10 +411,10 @@ function chatSection(present: Record<string, boolean>): HTMLElement {
     h("section", { class: "preferences" }, h("h2", { text: "Voice messages" }),
       h("div", { class: "preference-row" }, h("label", { text: "Voice service" }), speech.el),
       preference("Read replies aloud", () => settings.voiceRepliesEnabled,
-        value => { settings.voiceRepliesEnabled = value; }, "Mimo uses an AI generated voice."),
+        value => { settings.voiceRepliesEnabled = value; }, "Kumo uses an AI generated voice."),
       h("p", { class: "hint", text: "Tap the mic to talk. Tap again to send." }),
       h("p", { class: "hint", text: "Automatic uses a saved voice key, preferring your chat AI. Voice uses that service's API quota." }),
-      h("p", { class: "hint", text: 'Try “Mimo, go home”, “Mimo, open settings”, or “Mimo, show limits”.' })), panels);
+      h("p", { class: "hint", text: 'Try “Kumo, go home”, “Kumo, open settings”, or “Kumo, show limits”.' })), panels);
 }
 
 function assistantSection(statuses: Record<CodingAssistant, HookStatus>): HTMLElement {
@@ -671,7 +671,7 @@ function generalSection(): HTMLElement {
   volume.disabled = !settings.soundEnabled;
   const workingState = h("span", { class: "working-mode-status", text: "Tabs stay clear" });
   const workingScene = h("div", { class: "working-mode-scene", role: "img",
-    "aria-label": "Working mode enabled: Mimo's static 156 by 12 notch above a clear browser tab row." },
+    "aria-label": "Working mode enabled: Kumo's static 156 by 12 notch above a clear browser tab row." },
     h("div", { class: "working-mode-lip", "aria-hidden": "true" }),
     h("div", { class: "working-mode-browser", "aria-hidden": "true" },
       h("div", { class: "working-mode-tabs" },
@@ -719,10 +719,10 @@ function generalSection(): HTMLElement {
       "Keep the time close by.",
     ),
     preference(
-      "Grab Mimo",
+      "Grab Kumo",
       () => settings.grabEnabled,
       value => { settings.grabEnabled = value; },
-      "Drag Mimo from the island to capture a window. Hold Ctrl when compact.",
+      "Drag Kumo from the island to capture a window. Hold Ctrl when compact.",
     ),
   ), h("section", { class: "preferences working-mode-settings" },
     preference("Working mode", () => settings.workingModeEnabled,
@@ -788,7 +788,7 @@ function hotkeysSection(): HTMLElement {
     h("h2",{text:"Global access"}),
     h("label",{text:"Open next work item"}),
     h("div",{class:"preference-row"},value,apply),status,
-    h("label",{text:"Talk to Mimo"}),
+    h("label",{text:"Talk to Kumo"}),
     h("div",{class:"preference-row"},voiceValue,voiceApply),voiceStatus,
     h("p",{class:"hint",text:"Use Ctrl, Alt or Shift with a letter or Space. Clear it to turn it off."}),
     h("h2", { text: "In the island" }),
@@ -834,7 +834,7 @@ function aboutSection(): HTMLElement {
       h(
         "div",
         { class: "about-product" },
-        h("h2", { text: "Mimo" }),
+        h("h2", { text: "Kumo" }),
         h("p", { class: "hint about-version", text: `Version ${version || "0.1.1"}` }),
       ),
     ),
@@ -844,7 +844,7 @@ function aboutSection(): HTMLElement {
     }),
     h("p", {
       class: "hint about-privacy",
-      text: "No telemetry. Mimo only contacts your connected services.",
+      text: "No telemetry. Kumo only contacts your connected services.",
     }),
   );
 }
@@ -1011,7 +1011,7 @@ async function main() {
         height: 28,
       }),
       h("span", { class: "settings-brand", text: "Settings" }),
-      h("span", { class: "settings-titlebar-note", text: "Mimo" }),
+      h("span", { class: "settings-titlebar-note", text: "Kumo" }),
     ),
     h("div", { class: "settings-shell" }, navigation, content),
   );

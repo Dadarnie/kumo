@@ -112,7 +112,7 @@ export function buildGrab(_actions:ViewActions):ViewHost {
       item.addEventListener("drop",event=>{const source=event.dataTransfer?.getData("application/x-mimo-reference");delete item.dataset.drop;if(!source||source===r.id)return;event.preventDefault();void perform("reorder",{ids:reorderedReferences(snapshot.items.map(r=>r.id),source,r.id)});});
       item.append(preview,h("label",{class:"grab-file-select-hit"},check));grid.append(item);
     }
-    if(!count)grid.append(h("div",{class:"grab-empty"},icon(ICONS.shelf,26),h("b",{text:"A place for your references."}),h("span",{text:"Drag Mimo to capture, or drop a file on him."})));
+    if(!count)grid.append(h("div",{class:"grab-empty"},icon(ICONS.shelf,26),h("b",{text:"A place for your references."}),h("span",{text:"Drag Kumo to capture, or drop a file on him."})));
     const selectAll=button(selected.size===count&&count?"Deselect all":"Select all",()=>{selected=selected.size===count?new Set():new Set(snapshot.items.map(r=>r.id));render();});selectAll.classList.add("grab-select-all");selectAll.disabled=!count;
     const footer=h("div",{class:"grab-footer grab-shelf-footer"},h("span",{class:"grab-selection-count",text:selected.size?`${selected.size} selected`:""}));
     if(selected.size){footer.append(button("Group",()=>groupFiles()),button("Remove",()=>removeFiles([...selected])));}
@@ -213,7 +213,7 @@ export function buildGrab(_actions:ViewActions):ViewHost {
     const retention=h("select",{"aria-label":"Keep files"});
     for(const [value,label] of [[1,"1 day"],[7,"7 days"],[30,"30 days"],[0,"Until I remove them"]] as const)retention.append(h("option",{value,text:label}));retention.value=String(snapshot.retentionDays);
     body.append(head("Shelf options"),h("label",{class:"grab-option"},h("b",{text:"Keep files for"}),retention),
-      field("Note to copy (optional)",instruction,value=>instruction=value.slice(0,12000)),h("span",{class:"grab-hint",text:"Files stay in Mimo. Your project folders stay clean."}),
+      field("Note to copy (optional)",instruction,value=>instruction=value.slice(0,12000)),h("span",{class:"grab-hint",text:"Files stay in Kumo. Your project folders stay clean."}),
       h("div",{class:"grab-footer"},button("Clean expired files",()=>void perform("clean_expired",{},false).then(result=>{if(result!==null){render();message("Expired files cleared.");}})),h("span",{class:"grow"}),button("Save",()=>void perform("preferences",{retentionDays:Number(retention.value)},false).then(result=>{if(result!==null){scene="shelf";render();message("Shelf options saved.");}}),true)));
   }
   async function captured(id:string){

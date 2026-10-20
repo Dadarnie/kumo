@@ -18,7 +18,7 @@
     "windows": [
       {
         "label": "island",
-        "title": "Mimo",
+        "title": "Kumo",
         "url": "index.html",
         "width": 240,
         "height": 6,
@@ -68,8 +68,8 @@
     "publisher": "John Paul",
     "copyright": "© John Paul",
     "category": "DeveloperTool",
-    "shortDescription": "Mimo lives at the top of your screen",
-    "longDescription": "Mimo lives at the top of your screen: follow Claude Code and Codex, keep music and integrations close, and approve, chat or share a file without leaving your work.",
+    "shortDescription": "Kumo lives at the top of your screen",
+    "longDescription": "Kumo lives at the top of your screen: follow Claude Code and Codex, keep music and integrations close, and approve, chat or share a file without leaving your work.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",

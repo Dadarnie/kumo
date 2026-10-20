@@ -126,7 +126,7 @@ pub async fn send(
     query: String,
     context: Option<ChatContext>,
 ) -> Result<ChatReply, String> {
-    let key = secrets::get("openai-api-key").ok_or("Add an OpenAI API key in Settings for Mimo chat. Codex hooks and usage do not need this key.")?;
+    let key = secrets::get("openai-api-key").ok_or("Add an OpenAI API key in Settings for Kumo chat. Codex hooks and usage do not need this key.")?;
     let generation = chat.generation.load(Ordering::Acquire);
     let mut history = {
         let conversation = chat.conversation.lock().unwrap();

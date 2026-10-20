@@ -62,7 +62,7 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
   const input = h("input", {
     type: "text",
     class: "chat-input",
-    "aria-label": "Message Mimo",
+    "aria-label": "Message Kumo",
     placeholder: "Ask me anything…",
     spellcheck: "false",
     maxlength: 32000,

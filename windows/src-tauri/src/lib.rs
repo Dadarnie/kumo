@@ -1078,7 +1078,7 @@ async fn configure_voice_shortcut(
     receive
         .await
         .map_err(|error| error.to_string())?
-        .ok_or_else(|| "Mimo window is unavailable.".into())
+        .ok_or_else(|| "Kumo window is unavailable.".into())
 }
 #[tauri::command]
 async fn configure_workflow_shortcut(
@@ -1095,7 +1095,7 @@ async fn configure_workflow_shortcut(
     receive
         .await
         .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Mimo window is unavailable.".into())
+        .ok_or_else(|| "Kumo window is unavailable.".into())
 }
 
 pub fn run() {
@@ -1234,7 +1234,7 @@ pub fn run() {
             island::spawn_cursor_poll(handle.clone(), gate.clone());
 
             log::line(format!(
-                "--- Mimo {} started ---",
+                "--- Kumo {} started ---",
                 env!("CARGO_PKG_VERSION")
             ));
             if hooks::ensure_hook_exe(&handle) {
@@ -1249,7 +1249,7 @@ pub fn run() {
                 coding_hooks::migrate_legacy_installations();
             } else {
                 log::line(
-                    "current Mimo relay could not be verified; existing assistant hooks were kept",
+                    "current Kumo relay could not be verified; existing assistant hooks were kept",
                 );
             }
             pipe::start(handle.clone());
@@ -1257,7 +1257,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building Mimo")
+        .expect("error while building Kumo")
         .run(|app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 windows::file_drop::stop(app);

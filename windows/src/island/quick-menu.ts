@@ -5,7 +5,7 @@ export interface QuickAction { id: string; label: string; checked?: boolean }
 
 /** Browser preview of the native menu, using the existing picker material and keys. */
 export class MimoQuickMenu {
-  private el = h("div", {class:"audio-device-menu mimo-quick-menu",popover:"auto",role:"menu","aria-label":"Mimo quick controls"});
+  private el = h("div", {class:"audio-device-menu mimo-quick-menu",popover:"auto",role:"menu","aria-label":"Kumo quick controls"});
   private trigger: HTMLElement | null = null;
   constructor(private choose: (id: string) => void, private active: (open: boolean) => void) {
     document.body.append(this.el);

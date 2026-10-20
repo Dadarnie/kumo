@@ -111,7 +111,7 @@ pub fn load(dir: &Path) -> Result<Library, String> {
     let mut library: Library = serde_json::from_slice(&bytes)
         .map_err(|_| "Drop Shelf metadata needs recovery. Your original files are preserved.")?;
     if library.version != 1 {
-        return Err("This shelf was made by a newer Mimo version.".into());
+        return Err("This shelf was made by a newer Kumo version.".into());
     }
     library.items.retain(|item| {
         safe_id(&item.id)
@@ -160,7 +160,7 @@ pub fn path(dir: &Path, reference: &Reference, annotated: bool) -> Result<PathBu
         .canonicalize()
         .map_err(|_| "This reference file is missing.")?;
     if canonical.parent() != Some(base.as_path()) {
-        return Err("Reference paths must stay inside Mimo.".into());
+        return Err("Reference paths must stay inside Kumo.".into());
     }
     Ok(canonical)
 }
@@ -432,7 +432,7 @@ pub fn preview(
                 .as_path(),
         )
     {
-        return Err("Preview paths must stay inside Mimo.".into());
+        return Err("Preview paths must stay inside Kumo.".into());
     }
     let bytes = std::fs::read(file).map_err(|_| "Could not load the reference.")?;
     if bytes.len() > MAX_BYTES {

@@ -221,7 +221,7 @@ pub async fn send(
         .map(|key| {
             secrets::get(key).ok_or_else(|| {
                 format!(
-                    "Add a {} API key in Settings for Mimo chat.",
+                    "Add a {} API key in Settings for Kumo chat.",
                     provider.name()
                 )
             })

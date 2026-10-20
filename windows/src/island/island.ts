@@ -451,8 +451,8 @@ export class Island {
     this.restoreTarget = h("button", {
       id: "restore-island",
       type: "button",
-      "aria-label": "Open Mimo",
-      title: "Open Mimo · Right-click for controls",
+      "aria-label": "Open Kumo",
+      title: "Open Kumo · Right-click for controls",
       onclick: event => {
         event.preventDefault();
         if (this.media.available && !ownsContent(State.view)) {
@@ -466,8 +466,8 @@ export class Island {
       if (!IS_TAURI || State.visibility === "peek") this.onCursor(event.clientX, event.clientY,{x:event.clientX,y:event.clientY,control:event.ctrlKey});
     });
     this.activity = new ActivityStrip(task => this.reviewCodingTask(task), decision => this.decideApproval(decision));
-    this.botCanvas = h("canvas", { id: "bot-canvas", role: "img", "aria-label": "Mimo companion" });
-    this.patTarget = h("button", { id: "pat-mimo", type: "button", "aria-label": "Mimo companion",
+    this.botCanvas = h("canvas", { id: "bot-canvas", role: "img", "aria-label": "Kumo companion" });
+    this.patTarget = h("button", { id: "pat-mimo", type: "button", "aria-label": "Kumo companion",
       hidden: "", onclick: event => {
         if (State.view === "voice") { void this.toggleDesktopVoice(); return; }
         if(this.suppressGrabClick){this.suppressGrabClick=false;return;}
@@ -1819,7 +1819,7 @@ export class Island {
     if (this.botCanvas.dataset.status !== this.engine.status || this.botCanvas.dataset.expression !== this.engine.currentExpression) {
       this.botCanvas.dataset.status = this.engine.status;
       this.botCanvas.dataset.expression = this.engine.currentExpression;
-      this.botCanvas.setAttribute("aria-label", `Mimo companion, ${MIMO_EXPRESSIONS[this.engine.currentExpression].label.toLowerCase()}`);
+      this.botCanvas.setAttribute("aria-label", `Kumo companion, ${MIMO_EXPRESSIONS[this.engine.currentExpression].label.toLowerCase()}`);
     }
     this.engine.particleOverhang = BOT_OVERHANG;
     const rect = this.islandRect();
@@ -1893,8 +1893,8 @@ export class Island {
     this.restoreTarget.hidden = expanded && this.coreMode !== "hover";
     this.restoreTarget.setAttribute(
       "aria-label",
-      State.visibility === "peek" ? "Click to open Mimo. Working mode keeps browser tabs clear."
-        : this.media.available && !ownsContent(State.view) ? "Open Media" : "Open Mimo",
+      State.visibility === "peek" ? "Click to open Kumo. Working mode keeps browser tabs clear."
+        : this.media.available && !ownsContent(State.view) ? "Open Media" : "Open Kumo",
     );
     this.islandEl.dataset.compact = String(Visibility.compact);
     Visibility.setProtected(

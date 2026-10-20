@@ -91,10 +91,10 @@ pub fn copy(
     use tauri::Manager;
     let win = app
         .get_webview_window("island")
-        .ok_or("Mimo's clipboard window is unavailable.")?;
+        .ok_or("Kumo's clipboard window is unavailable.")?;
     let hwnd = win
         .hwnd()
-        .map_err(|_| "Mimo's clipboard window is unavailable.")?;
+        .map_err(|_| "Kumo's clipboard window is unavailable.")?;
     if ids.is_empty() || ids.len() > 40 || instruction.len() > 12000 {
         return Err(
             "Choose 1 to 40 references and keep the instruction under 12,000 characters.".into(),
