@@ -43,6 +43,8 @@ export class IslandVisibilityController {
   private dragging = false;
   private grabReady = false;
   private working = false;
+  /** A minimize during work keeps Mimo closed until that work ends. */
+  private minimizedDuringWork = false;
   private dense = false;
   private presentation = new Set<() => void>();
   private listeners = new Set<(from: IslandVisibility, to: IslandVisibility, reason: VisibilityReason) => void>();
@@ -81,6 +83,9 @@ export class IslandVisibilityController {
     if (this.working === active) return;
     this.working = active;
     this.cancel();
+    // Follow the agent: open when work starts, then settle closed once it stops.
+    if (active && this.current !== "expanded" && !this.minimizedDuringWork) this.change("expanded", "automatic");
+    if (!active) this.minimizedDuringWork = false;
     this.schedule();
   }
   // Media has its own compact controls and never activates the working lip.
@@ -110,6 +115,7 @@ export class IslandVisibilityController {
   peek(): void { this.change(this.preferences.workingModeEnabled === false ? "island" : "peek", "explicit"); }
   dock(): void { this.island(); }
   minimize(): void {
+    if (this.working) this.minimizedDuringWork = true;
     if (this.current === "expanded") this.island();
     else this.peek();
   }
@@ -128,7 +134,8 @@ export class IslandVisibilityController {
   }
   pointerLeft(_legacyMediaPeek = false): void {
     this.inside = false;
-    if (this.preferences.autoCollapseEnabled && !this.protectedContent && !this.grabReady && !this.dragging && !this.pinned && this.current !== "peek") {
+    if (this.preferences.autoCollapseEnabled && !this.protectedContent && !this.grabReady && !this.dragging && !this.pinned && this.current !== "peek"
+      && !(this.working && this.current === "expanded")) {
       this.change(this.minimizeForWork ? "peek" : "island", "automatic");
       this.setCompact(this.current === "island");
     } else this.schedule();
@@ -146,7 +153,8 @@ export class IslandVisibilityController {
   private schedule(): void {
     if (this.timer !== undefined || !this.preferences.autoCollapseEnabled || this.current === "peek" ||
       (this.current === "island" && this.dense && !this.minimizeForWork) ||
-      this.protectedContent || this.grabReady || this.dragging || this.inside || this.pinned) return;
+      this.protectedContent || this.grabReady || this.dragging || this.inside || this.pinned ||
+      (this.working && this.current === "expanded")) return;
     this.deadline = this.clock.now() + ACTIVITY_SETTLE_MS;
     this.timer = this.clock.after(() => {
       this.timer = undefined; this.deadline = null;

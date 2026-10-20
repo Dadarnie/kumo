@@ -7,6 +7,7 @@ import { ICONS, icon } from "./icons";
 import { integrationsFilled, usageFilled,
   soundFilled, soundOffFilled } from "../icons/filled";
 import { notchHome, notchSettings, notchMedia } from "../icons/notch";
+import { collapse as collapseGlyph } from "../icons/glyphs";
 import { mimoIcon } from "../icons/render";
 import { State, type AgentTask } from "../core/state";
 import { chatAssistantName, codingDefinition, codingConnections, detectedCodingProviders, codingLabel, codingProvider, codingAccountColor, preferredUsageProvider, type CodingProvider } from "../core/coding";
@@ -212,8 +213,10 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const approvalBtn = h("button", { class: "approvals-entry", type: "button", hidden: true,
     onclick: () => go("approvals") }, icon(ICONS.bang, 13),
     approvalLabel, approvalCount);
+  const minimizeBtn = h("button", { title: "Minimize", onclick: () => actions.collapse() },
+    mimoIcon(collapseGlyph, 18));
   let renderedSound: boolean | undefined;
-  for (const button of [gearBtn, soundBtn])
+  for (const button of [gearBtn, soundBtn, minimizeBtn])
     button.setAttribute("aria-label", button.title);
 
   function go(v: IslandViewName) {
@@ -229,7 +232,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       { class: "tabs", "aria-label": "Island sections" },
       ...navigation.map((item) => item.button),
     ),
-    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, gearBtn, soundBtn, approvalBtn),
+    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, gearBtn, soundBtn, minimizeBtn, approvalBtn),
   );
 
   return {

@@ -337,23 +337,23 @@ test("idle activity and media never start a sleeping or minimized timer", () => 
   assert.equal(f.timers.size, 0);
 });
 
-test("working mode stays compact without an active agent and preserves owned controls", () => {
+test("agent work opens Mimo, holds it open, and settles closed when the work ends", () => {
   const f = fixture(true);
   f.visibility.configure({ ...f.preferences, workingModeEnabled: true });
-  f.visibility.setWorking(true);
+  f.advance(1000); assert.equal(f.visibility.state, "peek");
+  f.visibility.setWorking(true); assert.equal(f.visibility.state, "expanded", "work opens Mimo");
+  f.visibility.pointerEntered(); f.visibility.pointerLeft(); f.advance(60000);
+  assert.equal(f.visibility.state, "expanded", "stays open while the agent works");
+  f.visibility.setWorking(false);
   f.advance(999); assert.equal(f.visibility.state, "expanded");
-  f.advance(1); assert.equal(f.visibility.state, "peek");
-  f.visibility.pointerEntered(); f.advance(60000);
-  assert.equal(f.visibility.state, "peek", "hover cannot open over a browser tab");
-  f.visibility.activate(); assert.equal(f.visibility.state, "expanded");
-  f.visibility.setProtected(true); f.visibility.pointerLeft(); f.advance(60000);
-  assert.equal(f.visibility.state, "expanded", "typing and approvals keep their owned content");
-  f.visibility.setProtected(false); assert.equal(f.visibility.state, "peek");
-  f.visibility.setWorking(false); assert.equal(f.visibility.state, "peek");
-  f.advance(60000); assert.equal(f.visibility.state, "peek", "The saved switch also applies when idle");
-  f.visibility.setWorking(true);
+  f.advance(1); assert.equal(f.visibility.state, "peek", "settles closed when done");
+  f.visibility.setWorking(true); f.visibility.minimize(); f.advance(60000);
+  assert.equal(f.visibility.state, "peek", "a minimize holds until that work ends");
+  f.visibility.setWorking(false); f.visibility.setWorking(true);
+  assert.equal(f.visibility.state, "expanded", "the next piece of work opens again");
+  f.visibility.setWorking(false);
   f.visibility.configure({...f.preferences, workingModeEnabled:false});
-  f.advance(60000); assert.equal(f.visibility.state, "island", "disabled working mode stays awake");
+  f.advance(60000); assert.equal(f.visibility.state, "island", "disabled working mode settles to the island");
 });
 
 test("working mode never minimizes pinned, typing, or dragging content", () => {
@@ -363,7 +363,7 @@ test("working mode never minimizes pinned, typing, or dragging content", () => {
     f.visibility[protect](true); f.visibility.setWorking(true);
     f.visibility.pointerLeft(); f.advance(60000);
     assert.equal(f.visibility.state, "expanded", protect);
-    f.visibility[protect](false); f.advance(1000);
+    f.visibility[protect](false); f.visibility.setWorking(false); f.advance(1000);
     assert.equal(f.visibility.state, "peek", protect);
   }
 });
