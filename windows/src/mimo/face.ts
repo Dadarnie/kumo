@@ -90,6 +90,25 @@ function heart(ctx: CanvasRenderingContext2D, w: number) {
   ctx.fill();
 }
 
+/** Anime eye: violet glow in the lower iris and two catch-lights. Uses the current eye path. */
+function animeShine(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.clip();
+  const iris = ctx.createLinearGradient(0, -h, 0, h);
+  iris.addColorStop(.35, `rgba(${MIMO_PALETTE.iris},0)`);
+  iris.addColorStop(1, `rgba(${MIMO_PALETTE.iris},.9)`);
+  ctx.fillStyle = iris;
+  ctx.fillRect(-w, -h, w * 2, h * 2);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.beginPath(); ctx.ellipse(-w * .28, -h * .42, w * .42, h * .26, -.3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(w * .38, h * .42, w * .2, 0, Math.PI * 2); ctx.fill();
+}
+
+let ears: Path2D[] | undefined;
+let innerEars: Path2D[] | undefined;
+const earPath = (side: number, inner: boolean) => new Path2D(inner
+  ? `M${side * .86}-.78 Q${side * .9}-1.18 ${side * .82}-1.36 Q${side * .58}-1.22 ${side * .4}-1.04 Z`
+  : `M${side * .98}-.5 Q${side * 1.02}-1.15 ${side * .86}-1.5 Q${side * .48}-1.3 ${side * .18}-1.08 Z`);
+
 function eye(ctx: CanvasRenderingContext2D, face: MimoFace, side: number) {
   const shape = face.eye ?? "pill";
   const opening = clamp(face.open ?? 1, 0, 1) * (side < 0 ? 1 - .96 * clamp(face.wink ?? 0, 0, 1) : 1);
@@ -176,6 +195,7 @@ function eye(ctx: CanvasRenderingContext2D, face: MimoFace, side: number) {
     else ctx.roundRect(-w, -h, w * 2, h * 2, Math.min(w, h));
     ctx.fillStyle = MIMO_INK;
     ctx.fill();
+    if (face.radius >= 10 && opening > .5) animeShine(ctx, w, h);
   }
   ctx.restore();
 }
@@ -208,6 +228,17 @@ export function drawMimoFace(ctx: CanvasRenderingContext2D, face: MimoFace) {
     material = { key, a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.e, f: matrix.f, body, rim };
     faceMaterials.set(ctx, material);
   }
+  // Cat ears sit behind the head; skipped while the body morphs for file intake.
+  if (!face.intakeMorph) {
+    ctx.fillStyle = material.body;
+    for (const ear of ears ??= [earPath(-1, false), earPath(1, false)]) ctx.fill(ear);
+    if (face.radius >= 10) {
+      ctx.fillStyle = MIMO_PALETTE.blush;
+      ctx.globalAlpha = .55;
+      for (const ear of innerEars ??= [earPath(-1, true), earPath(1, true)]) ctx.fill(ear);
+      ctx.globalAlpha = 1;
+    }
+  }
   ctx.fillStyle = material.body;
   ctx.fill(outline);
   ctx.save();
@@ -217,6 +248,18 @@ export function drawMimoFace(ctx: CanvasRenderingContext2D, face: MimoFace) {
   ctx.stroke(outline);
   eye(ctx, face, -1);
   eye(ctx, face, 1);
+  if (face.radius >= 10) {
+    // Blush follows the gaze so the cheeks turn with the eyes.
+    ctx.save();
+    ctx.globalAlpha = .4 * clamp(face.expressionOpen ?? 1, 0, 1);
+    ctx.fillStyle = MIMO_PALETTE.blush;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse((side * .55 + safeLook(face.lookX) * .35) * MIMO_BODY_SCALE, .36, .17, .085, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   // File intake opens at the top; expressive mouths remain on the lower face.
   if ((face.mouthOpening ?? 0) > .002) {
     const mouth = mimoIntake(1, face.mouthOpening!);

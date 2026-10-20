@@ -10,6 +10,9 @@ export const MIMO_PALETTE = {
   connected: "#4FB29E",
   error: "#E69537",
   tile: "#1C1C20",
+  // Anime look: iris glow, cheek blush and inner ears.
+  iris: "155,107,255",
+  blush: "#FF8FB1",
   // Reaction colors stay local to a temporary expression or state light.
   love: "#E13D44",
   pride: "#E69537",
