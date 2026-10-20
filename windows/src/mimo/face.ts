@@ -58,8 +58,20 @@ export function mimoIntake(radius: number, opening: number) {
   return { x: -w / 2, y: -radius * .73 - h / 2, w, h };
 }
 
+/** Kumo's cloud body: overlapping puffs filled as one shape (non-zero union). */
+const CLOUD_PUFFS: readonly [number, number, number][] = [
+  [0, -.3, .62], [-.55, -.05, .5], [.55, -.05, .5],
+  [-.78, .32, .38], [.78, .32, .38], [-.3, .35, .52], [.3, .35, .52],
+];
+function cloudOutline(): Path2D {
+  const cloud = new Path2D();
+  for (const [x, y, r] of CLOUD_PUFFS) { cloud.moveTo(x + r, y); cloud.arc(x, y, r, 0, Math.PI * 2); }
+  cloud.roundRect(-.85, .05, 1.7, .62, .3);
+  return cloud;
+}
+
 function headOutline(morph = 0): Path2D {
-  head ??= new Path2D(MIMO_HEAD);
+  head ??= cloudOutline();
   const step = Math.round(clamp(morph, 0, 1) * 48);
   if (step === 0) return head;
   let outline = intakeHeads.get(step);
@@ -103,11 +115,6 @@ function animeShine(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.beginPath(); ctx.arc(w * .38, h * .42, w * .2, 0, Math.PI * 2); ctx.fill();
 }
 
-let ears: Path2D[] | undefined;
-let innerEars: Path2D[] | undefined;
-const earPath = (side: number, inner: boolean) => new Path2D(inner
-  ? `M${side * .86}-.78 Q${side * .9}-1.18 ${side * .82}-1.36 Q${side * .58}-1.22 ${side * .4}-1.04 Z`
-  : `M${side * .98}-.5 Q${side * 1.02}-1.15 ${side * .86}-1.5 Q${side * .48}-1.3 ${side * .18}-1.08 Z`);
 
 function eye(ctx: CanvasRenderingContext2D, face: MimoFace, side: number) {
   const shape = face.eye ?? "pill";
@@ -228,24 +235,16 @@ export function drawMimoFace(ctx: CanvasRenderingContext2D, face: MimoFace) {
     material = { key, a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.e, f: matrix.f, body, rim };
     faceMaterials.set(ctx, material);
   }
-  // Cat ears sit behind the head; skipped while the body morphs for file intake.
-  if (!face.intakeMorph) {
-    ctx.fillStyle = material.body;
-    for (const ear of ears ??= [earPath(-1, false), earPath(1, false)]) ctx.fill(ear);
-    if (face.radius >= 10) {
-      ctx.fillStyle = MIMO_PALETTE.blush;
-      ctx.globalAlpha = .55;
-      for (const ear of innerEars ??= [earPath(-1, true), earPath(1, true)]) ctx.fill(ear);
-      ctx.globalAlpha = 1;
-    }
-  }
   ctx.fillStyle = material.body;
   ctx.fill(outline);
   ctx.save();
   ctx.clip(outline);
-  ctx.strokeStyle = material.rim;
-  ctx.lineWidth = Math.max(.024, .55 / face.radius);
-  ctx.stroke(outline);
+  // A rim would trace the inner puff arcs; only the square intake shape gets one.
+  if (face.intakeMorph) {
+    ctx.strokeStyle = material.rim;
+    ctx.lineWidth = Math.max(.024, .55 / face.radius);
+    ctx.stroke(outline);
+  }
   eye(ctx, face, -1);
   eye(ctx, face, 1);
   if (face.radius >= 10) {
@@ -424,6 +423,14 @@ export function drawMimoExpressionDetail(ctx: CanvasRenderingContext2D, options:
     ctx.translate(1.1, -.05); ctx.beginPath(); ctx.arc(0, 0, .18, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * reveal(0, .55)); ctx.stroke();
     const handle = .13 + .2 * reveal(.35, .35);
     ctx.beginPath(); ctx.moveTo(.13, .13); ctx.lineTo(handle, handle); ctx.stroke();
+  } else if (detail === "tear" && options.expression === "error") {
+    // Errors rain: three drops fall from under the cloud and loop.
+    ctx.fillStyle = "#7FB6D6";
+    for (const [x, delay] of [[-.4, 0], [0, .33], [.4, .66]]) {
+      const fall = ((options.time ?? .8) * 1.1 + delay) % 1;
+      ctx.save(); ctx.globalAlpha *= Math.sin(Math.PI * fall);
+      ctx.translate(x, .95 + fall * .55); ctx.scale(.8, .8); ctx.fill(tear); ctx.restore();
+    }
   } else if (detail === "tear") {
     const arrival = reveal(options.expression === "error" ? .3 : .15, .5);
     ctx.globalAlpha *= arrival;

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Mimo's silver material, charcoal eyes and local state lights.
 export const MIMO_PALETTE = {
-  body: "#EDF1F4",
-  highlight: "#FAFCFD",
-  shade: "#9EA8B2",
+  // Kumo: a warm cream cloud with a soft amber underside.
+  body: "#FFF4E2",
+  highlight: "#FFFDF7",
+  shade: "#D9B88E",
   tongue: "#EBA8B5",
   eyes: "#11161B",
   loading: "#2DA4F9",
