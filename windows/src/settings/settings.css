@@ -6,23 +6,24 @@
 /* Settings shares the island's barely separated black card surfaces. */
 html:root {
   color-scheme: dark;
-  --bg: #060606;
-  --card: #090909;
-  --card-flat: #070707;
-  --ink: #ededed;
-  --ink-2: #d6d6d6;
-  --dim: #a7a7a7;
-  --dim-2: #8d8d8d;
-  --accent: #dedede;
-  --accent-surface: #252525;
-  --hairline: rgba(255, 255, 255, .075);
-  --control-fill: #262626;
-  --control-hover: #333333;
-  --field-fill: #101010;
-  --progress-rail: #3b3b3b;
-  --focus-border: #9b9b9b;
-  --selection-fill: #454545;
-  --scroll-thumb: #494949;
+  /* Kumo · Night lantern; matches design/tokens.css. */
+  --bg: #0d0b12;
+  --card: #16131d;
+  --card-flat: #131019;
+  --ink: #f7eedf;
+  --ink-2: #e6d9c4;
+  --dim: #b3a48c;
+  --dim-2: #9a8b74;
+  --accent: #f2a84b;
+  --accent-surface: #2a2230;
+  --hairline: rgba(255, 214, 150, .09);
+  --control-fill: #2a2230;
+  --control-hover: #362c3e;
+  --field-fill: #120f18;
+  --progress-rail: #3a3044;
+  --focus-border: #f2a84b;
+  --selection-fill: #4a3a2a;
+  --scroll-thumb: #4a3d52;
   background: var(--bg);
 }
 

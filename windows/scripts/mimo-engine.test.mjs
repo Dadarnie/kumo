@@ -174,7 +174,7 @@ test("gaze frames reuse the owned color buffer without mutating another Mimo", (
   engine.bodyColor = [.48, .36, 1];
   advance(engine, 400);
   assert.equal(engine.faceColor, color, "Per-frame color easing does not allocate another RGB array");
-  assert.deepEqual(other.faceColor, [237/255,241/255,244/255]);
+  assert.deepEqual(other.faceColor, [255/255,244/255,226/255]);
   engine.destroy(); other.destroy();
 });
 
@@ -322,12 +322,12 @@ test("main Mimo keeps contextual reactions, app icons and readiness badges", (t)
   engine.setState("idle"); engine.setStatus("idle"); advance(engine,120); assert.equal(engine.badge,null);
 });
 
-test("service tint eases smoothly and Home returns to the reference silver", () => {
+test("service tint eases smoothly and Home returns to the Kumo cream", () => {
   const engine = new BotEngine();
   engine.bodyColor=[.48,.36,1]; advance(engine,400);
   assert.ok(engine.faceColor.every((value,i)=>Math.abs(value-engine.bodyColor[i])<.005));
   engine.bodyColor=null; advance(engine,400);
-  assert.ok(engine.faceColor.every((value,i)=>Math.abs(value-[237/255,241/255,244/255][i])<.005));
+  assert.ok(engine.faceColor.every((value,i)=>Math.abs(value-[255/255,244/255,226/255][i])<.005));
 });
 
 test("a delayed transient gesture cannot overwrite a new owned state or another reaction", (t) => {

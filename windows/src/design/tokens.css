@@ -8,19 +8,20 @@
   --code-string: color-mix(in srgb, var(--mini-amber) 55%, var(--ink));
   --code-function: color-mix(in srgb, var(--mini-amber) 35%, var(--ink));
   --code-type: color-mix(in srgb, var(--mini-mint) 55%, var(--ink));
-  --ink: #f4f4f5;
-  --ink-2: #dddddf;
-  --dim: #aaa9ae;
-  --dim-2: #95949a;
+  /* Kumo · Night lantern: warm cream text on deep ink, lantern-amber accent. */
+  --ink: #f7eedf;
+  --ink-2: #e6d9c4;
+  --dim: #b3a48c;
+  --dim-2: #9a8b74;
   --dim-3: var(--dim-2);
   --dim-4: var(--dim-2);
   --dim-5: var(--dim-2);
-  --bg: #000000;
-  --card: #090909;
-  --card-flat: #070707;
-  --tab-on: #252525;
-  --hairline: rgba(255, 255, 255, 0.035);
-  --accent: var(--mini-work-blue);
+  --bg: #0d0b12;
+  --card: #16131d;
+  --card-flat: #131019;
+  --tab-on: #2a2230;
+  --hairline: rgba(255, 214, 150, 0.06);
+  --accent: #f2a84b;
   /* Local Home identity colors sampled from the supplied video at 8 seconds. */
   --mini-work-blue: #2da4f9;
   --mini-mint: #4fb29e;
@@ -28,7 +29,7 @@
   --mini-amber: #e69537;
   --mini-violet: #8358e9;
   --home-workspace-fill: var(--card);
-  --accent-surface: color-mix(in srgb, var(--mini-work-blue) 18%, var(--bg));
+  --accent-surface: color-mix(in srgb, var(--accent) 18%, var(--bg));
   --green: var(--mini-mint);
   --green-2: color-mix(in srgb, var(--mini-mint) 75%, var(--ink));
   --red: var(--mini-coral);
@@ -39,8 +40,8 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
-  --radius-card: 16px;
-  --radius-control: 10px;
+  --radius-card: 20px;
+  --radius-control: 12px;
   --icon-compact: 16px;
   --icon-normal: 18px;
   --icon-primary: 24px;
@@ -56,11 +57,12 @@
   --motion-enter: 180ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.004), transparent 55%);
-  --terminal-fill: #080808;
+  --terminal-fill: #100d16;
   --terminal-glow: radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
-  --shadow-shell: 0 8px 24px rgba(0, 0, 0, 0.32);
+  /* Soft lantern glow under the notch. */
+  --shadow-shell: 0 10px 30px rgba(242, 168, 75, 0.12), 0 8px 24px rgba(0, 0, 0, 0.4);
   --shell-fill: var(--bg);
-  --shell-border: transparent;
+  --shell-border: rgba(242, 168, 75, 0.14);
   --shell-blur: 0px;
   --shell-saturation: 1;
   --shell-highlight: transparent;

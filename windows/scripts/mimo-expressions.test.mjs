@@ -220,7 +220,7 @@ test("pausing music cancels the bounded dance and preserves module identity colo
   advance(engine, 2200);
   assert.equal(engine.busy, false);
   engine.setIntegration("integration_claude"); engine.setExpressionContext("focus"); advance(engine, 400);
-  assert.ok(engine.faceColor.every((v,i)=>Math.abs(v-[237 / 255, 241 / 255, 244 / 255][i])<.005));
+  assert.ok(engine.faceColor.every((v,i)=>Math.abs(v-[255 / 255, 244 / 255, 226 / 255][i])<.005));
   engine.bodyColor = [.5, .3, .8]; engine.setExpressionContext("error"); advance(engine, 400);
   assert.ok(engine.faceColor.every((v,i)=>Math.abs(v-[.5, .3, .8][i])<.005));
   engine.destroy();
