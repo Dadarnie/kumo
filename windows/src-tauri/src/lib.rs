@@ -388,6 +388,25 @@ fn open_media_source(app_id: String) -> bool {
     windows::no_console(&mut cmd).spawn().is_ok()
 }
 
+/// The call in progress (an app holding the microphone), if any.
+#[tauri::command]
+fn call_state() -> Option<windows::call::CallState> {
+    windows::call::active_call()
+}
+
+#[tauri::command]
+fn call_set_muted(muted: bool) -> Result<bool, String> {
+    windows::call::set_mic_muted(muted)
+}
+
+/// Focuses only the app that is on the call right now, never an arbitrary path.
+#[tauri::command]
+fn call_focus() -> bool {
+    windows::call::active_call()
+        .and_then(|call| call.path)
+        .is_some_and(|path| windows::call::focus_call_app(&path))
+}
+
 #[tauri::command]
 fn open_url(url: String) {
     if !(url.starts_with("http://") || url.starts_with("https://")) {
@@ -1078,6 +1097,9 @@ pub fn run() {
             show_mimo_menu,
             open_url,
             open_media_source,
+            call_state,
+            call_set_muted,
+            call_focus,
             open_in_vscode,
             quit_app,
             hooks_status,

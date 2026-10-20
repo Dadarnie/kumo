@@ -63,6 +63,14 @@ export interface IslandPositionInfo {
   dockTargetY?: number;
 }
 
+/** An app holding the microphone right now (see src-tauri/src/windows/call.rs). */
+export interface CallState {
+  readonly app: string;
+  readonly path: string | null;
+  readonly startedAtUnixMs: number;
+  readonly muted: boolean | null;
+}
+
 export const Bridge = {
   grabRead: () => callOrThrow<import("./grab").GrabSnapshot>("grab_read"),
   grabAction: <T = unknown>(action:string,args:Record<string,unknown> = {}) => callOrThrow<T>("grab_action",{action,args}),
@@ -98,6 +106,9 @@ export const Bridge = {
   openUrl: (url: string) => call<void>("open_url", { url }),
   /** Brings the app playing the current media to the front. */
   openMediaSource: (appId: string) => call<boolean>("open_media_source", { appId }),
+  callState: () => call<CallState | null>("call_state"),
+  callSetMuted: (muted: boolean) => call<boolean>("call_set_muted", { muted }),
+  callFocus: () => call<boolean>("call_focus"),
 
   /** "Open terminal" → opens the folder in VS Code when `code` is on PATH. */
   openInVSCode: (path: string | null) =>

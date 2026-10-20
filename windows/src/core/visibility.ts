@@ -54,8 +54,9 @@ export class IslandVisibilityController {
   get state(): IslandVisibility { return this.current; }
   get compact(): boolean { return this.current === "island" && this.dense; }
   private mediaPlaying = false;
+  private inCall = false;
   private get minimizeForWork(): boolean {
-    return this.preferences.workingModeEnabled === true && !this.mediaPlaying && !this.working;
+    return this.preferences.workingModeEnabled === true && !this.mediaPlaying && !this.working && !this.inCall;
   }
 
   subscribePresentation(fn: () => void): () => void {
@@ -96,6 +97,13 @@ export class IslandVisibilityController {
     if (this.mediaPlaying === playing) return;
     this.mediaPlaying = playing;
     if (playing && this.current === "peek") this.change("island", "automatic");
+    else { this.cancel(); this.schedule(); }
+  }
+  /** A call shows its pill instead of the bare lip, like music. */
+  setCall(active: boolean): void {
+    if (this.inCall === active) return;
+    this.inCall = active;
+    if (active && this.current === "peek") this.change("island", "automatic");
     else { this.cancel(); this.schedule(); }
   }
   setMediaPeekFlow(_value: boolean): void {}

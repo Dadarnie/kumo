@@ -2,6 +2,7 @@
 // The island: DOM shell, sizing animation, Mimo placement, mouse handling.
 // Mirrors IslandRootView.swift + IslandWindowController.swift.
 
+import { CallPill } from "./call-pill";
 import { Tracked, Spring, clamp } from "../core/anim";
 import { Lifetime } from "../core/lifetime";
 import { applyAppearance } from "../core/appearance";
@@ -228,6 +229,11 @@ export class Island {
   private countdown!: HTMLElement;
   private restoreTarget!: HTMLButtonElement;
   private activity!: ActivityStrip;
+  private call = new CallPill(active => {
+    if (this.islandEl) this.islandEl.dataset.call = String(active);
+    Visibility.setCall(active);
+    State.notify();
+  });
   private coreRim!: SVGSVGElement;
   private coreRimPath!: SVGPathElement;
   private coreMode: CoreMediaMode = null;
@@ -359,6 +365,7 @@ export class Island {
     this.header.destroy?.();
     for (const view of this.views.values()) view.destroy?.();
     this.activity.destroy();
+    this.call.destroy();
     this.windowBounds.destroy();
     this.subscriptions.splice(0).forEach((stop) => stop());
     Visibility.destroy();
@@ -563,9 +570,11 @@ export class Island {
       this.countdown,
       this.restoreTarget,
       this.activity.el,
+      this.call.el,
       this.coreRim,
     );
     this.islandEl.style.pointerEvents = "auto";
+    this.islandEl.dataset.call = String(this.call.active);
 
     resizeCanvas(this.greetingCanvas, EXPANDED_W, 150);
 
@@ -1468,7 +1477,8 @@ export class Island {
     const overReview = State.visibility === "island" && this.activity.reviewHit(x, y, HIT_MARGIN);
     const overControls = State.visibility === "island" &&
       this.media.compactControlHit(x, y, HIT_MARGIN);
-    const holdControls = this.grabModifier || this.activity.clickOnly || overReview || overControls &&
+    // The call pill opens only on click, like in-pill approvals.
+    const holdControls = this.grabModifier || this.activity.clickOnly || (this.call.active && State.visibility === "island") || overReview || overControls &&
       (this.compactControlsHeld ||
         mediaStore.snapshot().state.playbackState === "paused");
     if (inIsland && (!this.wasInIsland || this.compactControlsHeld)) {

@@ -3,6 +3,7 @@
 
 pub(crate) mod audio_devices;
 pub(crate) mod audio_sessions;
+pub(crate) mod call;
 pub(crate) mod file_drop;
 pub(crate) mod media;
 pub(crate) mod power;

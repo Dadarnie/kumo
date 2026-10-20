@@ -339,3 +339,30 @@
 .activity-allow { background: var(--ink); color: #000; }
 .activity-decide:hover { filter: brightness(1.15); }
 .activity-decide:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
+/* Call pill: replaces the strip and music in the compact island during a call. */
+.call-pill {
+  position: absolute;
+  inset: 0 56px 0 16px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font: 600 12px var(--font-compact);
+  color: var(--ink);
+  cursor: pointer;
+}
+#island[data-visibility="island"][data-call="true"] .call-pill:not([hidden]) { display: flex; }
+#island[data-visibility="island"][data-call="true"] .activity-strip,
+#island[data-visibility="island"][data-call="true"] .media-ambient { visibility: hidden; }
+.call-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex: 0 0 8px; animation: call-pulse 2s ease-in-out infinite; }
+.call-pill[data-muted="true"] .call-dot { background: var(--red); animation: none; }
+@keyframes call-pulse { 50% { opacity: .45; } }
+.call-app { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-timer { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: auto; }
+.call-mic {
+  width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--control-fill); color: var(--ink); cursor: pointer;
+}
+.call-pill[data-muted="true"] .call-mic { background: var(--red); color: #fff; }
+.call-mic:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
+@media (prefers-reduced-motion: reduce) { .call-dot { animation: none; } }
