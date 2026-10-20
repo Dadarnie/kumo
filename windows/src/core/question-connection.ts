@@ -5,6 +5,6 @@ import type { CodingProvider } from "./coding";
 export function questionConnection(provider: CodingProvider, hookPath: string): string {
   const command = hookPath.replaceAll("\\", "/");
   const args = ["--mcp", "--provider", provider];
-  if (provider === "codex") return `[mcp_servers.mimo]\ncommand = ${JSON.stringify(command)}\nargs = ${JSON.stringify(args)}\ntool_timeout_sec = 120`;
+  if (provider === "codex") return `[mcp_servers.kumo]\ncommand = ${JSON.stringify(command)}\nargs = ${JSON.stringify(args)}\ntool_timeout_sec = 120`;
   return JSON.stringify({command, args}, null, 2);
 }

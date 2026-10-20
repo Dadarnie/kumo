@@ -52,7 +52,7 @@ fn initialization(requested: &str) -> Value {
         _ => PROTOCOL,
     };
     json!({"protocolVersion":protocol,"capabilities":{"tools":{"listChanged":false}},
-        "serverInfo":{"name":"mimo","version":env!("CARGO_PKG_VERSION")},
+        "serverInfo":{"name":"kumo","version":env!("CARGO_PKG_VERSION")},
         "instructions":"Use ask_user when you need a clarification, a choice, or a follow-up answer from the user. Mimo queues requests from connected agents and returns only the user's explicit answers. Never answer your own question. If the tool is unavailable, cancelled, or returns isError, ask the user in your normal interface. Questions do not grant permission to run other tools."})
 }
 

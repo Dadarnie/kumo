@@ -6,14 +6,15 @@ use std::{
 };
 use tauri_plugin_autostart::ManagerExt;
 
-pub const IDENTIFIER: &str = "com.johnpaul.mimo";
+pub const IDENTIFIER: &str = "com.dadarnie.kumo";
 
+/// The name this app shipped under before the Kumo rebrand.
 pub fn legacy_name() -> String {
-    ["Cou", "cou"].concat()
+    "Mimo".to_string()
 }
 
 pub fn legacy_identifier() -> String {
-    format!("fr.louisraille.{}", legacy_name().to_ascii_lowercase())
+    "com.johnpaul.mimo".to_string()
 }
 
 fn environment_dir(variable: &str) -> PathBuf {
@@ -37,7 +38,7 @@ pub fn migrate_user_data() -> io::Result<()> {
     let old_name = legacy_name();
     for variable in ["APPDATA", "LOCALAPPDATA"] {
         let base = environment_dir(variable);
-        migrate_directory(&base.join(&old_name), &base.join("Mimo"))?;
+        migrate_directory(&base.join(&old_name), &base.join("Kumo"))?;
     }
     // The application identifier also chooses WebView2's persistent profile.
     // Copy it before Tauri creates a window, so browser history/settings survive.
@@ -46,12 +47,12 @@ pub fn migrate_user_data() -> io::Result<()> {
 }
 
 fn migrate_directory(source: &Path, destination: &Path) -> io::Result<()> {
-    let marker = destination.join(".mimo-migration-v1");
+    let marker = destination.join(".kumo-migration-v1");
     if marker.exists() || !source.exists() {
         return Ok(());
     }
     copy_missing(source, destination)?;
-    std::fs::write(marker, b"Mimo storage migration completed\n")
+    std::fs::write(marker, b"Kumo storage migration completed\n")
 }
 
 fn is_redirected(metadata: &std::fs::Metadata) -> bool {
@@ -89,7 +90,7 @@ fn copy_missing(source: &Path, destination: &Path) -> io::Result<()> {
             continue;
         }
         let target = if name == old_log.as_str() {
-            destination.join("mimo.log")
+            destination.join("kumo.log")
         } else {
             destination.join(name)
         };
@@ -217,7 +218,7 @@ mod tests {
             b"attachment"
         );
         assert_eq!(
-            std::fs::read(destination.join("mimo.log")).unwrap(),
+            std::fs::read(destination.join("kumo.log")).unwrap(),
             b"previous log"
         );
         assert!(old_log.exists());

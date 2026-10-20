@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: MIT
 [package]
-name = "mimo-hook"
-description = "Relays Claude Code hook events to Mimo over a Windows named pipe"
+name = "kumo-hook"
+description = "Relays Claude Code hook events to Kumo over a Windows named pipe"
 authors = ["John Paul"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "mimo-hook"
+name = "kumo-hook"
 path = "src/main.rs"
 
 [dependencies]

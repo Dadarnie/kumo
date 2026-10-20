@@ -213,7 +213,9 @@ pub struct Vault {
     pub name: String,
 }
 
-const INBOX: &str = "Mimo Inbox.md";
+const INBOX: &str = "Kumo Inbox.md";
+/// Notes written before the Kumo rebrand; renamed on first use so nothing is split.
+const LEGACY_INBOX: &str = "Mimo Inbox.md";
 
 fn vault_paths() -> Vec<(String, std::path::PathBuf)> {
     let Ok(appdata) = std::env::var("APPDATA") else {
@@ -267,6 +269,9 @@ pub fn quick_note(vault_id: &str, text: &str) -> Result<(), String> {
         .into_iter()
         .find(|(id, _)| id == vault_id)
         .ok_or("That vault is not available")?;
+    if !path.join(INBOX).exists() && path.join(LEGACY_INBOX).exists() {
+        let _ = std::fs::rename(path.join(LEGACY_INBOX), path.join(INBOX));
+    }
     let time = windows::local_time();
     use std::io::Write;
     let mut file = std::fs::OpenOptions::new()

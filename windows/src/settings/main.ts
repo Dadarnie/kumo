@@ -259,7 +259,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
         : "Connect Kumo's question tool to answer this agent's follow-ups in the shared Review queue." }),
       h("p", { class: "hint", text: provider === "codex"
         ? "Add this to your Codex config.toml, then restart Codex."
-        : "In your agent's MCP settings, add a local server named Mimo with this command and arguments. Use a tool timeout of at least 120 seconds, then restart the agent." }),
+        : "In your agent's MCP settings, add a local server named Kumo with this command and arguments. Use a tool timeout of at least 120 seconds, then restart the agent." }),
       h("pre", { class: "path", text: connection }), h("div", { class: "row" }, copy, copyStatus)));
     if (provider === "claude" && status.installed && status.usageReady === false) {
       body.append(h("p", { class: "hint", text: "Your status line stays yours. Share its JSON with this command for usage. Add --quiet to keep its text." }),

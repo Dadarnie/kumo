@@ -378,7 +378,7 @@ fn github_request(http: &reqwest::Client, token: &str, path: &str) -> reqwest::R
     http.get(format!("https://api.github.com{path}"))
         .bearer_auth(token)
         .header("Accept", "application/vnd.github+json")
-        .header("User-Agent", "Mimo")
+        .header("User-Agent", "Kumo")
 }
 
 /** Poll together without detached tasks, so the module's cancellation drops every read. */
@@ -583,7 +583,7 @@ async fn poll_github(app: AppHandle) {
         api_json(search("pr", "review-requested"), "Review requests"),
         api_json(search("issue", "assignee"), "Assigned issues"),
         api_json(get(&format!("/users/{login}/events?per_page=20")), "Activity"),
-        api_json(http.post("https://api.github.com/graphql").bearer_auth(&token).header("User-Agent", "Mimo")
+        api_json(http.post("https://api.github.com/graphql").bearer_auth(&token).header("User-Agent", "Kumo")
             .json(&json!({"query": "query { viewer { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }"})), "Contribution calendar")
     ]).await;
     let mut warnings = Vec::new();

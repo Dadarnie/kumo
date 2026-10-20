@@ -30,7 +30,7 @@ const ERROR_PIPE_BUSY: i32 = 231;
 fn pipe_path() -> String {
     let key = current_user_sid()
         .unwrap_or_else(|| std::env::var("USERNAME").unwrap_or_else(|_| "user".into()));
-    format!(r"\\.\pipe\mimo-{key}")
+    format!(r"\\.\pipe\kumo-{key}")
 }
 
 /// Opens the pipe. Retries only while the server is busy: any other error means

@@ -5,7 +5,7 @@ import {spawn} from 'node:child_process';
 import {createInterface} from 'node:readline';
 import {fileURLToPath} from 'node:url';
 
-export function mimoMcp(provider, {executable=fileURLToPath(new URL('../target/release/mimo-hook.exe',import.meta.url))}={}) {
+export function mimoMcp(provider, {executable=fileURLToPath(new URL('../target/release/kumo-hook.exe',import.meta.url))}={}) {
   const child=spawn(executable,['--mcp','--provider',provider],{windowsHide:true,stdio:['pipe','pipe','pipe']});
   const pending=new Map(),errors=[];
   let sequence=0,exited=false;

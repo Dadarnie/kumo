@@ -356,7 +356,7 @@ fn read_from_server(mut server: Server) -> Result<CodexUsage, String> {
     server.request(
         1,
         "initialize",
-        json!({"clientInfo":{"name":"mimo","title":"Mimo","version":env!("CARGO_PKG_VERSION")}}),
+        json!({"clientInfo":{"name":"kumo","title":"Kumo","version":env!("CARGO_PKG_VERSION")}}),
     )?;
     server.send(json!({"method":"initialized","params":{}}))?;
     let account = server.request(2, "account/read", json!({"refreshToken":false}))?;

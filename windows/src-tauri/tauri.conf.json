@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Mimo",
+  "productName": "Kumo",
   "version": "1.0.1",
-  "identifier": "com.johnpaul.mimo",
+  "identifier": "com.dadarnie.kumo",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -52,7 +52,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../target/release/mimo-hook.exe": "mimo-hook.exe",
+      "../target/release/kumo-hook.exe": "kumo-hook.exe",
       "../../LICENSE": "licenses/LICENSE",
       "../../LICENSE-ASSETS.md": "licenses/LICENSE-ASSETS.md",
       "../../legal/ASSETS.md": "licenses/legal/ASSETS.md",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Relay server for mimo-hook.
+// Relay server for kumo-hook.
 //
 // Windows: the named pipe `\\.\pipe\mimo-<sid>`, one instance per connection.
 // Every hook event is
@@ -8,7 +8,7 @@
 // it back on the same connection, which is how approving from the island works.
 //
 // Claude Code is never blocked by us. Three things guarantee it:
-//   * mimo-hook gives the connection 300 ms and exits cleanly if we are closed;
+//   * kumo-hook gives the connection 300 ms and exits cleanly if we are closed;
 //   * we only wait for a human once the island has *confirmed* the card is on
 //     screen, so a paused island or a webview that is not listening costs a few
 //     hundred milliseconds, not two minutes;
@@ -16,7 +16,7 @@
 //     the terminal takes over.
 //
 // What we write back is the bare word `allow` or `deny`. Turning that into the
-// documented hookSpecificOutput JSON is mimo-hook's job, so the wire format
+// documented hookSpecificOutput JSON is kumo-hook's job, so the wire format
 // Claude Code expects lives in exactly one place.
 
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ use crate::log;
 #[path = "../../hook/src/questions.rs"]
 mod question_protocol;
 
-/// Slightly under mimo-hook's own 110 s wait, so we always answer first.
+/// Slightly under kumo-hook's own 110 s wait, so we always answer first.
 const DECISION_TIMEOUT: Duration = Duration::from_secs(108);
 /// How long the island gets to say "the card is up". This is the whole of B4:
 /// without it, an island that is paused, hidden behind a crashed webview or
@@ -67,11 +67,11 @@ struct PendingRequest {
 
 static COUNTER: AtomicU64 = AtomicU64::new(1);
 
-/// `\\.\pipe\mimo-<sid>` — must match mimo-hook's `pipe_path()` exactly.
+/// `\\.\pipe\mimo-<sid>` — must match kumo-hook's `pipe_path()` exactly.
 pub fn pipe_name() -> String {
     let key = crate::windows::current_user_sid()
         .unwrap_or_else(|| std::env::var("USERNAME").unwrap_or_else(|_| "user".into()));
-    format!(r"\\.\pipe\mimo-{key}")
+    format!(r"\\.\pipe\kumo-{key}")
 }
 
 pub fn start(app: AppHandle) {
@@ -274,7 +274,7 @@ async fn handle(app: AppHandle, mut pipe: NamedPipeServer) {
     };
     app.state::<Pending>().0.lock().unwrap().remove(&id);
 
-    // No decision: say nothing at all. mimo-hook then writes nothing to stdout
+    // No decision: say nothing at all. kumo-hook then writes nothing to stdout
     // and Claude Code asks in the terminal, exactly as if Mimo were closed.
     if let Some(d) = decision {
         let _ = pipe.write_all(format!("{d}\n").as_bytes()).await;
@@ -361,7 +361,7 @@ pub fn decline_all(app: &AppHandle) {
 }
 
 /// Called by the island's Allow / Deny buttons. Only ever a bare word: turning
-/// it into Claude Code's JSON is mimo-hook's job.
+/// it into Claude Code's JSON is kumo-hook's job.
 pub fn answer(app: &AppHandle, request_id: &str, decision: &str) {
     // A permission shortcut must never answer a question without collecting input.
     if app

@@ -9,7 +9,9 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const MARKER: &str = "Mimo Codex companion";
+const MARKER: &str = "Kumo Codex companion";
+/// Hooks installed before the Kumo rebrand carry this marker.
+const LEGACY_MARKER: &str = "Mimo Codex companion";
 const EVENTS: &[(&str, u64)] = &[
     ("SessionStart", 10),
     ("SessionEnd", 3),
@@ -49,7 +51,8 @@ fn ours(handler: &Value) -> bool {
     if legacy_agent_command(handler) {
         return true;
     }
-    if handler.get("statusMessage").and_then(Value::as_str) != Some(MARKER) {
+    let marker = handler.get("statusMessage").and_then(Value::as_str);
+    if marker != Some(MARKER) && marker != Some(LEGACY_MARKER) {
         return false;
     }
     let Some(script) = decoded_command(handler) else {
@@ -58,7 +61,7 @@ fn ours(handler: &Value) -> bool {
     let previous = crate::migration::legacy_name().to_ascii_lowercase();
     script.starts_with("& '")
         && EVENTS.iter().any(|(event, _)| {
-            script.ends_with(&format!("mimo-hook.exe' --provider codex {event}"))
+            script.ends_with(&format!("kumo-hook.exe' --provider codex {event}"))
                 || script.ends_with(&format!("{previous}-hook.exe' --provider codex {event}"))
         })
 }

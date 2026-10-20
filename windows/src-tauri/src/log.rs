@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Small append-only log at %LOCALAPPDATA%\Mimo\mimo.log.
+// Small append-only log at %LOCALAPPDATA%\Kumo\kumo.log.
 // Nothing leaves the machine.
 
 use std::io::Write;
@@ -16,7 +16,7 @@ pub fn line(message: impl AsRef<str>) {
     if windows::ensure_private_dir(&dir).is_err() {
         return;
     }
-    let path = dir.join("mimo.log");
+    let path = dir.join("kumo.log");
     // Keep it from growing forever: start fresh past ~1 MB.
     if std::fs::metadata(&path)
         .map(|m| m.len() > 1_000_000)

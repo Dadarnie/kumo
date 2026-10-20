@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: MIT
 [package]
-name = "mimo"
-description = "Mimo for Windows — Mimo lives at the top of your screen"
+name = "kumo"
+description = "Kumo for Windows — Kumo lives at the top of your screen"
 authors = ["John Paul"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "mimo_lib"
+name = "kumo_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

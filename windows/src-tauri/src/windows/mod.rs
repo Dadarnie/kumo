@@ -34,7 +34,7 @@ use ::windows::Win32::UI::WindowsAndMessaging::{
 };
 
 /// File name of the Claude Code relay.
-pub const HOOK_EXE: &str = "mimo-hook.exe";
+pub const HOOK_EXE: &str = "kumo-hook.exe";
 
 /// Environment variable holding the home directory.
 pub const HOME_VAR: &str = "USERPROFILE";
@@ -44,20 +44,20 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 // ── Files ─────────────────────────────────────────────────────────────────────
 
-/// %APPDATA%\Mimo — preferences.
+/// %APPDATA%\Kumo — preferences.
 pub fn config_dir() -> PathBuf {
     let base = std::env::var_os("APPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("Mimo")
+    base.join("Kumo")
 }
 
-/// %LOCALAPPDATA%\Mimo — where mimo-hook.exe, the inbox and the log live.
+/// %LOCALAPPDATA%\Kumo — where kumo-hook.exe, the inbox and the log live.
 pub fn local_dir() -> PathBuf {
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("Mimo")
+    base.join("Kumo")
 }
 
 /// %APPDATA% and %LOCALAPPDATA% are already private to the user.
@@ -114,7 +114,7 @@ pub fn find_on_path(stem: &str) -> Option<PathBuf> {
 //
 // Named pipes share one machine-wide namespace, so the SID in the name is what
 // keeps two accounts on the same machine from ever meeting on `mimo-*`.
-// mimo-hook computes the same string (hook/src/win.rs) and additionally checks
+// kumo-hook computes the same string (hook/src/win.rs) and additionally checks
 // that the process serving the pipe really is us.
 
 /// The SID of the account this process runs as, as `S-1-5-21-…`.

@@ -115,9 +115,9 @@ fn relay_command_args(command: &str) -> Option<&str> {
     }
     let (exe, args) = command[1..].rsplit_once(&format!("{quote} "))?;
     let previous = crate::migration::legacy_name().to_ascii_lowercase();
-    if !(exe.ends_with("/mimo-hook.exe")
-        || exe.ends_with("\\mimo-hook.exe")
-        || exe.ends_with("/mimo-hook")
+    if !(exe.ends_with("/kumo-hook.exe")
+        || exe.ends_with("\\kumo-hook.exe")
+        || exe.ends_with("/kumo-hook")
         || exe.ends_with(&format!("/{previous}-hook.exe"))
         || exe.ends_with(&format!("\\{previous}-hook.exe"))
         || exe.ends_with(&format!("/{previous}-hook")))
@@ -329,13 +329,13 @@ pub fn preview(install: bool) -> Result<HookPreview, String> {
     let sign = if install { "+" } else { "-" };
     let mut lines: Vec<String> = HOOK_EVENTS
         .iter()
-        .map(|(event, timeout)| format!("{sign} {event}: mimo-hook ({timeout}s)"))
+        .map(|(event, timeout)| format!("{sign} {event}: kumo-hook ({timeout}s)"))
         .collect();
     if (install && current.get("statusLine").is_none())
         || current.get("statusLine").is_some_and(own_status_line)
     {
         lines.push(format!(
-            "{sign} statusLine: mimo-hook --usage (numbers only, no polling)"
+            "{sign} statusLine: kumo-hook --usage (numbers only, no polling)"
         ));
     } else if install {
         lines.push("  Your existing status line stays as it is.".into());
@@ -366,7 +366,7 @@ pub fn write(install: bool, preview_fingerprint: &str) -> Result<String, String>
     hook_config::save(&path, &bytes, &next)
 }
 
-/// Copies the relay (mimo-hook.exe / mimo-hook) into the local data dir's
+/// Copies the relay (kumo-hook.exe / kumo-hook) into the local data dir's
 /// bin/ on launch. In a bundled install it comes from the app resources; in
 /// `tauri dev` it sits next to the app binary in the workspace target directory.
 ///
@@ -492,7 +492,7 @@ mod tests {
         ));
         std::fs::create_dir_all(&directory).unwrap();
         let source = directory.join("bundled.exe");
-        let destination = directory.join("mimo-hook.exe");
+        let destination = directory.join("kumo-hook.exe");
         std::fs::write(&source, b"current relay").unwrap();
         std::fs::write(&destination, b"earlier relay").unwrap();
         // Even equal lengths and timestamps must not mistake a stale relay for
@@ -529,7 +529,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let directory = std::env::temp_dir().join(format!(
-            "mimo-hook-migration-{}-{nonce}",
+            "kumo-hook-migration-{}-{nonce}",
             std::process::id()
         ));
         std::fs::create_dir_all(&directory).unwrap();
@@ -592,7 +592,7 @@ mod tests {
         assert_eq!(cleaned["statusLine"], original["statusLine"]);
         assert_eq!(cleaned["hooks"]["Foreign"], json!([]));
         assert!(!ours(
-            &json!({"type":"command","command":"echo mimo-hook.exe"})
+            &json!({"type":"command","command":"echo kumo-hook.exe"})
         ));
         assert!(!ours(
             &json!({"type":"command","command":format!("{}; echo foreign", hook_command("Stop"))})
@@ -676,7 +676,7 @@ mod tests {
     /// the home directory at a temp directory, and that is process-wide.
     #[test]
     fn writing_backs_up_preserves_and_refuses_a_changed_file() {
-        let tmp = std::env::temp_dir().join(format!("mimo-hooks-{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("kumo-hooks-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(tmp.join(".claude")).unwrap();
         std::env::set_var(windows::HOME_VAR, &tmp);
@@ -696,7 +696,7 @@ mod tests {
         // Install.
         let plan = preview(true).expect("a BOM must not stop the preview");
         assert!(
-            plan.diff.contains("mimo-hook"),
+            plan.diff.contains("kumo-hook"),
             "the diff must show what changes"
         );
         let backup = write(true, &plan.fingerprint).expect("install should succeed");

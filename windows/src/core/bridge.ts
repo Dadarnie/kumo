@@ -135,7 +135,7 @@ export const Bridge = {
   openSettingsWindow: (page?:string) => call<void>("open_settings_window",{page:page ?? null}),
   installedCodingTools: () => call<string[]>("installed_coding_tools"),
 
-  /** Writes to %LOCALAPPDATA%\Mimo\mimo.log, next to the Rust lines. */
+  /** Writes to %LOCALAPPDATA%\Kumo\kumo.log, next to the Rust lines. */
   log: (message: string) => call<void>("log_line", { message }),
 
   // ── Claude Code hooks ─────────────────────────────────────────────────────

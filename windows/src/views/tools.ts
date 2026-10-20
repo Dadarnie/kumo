@@ -66,7 +66,7 @@ export class ToolsPanel {
       this.note.disabled = true;
       void Bridge.toolsQuickNote(this.vault.id, text).then(() => {
         this.note.value = "";
-        this.note.placeholder = "Saved to Mimo Inbox ✓";
+        this.note.placeholder = "Saved to Kumo Inbox ✓";
       }).catch(() => { this.note.placeholder = "Could not save the note"; })
         .finally(() => { this.note.disabled = false; });
     });
@@ -149,7 +149,7 @@ export class ToolsPanel {
     if (!this.vault) { this.obsidian.replaceChildren(h("span", { class: "tools-dim", text: "No Obsidian vault found." })); return; }
     const vault = this.vault;
     this.obsidian.replaceChildren(this.note,
-      h("button", { class: "tools-action", type: "button", text: "Open inbox", title: `${vault.name} › Mimo Inbox`,
+      h("button", { class: "tools-action", type: "button", text: "Open inbox", title: `${vault.name} › Kumo Inbox`,
         onclick: () => { void Bridge.toolsOpenInbox(vault.id).catch(() => {}); } }));
   }
 

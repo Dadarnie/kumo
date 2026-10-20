@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-//! mimo-hook — the relay Claude Code runs on every hook event.
+//! kumo-hook — the relay Claude Code runs on every hook event.
 //!
 //! Reads the hook JSON on stdin, adds a little terminal context, and hands it to
 //! Mimo over the named pipe `\\.\pipe\mimo-<sid>`.
@@ -14,7 +14,7 @@
 //!   island is the whole point. No answer means empty stdout, and Claude Code
 //!   asks in the terminal exactly as if Mimo were not installed.
 //!
-//! Usage: `mimo-hook <EventName>` (the name is also read from the JSON).
+//! Usage: `kumo-hook <EventName>` (the name is also read from the JSON).
 
 use std::io::{Read, Write};
 use std::sync::mpsc;
@@ -64,7 +64,7 @@ fn main() {
         let code = match mcp::run(std::env::args().skip(1)) {
             Ok(()) => 0,
             Err(message) => {
-                eprintln!("mimo-hook: {message}");
+                eprintln!("kumo-hook: {message}");
                 2
             }
         };
@@ -340,7 +340,7 @@ fn prepare_event(mut raw: Vec<u8>, args: impl Iterator<Item = String>) -> Option
         }
     }
 
-    // Parse argv: "mimo-hook.exe [--agent <name>] [<EventName>]"
+    // Parse argv: "kumo-hook.exe [--agent <name>] [<EventName>]"
     // --agent tags the payload with mimo_agent so the app routes to the right pill.
     // Absent or invalid names are validated and discarded by the app, not here.
     if !matches!(provider.as_str(), "claude" | "codex")

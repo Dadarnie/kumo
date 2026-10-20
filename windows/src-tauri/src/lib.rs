@@ -1116,7 +1116,7 @@ pub fn run() {
         // The previous startup entry is migrated after the new plugin is ready.
         .plugin(
             tauri_plugin_autostart::Builder::new()
-                .app_name("Mimo")
+                .app_name("Kumo")
                 .build(),
         )
         .manage(Shared {
