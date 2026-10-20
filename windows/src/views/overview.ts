@@ -52,8 +52,9 @@ export class ModuleOverview implements ViewHost {
   private visible = false;
   private contentHeight = HOME_WORKSPACE_HEIGHT;
   private contentWidth = 0;
-  /** Back from the live session keeps Home compact until the agent goes idle. */
+  /** Back from the live session keeps Home compact until the next turn of work. */
   private liveDismissed = false;
+  private wasWorking = false;
 
   constructor(private actions: ViewActions) {
     this.el.append(this.surface, this.sessionFooter);
@@ -245,7 +246,10 @@ export class ModuleOverview implements ViewHost {
     const coding = !!codingProvider(task) || task.source === "agent";
     const codingActive = coding && (task.state !== "idle" || task.steps.length > 0
       || !!task.activity?.completed || !!task.activity?.stopped);
-    if (!codingActive) this.liveDismissed = false;
+    // Each new turn of work reopens the live session, even after Back.
+    const working = ["working", "thinking", "searching"].includes(task.state);
+    if (!codingActive || working && !this.wasWorking) this.liveDismissed = false;
+    this.wasWorking = working;
     const connections = codingConnections(State.settings, State.tasks);
     const providers = CODING_PROVIDERS.map(p => p.id).filter(provider => connections[provider]);
     const sessions = State.tasks.filter(session => {
