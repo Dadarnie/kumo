@@ -150,7 +150,8 @@ export class CodingCard {
     this.context.append(this.heading);
     this.el = h("div", { class: "coding-card" },
       this.trigger, this.preview);
-    this.trigger.addEventListener("click", () => { Sound.play("open"); this.togglePreview(); });
+    // No click-to-enlarge: a second click on Home must not grow the window.
+    // The live session still opens during work, and Enter opens it from the keyboard.
     this.el.addEventListener("keydown", event => {
       if (event.target === this.trigger && !this.expanded && ["Enter", " "].includes(event.key)) {
         event.preventDefault(); event.stopPropagation(); Sound.play("open"); this.togglePreview();

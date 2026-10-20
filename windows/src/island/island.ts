@@ -659,7 +659,10 @@ export class Island {
         if (next !== "expanded") {
           this.coreMode = null;
           this.greeting.interrupt();
-          if (State.view === "greeting" || State.view === "settings") State.view = State.defaultView();
+          // Minimizing from any page shows the same notch: pages go back to Home.
+          // Pending decisions and a live voice chat keep their view.
+          if (["greeting", "settings", "prompt", "grab", "integrations", "usage", "media"].includes(State.view))
+            State.view = State.defaultView();
           this.engine.resetMorph();
           UploadSeq.deactivate();
         }
