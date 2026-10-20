@@ -1,4 +1,4 @@
-# Mimo for Windows 1.0.1
+# Kumo for Windows 1.0.1
 
 This update refines coding workflows, media controls and the desktop experience.
 
@@ -12,7 +12,7 @@ This update refines coding workflows, media controls and the desktop experience.
 
 ## Download
 
-[Windows x64 installer](../../downloads/Mimo-Windows-setup.exe) ·
+[Windows x64 installer](../../downloads/Kumo-Windows-setup.exe) ·
 [SHA-256 checksum](../../downloads/SHA256SUMS.txt) ·
 [Build record](../../downloads/build.json)
 

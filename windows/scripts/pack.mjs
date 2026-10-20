@@ -19,7 +19,7 @@ const packages = [
   {
     dir: "nsis",
     suffix: "-setup.exe",
-    names: [`Mimo-Windows-${version}-setup.exe`, "Mimo-Windows-setup.exe"],
+    names: [`Kumo-Windows-${version}-setup.exe`, "Kumo-Windows-setup.exe"],
   },
 ];
 

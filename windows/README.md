@@ -1,6 +1,6 @@
-# Mimo for Windows
+# Kumo for Windows
 
-Mimo is a Tauri app with a TypeScript interface and Rust Windows runtime.
+Kumo is a Tauri app with a TypeScript interface and Rust Windows runtime.
 Maintained by John Paul.
 
 ## Run and build
@@ -16,14 +16,14 @@ Run these commands from `windows/`. To create the installer, run
 `npm run pack`. Files are copied to `release/`. The installer is unsigned;
 see [downloads and verification](../docs/distribution.md).
 
-## Use Mimo
+## Use Kumo
 
 | Feature | Where to start |
 | --- | --- |
 | Coding agents | Open Settings → Coding connection. Install hooks through the preview and Apply flow. |
 | Chat | Open Chat and choose a provider and model. API keys are separate from coding connections. |
 | Voice | Tap the chat microphone, or use Ctrl+Alt+V for desktop voice. Esc cancels. Configure speech keys in Settings. |
-| Shelf | Drop files or drag Mimo out to capture a region. Ctrl+Alt+G also starts capture. |
+| Shelf | Drop files or drag Kumo out to capture a region. Ctrl+Alt+G also starts capture. |
 | Media | Open Now playing from Home. Windows reports supported playback controls and audio devices. |
 | Working mode | The island becomes a thin lip. Review and explicit opening remain available. |
 
@@ -42,9 +42,9 @@ Open Settings from the island or tray.
 
 | Data | Location |
 | --- | --- |
-| Preferences | `%APPDATA%/Mimo/settings.json` |
-| Shelf and clipboard copies | `%LOCALAPPDATA%/Mimo/grab` |
-| Relay, inbox and logs | `%LOCALAPPDATA%/Mimo` |
+| Preferences | `%APPDATA%/Kumo/settings.json` |
+| Shelf and clipboard copies | `%LOCALAPPDATA%/Kumo/grab` |
+| Relay, inbox and logs | `%LOCALAPPDATA%/Kumo` |
 | Credentials | Windows Credential Manager, under `com.johnpaul.mimo` |
 | Claude hook configuration | `%USERPROFILE%/.claude/settings.json` |
 
@@ -62,7 +62,7 @@ Never commit keys, personal logs or exported credentials.
 | `src-tauri/src/` | Native runtime and commands |
 | `src-tauri/src/windows/` | Windows window, media and audio integration |
 | `hook/` | Coding-agent relay and MCP server |
-| `assets/sounds/` | Original Mimo sound cues |
+| `assets/sounds/` | Original Kumo sound cues |
 
 See the [architecture map](../docs/architecture.md)
 and [companion guide](../docs/companion.md).
@@ -94,5 +94,5 @@ are local test fixtures. `npm run test:performance` records a browser switching
 benchmark under `target/mimo-performance/`.
 
 For native memory measurements, use a release build with DevTools closed and
-the same DPI and player as the baseline. Include the full Mimo and WebView2
+the same DPI and player as the baseline. Include the full Kumo and WebView2
 process tree; browser heap alone does not establish native RAM usage.

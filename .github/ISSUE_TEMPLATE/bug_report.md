@@ -14,6 +14,6 @@ labels: bug
 
 **Steps and relevant logs (redact credentials and personal data)**
 
-**Mimo version**
+**Kumo version**
 
 **Screenshots or a short clip, if helpful**

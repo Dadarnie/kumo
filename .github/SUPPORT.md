@@ -2,7 +2,7 @@
 
 Start with the [Windows guide](../windows/README.md) and [docs index](../docs/README.md).
 
-For bugs, [open an issue](https://github.com/Jiocode1/mimo/issues) with the Mimo
+For bugs, [open an issue](https://github.com/Dadarnie/kumo/issues) with the Kumo
 version, Windows version, display scaling and steps to reproduce. Include useful
 logs or screenshots after removing personal data.
 

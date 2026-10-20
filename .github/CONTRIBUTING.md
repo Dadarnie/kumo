@@ -4,7 +4,7 @@ Bug reports, fixes, docs and small improvements are welcome.
 
 ## Report an issue
 
-[Open an issue](https://github.com/Jiocode1/mimo/issues) with the Mimo version,
+[Open an issue](https://github.com/Dadarnie/kumo/issues) with the Kumo version,
 Windows version, display scaling, steps to reproduce and expected behavior.
 Attach relevant logs or screenshots after removing keys and personal information.
 Use [private security reporting](SECURITY.md) for sensitive problems.
@@ -12,7 +12,7 @@ Use [private security reporting](SECURITY.md) for sensitive problems.
 ## Send a fix
 
 1. Fork the repo and create a branch for your change.
-2. Build and run Mimo from `windows/`.
+2. Build and run Kumo from `windows/`.
 3. Keep the change focused and run the checks below.
 4. Open a pull request with the problem, resulting behavior and checks run.
    Include a screenshot or clip for a visible change.

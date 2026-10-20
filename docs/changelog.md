@@ -1,5 +1,20 @@
 # Changelog
 
+## Kumo (unreleased)
+
+Kumo forks Mimo 1.0.1 under a new name and identity.
+
+- New cloud spirit mascot, Night lantern theme, cloud app icon and synthesized
+  lantern sound pack; Mimo's branding, artwork and recordings removed.
+- Quieter island: one thing at a time, status line with a progress ring, approvals
+  answered in the pill, typing never interrupted; bigger peeking lip with a clock.
+- Live session view, music app switching, call pill, Tools tab (launcher, Docker,
+  Ollama, Obsidian), VSCodium support.
+- Island loop capped at 60 fps; lighter polling.
+- Upgrades from Mimo: data, autostart and installed hooks move over on first launch.
+
+Entries below are Mimo's history.
+
 ## 1.0.1
 
 A maintenance update for coding workflows, media controls and the desktop experience.

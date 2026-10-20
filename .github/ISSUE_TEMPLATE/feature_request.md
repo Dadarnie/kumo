@@ -1,10 +1,10 @@
 ---
 name: Feature request
-about: Suggest an improvement to Mimo
+about: Suggest an improvement to Kumo
 labels: enhancement
 ---
 
-**What would you like Mimo to do?**
+**What would you like Kumo to do?**
 
 **Why would it be useful?**
 

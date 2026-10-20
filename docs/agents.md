@@ -1,10 +1,10 @@
-# Mimo — Windows agent integration
+# Kumo — Windows agent integration
 
-Tools can send hook events through the bundled `mimo-hook.exe` relay. It connects
+Tools can send hook events through the bundled `kumo-hook.exe` relay. It connects
 to `\\.\pipe\mimo-<sid>`, where the SID isolates users on the machine. Both the
 Windows transport and its server preserve the existing authentication checks.
 
-Configure a hook command as `"C:/path/to/mimo-hook.exe" --agent my-tool UserPromptSubmit`
+Configure a hook command as `"C:/path/to/kumo-hook.exe" --agent my-tool UserPromptSubmit`
 and write a hook JSON object on stdin. `--agent` sets `mimo_agent`; an absent or
 invalid agent falls back to the Claude Code pill. Names must match
 `^[a-z0-9-]{1,24}$`; `claude` is reserved. Existing commands without `--agent` still work.
@@ -38,7 +38,7 @@ clear the previous prompt result. Quota percentages remain in Limits.
 
 `PermissionRequest` waits for the existing island acknowledgement and allow/deny
 decision; other events finish promptly. The relay turns a confirmed decision into
-Claude Code's existing `hookSpecificOutput`. If Mimo is closed, unavailable, paused
+Claude Code's existing `hookSpecificOutput`. If Kumo is closed, unavailable, paused
 or cannot show the request, the terminal takes over. Connection, acknowledgement
 and decision deadlines are unchanged; do not implement a second transport.
 
@@ -46,10 +46,10 @@ The permission panel keeps the command and its supplied workflow description
 together. Deny, Allow and Always appear in that order, with N, Y and A shortcuts.
 Always remembers the exact tool input for the current provider, session and
 workspace in memory. A different command, session or workspace still needs a
-decision. Ending the session or restarting Mimo clears the remembered choice;
+decision. Ending the session or restarting Kumo clears the remembered choice;
 the provider's saved permission policy is unchanged.
 
-Use the app's Settings hook preview/install/uninstall flow. It merges only Mimo's
+Use the app's Settings hook preview/install/uninstall flow. It merges only Kumo's
 entries, backs up the original file and rejects concurrent changes in
 `%USERPROFILE%\.claude\settings.json`.
 
@@ -58,7 +58,7 @@ entries, backs up the original file and rejects concurrent changes in
 The bundled relay also runs as a local MCP stdio server:
 
 ```text
-mimo-hook.exe --mcp --provider codex
+kumo-hook.exe --mcp --provider codex
 ```
 
 Use the installed relay path shown in **Settings → Coding connection → Follow-up
@@ -73,7 +73,7 @@ installed helper path, then restart Codex:
 
 ```toml
 [mcp_servers.mimo]
-command = "C:/Users/your-name/AppData/Local/Mimo/bin/mimo-hook.exe"
+command = "C:/Users/your-name/AppData/Local/Kumo/bin/kumo-hook.exe"
 args = ["--mcp", "--provider", "codex"]
 tool_timeout_sec = 120
 ```
@@ -90,7 +90,7 @@ are never preselected; the user can also write a custom answer. A successful
 result has `answers` keyed by the exact question text. Do not fabricate an answer
 after an error or cancellation; ask through the agent's normal interface.
 
-Mimo recognizes 9 coding providers. Questions and permissions have equal priority:
+Kumo recognizes 9 coding providers. Questions and permissions have equal priority:
 every incoming request expands and pins the island, including in Working mode
 or over an open panel. The selected request and unfinished answers remain intact.
 
@@ -98,10 +98,10 @@ Calls share the existing Review queue with native questions and permissions.
 Every call has an isolated session and can only answer its own pending request.
 Cancellation or disconnect releases that call's card. The server bounds active
 calls to eight per connection and the decision wait to 110 seconds. Closed or
-paused Mimo returns an error promptly. No question text or answers are stored in
+paused Kumo returns an error promptly. No question text or answers are stored in
 agent configuration, and no API key or network server is needed.
 
 The adapter implements [MCP stdio](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
 and [tool calls](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
-over the existing authenticated Mimo pipe. Standard output contains JSON-RPC
+over the existing authenticated Kumo pipe. Standard output contains JSON-RPC
 only; local activity hooks keep their provider's documented response contracts.

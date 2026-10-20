@@ -2,7 +2,7 @@
 
 | Guide | Contents |
 | --- | --- |
-| [Windows](../windows/README.md) | Run Mimo, settings, local data and tests |
+| [Windows](../windows/README.md) | Run Kumo, settings, local data and tests |
 | [Coding agents](agents.md) | Hooks, sessions, permissions and MCP questions |
 | [Integrations](integrations.md) | Providers, services and credentials |
 | [Distribution](distribution.md) | Installer, checksums and unsigned-build notice |

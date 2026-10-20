@@ -1,13 +1,13 @@
-# Mimo for Windows
+# Kumo for Windows
 
-Mimo is a compact desktop companion at the top of the Windows screen, maintained
+Kumo is a compact desktop companion at the top of the Windows screen, maintained
 by John Paul. It uses a round, earless silver companion, compact dark surfaces
 and restrained state light. Sleeping mode is removed. The current appearance preference resolves
 to Dark; retain the documented Glass material direction without adding Light.
 
 ## Product behavior
 
-- Home, Chat and Mimo Shelf own the primary destinations. Home opens Now playing,
+- Home, Chat and Kumo Shelf own the primary destinations. Home opens Now playing,
   live coding/terminal work, attention requests and configured service views.
 - Working mode minimizes to a 156 by 12 attached lip. Explicit opening, Review,
   approvals and keyboard use remain available. Compact coding retains reported
@@ -25,11 +25,11 @@ to Dark; retain the documented Glass material direction without adding Light.
 
 ## Compatibility and ownership
 
-Preferences use `%APPDATA%\Mimo`; relay/inbox/log/shelf use `%LOCALAPPDATA%\Mimo`.
+Preferences use `%APPDATA%\Kumo`; relay/inbox/log/shelf use `%LOCALAPPDATA%\Kumo`.
 Credentials use Windows Credential Manager under `com.johnpaul.mimo`. Preserve
 existing storage keys, module IDs, event contracts and hook configuration safeguards.
 
-Mimo's 28 original synthesized sound cues use the existing sound/volume settings.
+Kumo's 28 original synthesized sound cues use the existing sound/volume settings.
 Their [source and provenance](../windows/assets/sounds/README.md), app artwork and icons have
 an explicit [asset terms](../LICENSE-ASSETS.md). Preserve upstream and
 third-party attribution. See [Windows development](../windows/README.md),

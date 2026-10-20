@@ -1,4 +1,4 @@
-# Mimo — Windows integrations
+# Kumo — Windows integrations
 
 The current native service pollers are in `windows/src-tauri/src/integrations.rs`.
 Frontend ownership stays in `src/core/modules.ts`, `module-lifecycle.ts`,

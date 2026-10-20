@@ -1,6 +1,6 @@
 # Architecture
 
-Mimo is a Windows Tauri application. Paths below are relative to `windows/`.
+Kumo is a Windows Tauri application. Paths below are relative to `windows/`.
 
 | Entry | Owns |
 | --- | --- |
@@ -22,14 +22,14 @@ Mimo is a Windows Tauri application. Paths below are relative to `windows/`.
 
 ## Boundaries
 
-Preferences live in `%APPDATA%/Mimo`; relay data, logs and Shelf files live in
-`%LOCALAPPDATA%/Mimo`. Credentials use Windows Credential Manager under
+Preferences live in `%APPDATA%/Kumo`; relay data, logs and Shelf files live in
+`%LOCALAPPDATA%/Kumo`. Credentials use Windows Credential Manager under
 `com.johnpaul.mimo`. Preserve storage keys, event contracts and relay authentication.
 
 Questions and permissions share a session-owned Review queue. Each incoming
 request expands and pins the island, including in Working mode or over an open
 Chat or Shelf panel. Queued requests preserve the active selection and drafts.
-Unavailable or paused Mimo returns control to the agent.
+Unavailable or paused Kumo returns control to the agent.
 
 Chat providers are separate from coding connections. Windows media sessions and
 master/app audio have separate native owners. Unknown capability and activity
@@ -46,10 +46,10 @@ Lazy panels populate before their first paint; the island owns their transition.
 
 Vite builds both HTML entries and their imported code, CSS, fonts and icons.
 It serves and copies the 28 original sound files. The icon generator uses the
-supplied master; [asset terms](../LICENSE-ASSETS.md) cover Mimo artwork
+supplied master; [asset terms](../LICENSE-ASSETS.md) cover Kumo artwork
 and sound files separately from MIT code.
 
-`predev` and `prebuild` build `mimo-hook.exe`. Tauri bundles the relay,
+`predev` and `prebuild` build `kumo-hook.exe`. Tauri bundles the relay,
 license notices and NSIS installer hooks. `scripts/pack.mjs` copies versioned
 and stable installer filenames into ignored `release/`.
 

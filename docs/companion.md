@@ -1,6 +1,6 @@
-# Mimo companion
+# Kumo companion
 
-Mimo is a round, earless silver companion with dark capsule eyes and a
+Kumo is a round, earless silver companion with dark capsule eyes and a
 circular status badge. The app icon master is
 `windows/mimo-app--icon/mimo-app-icon.png`; its generated exports serve
 static branding.
@@ -37,7 +37,7 @@ body tilt and gentle bob from the supplied video; it adds no noise sound.
 Happy closed lids belong to dancing, whistling and confirmed completion.
 Only the visible Media panel performs for music. Confirmed Spotify playback
 uses the soft mint body tint; paused playback and other players return to silver.
-With nothing playing, the same Mimo moves above the empty-state label. Playback
+With nothing playing, the same Kumo moves above the empty-state label. Playback
 returns him to the right-hand position; there is no duplicate mascot icon.
 
 Sleeping mode is removed. Preserve compact coding activity and explicit Review,
@@ -47,7 +47,7 @@ surfaces. Legacy internal identifiers do not authorize restoring removed UI.
 ## Sound, provenance and verification
 
 The app uses [28 original synthesized cues](../windows/assets/sounds/README.md) under
-[Mimo's asset terms](../LICENSE-ASSETS.md). The existing sound switch,
+[Kumo's asset terms](../LICENSE-ASSETS.md). The existing sound switch,
 volume and idle suspension remain in control. Vendor artwork retains the notices
 in [brands/README.md](../windows/src/mimo/brands/README.md).
 
