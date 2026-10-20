@@ -416,7 +416,7 @@ fn process_stamp(pid: u32) -> Option<String> {
 }
 fn editor_process(image: &str) -> bool {
     let name = image.rsplit(['\\', '/']).next().unwrap_or("");
-    ["code.exe", "code - insiders.exe", "cursor.exe"]
+    ["code.exe", "code - insiders.exe", "vscodium.exe", "cursor.exe"]
         .iter()
         .any(|editor| name.eq_ignore_ascii_case(editor))
 }
@@ -495,6 +495,7 @@ mod tests {
     fn cursor_returns_only_to_the_verified_editor_process() {
         assert!(editor_process(r"C:\Apps\Cursor\Cursor.exe"));
         assert!(editor_process(r"C:\Apps\VS Code\Code.exe"));
+        assert!(editor_process(r"C:\Apps\VSCodium\VSCodium.exe"));
         for other in [
             r"C:\Apps\not-cursor.exe",
             r"C:\Apps\Cursor.exe.helper",

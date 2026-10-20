@@ -365,11 +365,12 @@ fn open_url(url: String) {
     windows::open_url(&url);
 }
 
-/// "Open terminal" opens the working folder in VS Code when `code` is on PATH,
-/// and falls back to the file manager otherwise.
+/// "Open terminal" opens the working folder in VSCodium (`codium`) or VS Code
+/// (`code`), whichever is on PATH first, and falls back to the file manager.
 #[tauri::command]
 fn open_in_vscode(path: Option<String>) -> bool {
-    open_in_editor(path, "code")
+    let launcher = if windows::find_on_path("codium").is_some() { "codium" } else { "code" };
+    open_in_editor(path, launcher)
 }
 fn open_in_editor(path: Option<String>, launcher: &str) -> bool {
     // No shell anywhere near this. The path is a project folder chosen by
