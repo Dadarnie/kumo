@@ -638,6 +638,7 @@ export class Island {
         }
         if (previous === "expanded") {
           Sound.play("close");
+          if (!this.reducedMotion) this.engine.squash();
           State.isPinned = false;
           Visibility.setPinned(false);
           void Bridge.focusWindow(false);
