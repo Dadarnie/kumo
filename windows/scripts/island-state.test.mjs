@@ -37,7 +37,8 @@ test("sections respect parent modules, current integration choices, and existing
   assert.equal(sectionEnabled("integrations", modules, 2), true);
   assert.equal(
     sectionEnabled("integrations", { ...modules, vscode: true }, 0),
-    true,
+    false,
+    "coding tools alone do not need the Tools tab",
   );
   assert.equal(
     safeSectionView("media", { ...modules, media: false }, 2),

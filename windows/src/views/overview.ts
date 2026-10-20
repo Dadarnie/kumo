@@ -13,7 +13,6 @@ import { createMiniBot, pruneMiniBots, miniNotificationLabel, miniBotTask } from
 import { MIMO_PICKER_COLORS } from "../mimo/palette";
 import { integrationActivityKey } from "./integration-activity";
 import { Sound } from "../core/sound";
-import { icon, ICONS } from "./icons";
 import { codingQuiet } from "../core/coding-progress";
 
 const TOOLS_HEIGHT = 176;
@@ -308,9 +307,7 @@ export class ModuleOverview implements ViewHost {
     this.more.button.setAttribute("aria-label", "More integrations" + (moreAttention ? ", needs attention" : moreUnread ? ", activity" : ""));
     this.more.el.hidden = overflow.length === 0;
     this.developerBody.classList.toggle("has-more", overflow.length > 0);
-    const connectedProviders = new Set(State.tasks.map(codingProvider).filter(Boolean));
-    const connections = CODING_PROVIDERS.filter(provider => !connectedProviders.has(provider.id));
-    const key = JSON.stringify([active?.id, quick.map(task => [task.id, this.choiceName(task), miniNotificationLabel(task)]), connections]);
+    const key = JSON.stringify([active?.id, quick.map(task => [task.id, this.choiceName(task), miniNotificationLabel(task)])]);
     if (this.pickerKey === key) return;
     this.pickerKey = key;
     const focused = document.activeElement;
@@ -340,15 +337,6 @@ export class ModuleOverview implements ViewHost {
         ? "var(--mini-work-blue)" : MIMO_PICKER_COLORS[task.id] ?? "var(--ink-2)");
       return button;
     }));
-    for (let index=quick.length;index<4;index++) {
-      const provider=connections[index-quick.length];
-      const label=provider ? "Connect "+provider.name : "Add connection";
-      this.choices.append(h("button", {class:"pill integration-tile connection-slot",type:"button",
-        "aria-label":label, title:label,
-        onclick:()=>this.actions.openSettingsWindow("connections")},
-        h("span",{class:"integration-avatar","aria-hidden":"true"},icon(ICONS.plus,16)),
-        h("span",{class:"integration-label",text:label})));
-    }
     pruneMiniBots();
     if (focusIndex >= 0) {
       const next = [...this.choices.querySelectorAll<HTMLButtonElement>("button")];

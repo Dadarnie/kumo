@@ -53,10 +53,8 @@ export function sectionEnabled(
 ): boolean {
   if (section === "usage") return usageEnabled && modules.vscode && connected;
   if (section === "media") return modules.media;
-  if (section === "integrations")
-    return (
-      modules.vscode || (modules.developerIntegrations && integrations > 0)
-    );
+  // Coding tools live on Home and in Settings; the Tools tab is only for connected services.
+  if (section === "integrations") return modules.developerIntegrations && integrations > 0;
   return true;
 }
 
