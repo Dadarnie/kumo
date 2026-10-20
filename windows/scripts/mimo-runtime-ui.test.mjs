@@ -97,7 +97,7 @@ test("Limits opening keeps its content at a stable height without a transient sc
   await browser.capture('limits-no-scrollbar');
 });
 
-test("VS Code Preview retains its earlier controls and readable source and edits at both DPI scales", async()=>{
+test("VSCodium Preview retains its earlier controls and readable source and edits at both DPI scales", async()=>{
   await home();
   await browser.evaluate(`Object.assign(mediaPreview.state.codingTask,{state:'working',sessionCwd:'C:/work/mimo',steps:['Read invoice'],stepIndex:0,activity:{action:'Read',tool:'Read',phase:'running',target:'C:/work/mimo/src/invoice.ts',preview:{startLine:80,lines:['export const total = 42;']},files:[{action:'Edit',tool:'Edit',phase:'complete',target:'C:/work/mimo/src/invoice.ts',changes:{added:1,removed:1},preview:{startLine:80,lines:['const total = 41;','const total = 42;'],kinds:['removed','added']}}]}});mediaPreview.state.notify()`);
   await browser.settle();

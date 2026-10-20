@@ -481,7 +481,7 @@ test("New workflow entry names Approval and Home omits the repeated task prompt"
   assert.equal(await evaluate("document.querySelector('.home-view').textContent.includes('Start a real task')"),false);
 });
 
-test("VS Code switches live agents compactly and preserves a manual editing selection",async(t)=>{
+test("VSCodium switches live agents compactly and preserves a manual editing selection",async(t)=>{
   t.after(clearPanelFixture);await panelFixture();
   await evaluate(`mediaPreview.state.tasks=mediaPreview.state.tasks.filter(t=>!t.sessionId);
     const first=mediaPreview.state.upsertCodingTask('codex','Shop','C:/work/shop','auto-shop');
@@ -549,7 +549,7 @@ test("Mimo workflow Home removes Activity and owns retained actions", async (t) 
   await evaluate("mediaPreview.state.returnStatus='Opened project.';mediaPreview.state.notify()");
   assert.equal(await evaluate("document.querySelector('.workflow-context')"),null);
   assert.equal(await evaluate("document.querySelector('.home-view').textContent.includes('Opened project.')"),false);
-  assert.match(await evaluate("document.querySelector('.home-view').textContent"), /VS Code.*GitHub/);
+  assert.match(await evaluate("document.querySelector('.home-view').textContent"), /VSCodium.*GitHub/);
   assert.equal(await evaluate("document.querySelector('[data-section=usage]').hidden"),false);
   assert.equal(await evaluate("document.querySelector('.home-view').scrollWidth<=document.querySelector('.home-view').clientWidth"), true);
   await capture('mimo-workflow-home-dark');
@@ -666,7 +666,7 @@ test("Home capacity sits beside Settings, opens Limits and shares its off switch
   assert.equal(await evaluate("document.querySelector('.agent-usage')"), null);
 });
 
-test("VS Code Mimo gets annoyed, gives a friendly three-second confused pause, and protects approvals", async (t) => {
+test("VSCodium Mimo gets annoyed, gives a friendly three-second confused pause, and protects approvals", async (t) => {
   t.after(clearPanelFixture); await panelFixture();
   await selectIntegration('integration_claude');
   await evaluate("mediaPreview.state.updateTask('integration_claude','working');mediaPreview.state.notify()");
@@ -1509,11 +1509,11 @@ test("settings sidebar exposes real preferences, hides inactive controls, and fi
     );
     if (page === "modules") {
       await evaluate(
-        `document.querySelector('#settings-modules [aria-label="VS Code"]').click()`,
+        `document.querySelector('#settings-modules [aria-label="VSCodium"]').click()`,
       );
       assert.equal(
         await evaluate(
-          `document.querySelector('#settings-modules [aria-label="VS Code"]').getAttribute('aria-checked')`,
+          `document.querySelector('#settings-modules [aria-label="VSCodium"]').getAttribute('aria-checked')`,
         ),
         "false",
       );
@@ -1727,7 +1727,7 @@ test("integration icons reflow while selection replaces the left tool and return
   for (const appearance of ["dark"]) {
     await evaluate(`mediaPreview.preferences({appearance:'${appearance}'})`);
     await selectIntegration("integration_claude");
-    assert.equal(await evaluate("document.querySelector('.module-activity .int-head b').textContent"),"VS Code");
+    assert.equal(await evaluate("document.querySelector('.module-activity .int-head b').textContent"),"VSCodium");
     assert.deepEqual(await evaluate("[...document.querySelectorAll('.integration-tile')].map(button=>button.title)"),
       ["Resend","n8n","Vercel","GitHub"]);
     assert.equal(await evaluate("document.querySelectorAll('.module-developer canvas').length"),4);
@@ -1809,12 +1809,12 @@ test("integration icons reflow while selection replaces the left tool and return
     assert.equal(await evaluate("document.querySelector('.integration-more-picker [data-device=integration_stripe]')===null"),true);
     await selectIntegration("integration_claude");
     assert.equal(await evaluate("document.querySelectorAll('.integration-tile').length"),4);
-    assert.equal(await evaluate("document.querySelector('.module-activity .int-head b').textContent"),"VS Code");
+    assert.equal(await evaluate("document.querySelector('.module-activity .int-head b').textContent"),"VSCodium");
     await selectIntegration("integration_github");
     await evaluate("mediaPreview.preferences({activeIntegrations:['integration_resend','integration_n8n','integration_vercel','integration_notion','integration_calcom','integration_stripe']})");
     await evaluate(settled);
     assert.equal(await evaluate("document.querySelector('.module-activity').dataset.integration"),"integration_claude",
-      "Removing the current integration returns to VS Code");
+      "Removing the current integration returns to VSCodium");
     await evaluate("mediaPreview.preferences({activeIntegrations:['integration_resend','integration_n8n','integration_vercel','integration_github','integration_notion','integration_calcom','integration_stripe']})");
     await evaluate(settled);
   }
@@ -2202,7 +2202,7 @@ test("Ongoing service executions use the same blue mini badge and reject stale r
   assert.deepEqual(browserErrors,[]);
 });
 
-test("VS Code terminal uses one flat surface and keeps keyboard scrolling", async (t) => {
+test("VSCodium terminal uses one flat surface and keeps keyboard scrolling", async (t) => {
   t.after(() => loadPage("Page.reload")); await loadPage("Page.reload");
   await evaluate(`mediaPreview.preferences({codingAssistant:'claude',hooksInstalled:true,modules:{media:false,vscode:true,developerIntegrations:false}});
     mediaPreview.state.setFocus('integration_claude');
@@ -2844,7 +2844,7 @@ test("equalizer measures packaged players and unidentified media, and rests on p
   await evaluate("mediaPreview.levels.apply({revision:mediaPreview.levels.snapshot().revision+1,available:false,peak:0});mediaPreview.open('media')");
 });
 
-test("VS Code hooks show ready without a data fetch and keep Mimo white", async (t) => {
+test("VSCodium hooks show ready without a data fetch and keep Mimo white", async (t) => {
   const original = await evaluate("JSON.parse(JSON.stringify(mediaPreview.state.settings))");
   const previous = await evaluate("mediaPreview.state.integrations.integration_claude ?? null");
   t.after(async () => {
@@ -4698,8 +4698,8 @@ test("Mimo matches the reference states at 32 px and follows both turns with eit
   await selectIntegration('integration_claude');
   await evaluate(settled);
   assert.equal(await evaluate("mediaPreview.island.engine.badge"),null,'The left companion omits app icon badges');
-  assert.equal(await evaluate("mediaPreview.island.engine.tile"),false,'VS Code keeps Mimo transparent');
-  assert.ok(await evaluate("mediaPreview.island.engine.faceColor.every((value,i)=>Math.abs(value-[247/255,245/255,242/255][i])<.005)"),'VS Code keeps the original white Mimo');
+  assert.equal(await evaluate("mediaPreview.island.engine.tile"),false,'VSCodium keeps Mimo transparent');
+  assert.ok(await evaluate("mediaPreview.island.engine.faceColor.every((value,i)=>Math.abs(value-[247/255,245/255,242/255][i])<.005)"),'VSCodium keeps the original white Mimo');
   await capture("mimo-app-vscode");
   await evaluate("mediaPreview.preferences({modules:{vscode:false}});mediaPreview.open('overview')");
   await evaluate(settled);
@@ -4749,7 +4749,7 @@ test("Mimo's 24 expressions, hover petting, circling spirals and playback preser
   })()`);
   assert.ok(forehead.every(([r,g,b,a])=>r>=230&&g>=230&&b>=r&&a===255),'The shared renderer keeps the current cool silver material');
   const codingIdentity = await evaluate(`(()=>[...document.querySelectorAll('#integrations figure')]
-    .filter(figure=>figure.querySelector('figcaption').textContent==='VS Code')
+    .filter(figure=>figure.querySelector('figcaption').textContent==='VSCodium')
     .map(figure=>{const c=figure.querySelector('canvas');return [...c.getContext('2d').getImageData(c.width/2,c.height*.42,1,1).data]}))()`);
   assert.equal(codingIdentity.length,2);
   assert.ok(codingIdentity.every(([r,g,b,a])=>r>=230&&g>=230&&b>=r&&a===255),'Both coding-provider studies retain the current silver identity');
@@ -5896,7 +5896,7 @@ test("One hook subscription handles both assistants, owned approvals, and sessio
   assert.equal(await evaluate("mediaPreview.state.approvalCount"),1,'An unrelated result cannot clear the missed notification');
   await evaluate("emitHook('claude','PostToolUse',{tool_name:'Read',tool_use_id:'second-review',tool_input:{file_path:'review.ts'}})");
   await evaluate(settled);
-  assert.equal(await evaluate("mediaPreview.state.approvalCount"),0,'Approving and completing the tool in VS Code clears its notification');
+  assert.equal(await evaluate("mediaPreview.state.approvalCount"),0,'Approving and completing the tool in VSCodium clears its notification');
   assert.equal(await evaluate("mediaPreview.state.approvalInboxCount"),1,'The resolved missed approval stays reviewable without a persistent work feed');
   assert.equal(await evaluate("document.querySelector('.approval-inbox-row').dataset.resolved"),'true');
   assert.equal(await evaluate("document.querySelector('.approval-inbox-status').textContent"),'Approved · Completed');

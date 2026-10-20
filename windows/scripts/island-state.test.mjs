@@ -545,7 +545,7 @@ test("integration rows use available width without increasing the compact card h
   assert.equal(wide.activityHeight, 124);
 });
 
-test("disabling modules prunes VS Code sessions and integration tasks; reenable restores implementations", () => {
+test("disabling modules prunes VSCodium sessions and integration tasks; reenable restores implementations", () => {
   State.settings = normalizeSettings();
   State.loadIntegrationTasks();
   State.tasks.push({

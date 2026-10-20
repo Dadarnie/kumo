@@ -386,7 +386,7 @@ export class CodingCard {
     this.project.textContent = codingLabel(task);
     this.project.title = task.sessionCwd || task.name;
     this.workspace.textContent = task.sessionCwd?.replace(/[\\/]+$/, "").split(/[\\/]/).at(-1)
-      || (["VS Code", "Codex", "Claude"].includes(task.name) ? "" : task.name);
+      || (["VSCodium", "Codex", "Claude"].includes(task.name) ? "" : task.name);
     this.workspace.title = task.sessionCwd || task.name;
     this.workspace.hidden = !this.workspace.textContent || this.workspace.textContent.toLowerCase() === codingLabel(task).toLowerCase();
     this.counter.textContent = task.steps.length ? String(task.steps.length) : "";
@@ -469,9 +469,9 @@ export class CodingCard {
     const fileAction = ["Read", "Write", "Edit"].includes(activity?.action ?? "");
     const sessionMessage = !activity?.preview && !fileAction && activity?.action !== "Run";
     const filePlaceholder = progress.state === "waiting" ? progress.hint
-      : progress.state === "failed" ? "Open VS Code to review this action."
+      : progress.state === "failed" ? "Open VSCodium to review this action."
       : progress.active ? activity?.action === "Read" ? "Reading file…" : activity?.action === "Write" ? "Writing file…" : "Applying changes…"
-      : "Open VS Code to review this file.";
+      : "Open VSCodium to review this file.";
     const lines = activity?.action === "Run" && activity.target
       ? [`$ ${activity.target}`, ...(activity.preview?.lines ?? [])].slice(0, 12)
       : activity?.preview?.lines ?? [fileAction ? filePlaceholder : target];

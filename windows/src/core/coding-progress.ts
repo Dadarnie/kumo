@@ -100,9 +100,9 @@ export function codingProgress(task: Pick<AgentTask, "state" | "activity" | "ses
     : failed ? `${stage ?? (action || "Action")} failed`
     : complete ? action === "Edit" || action === "Write" ? "Edit applied" : `${action || "Action"} complete`
     : task.state === "thinking" ? "Thinking" : active ? ACTIVE_LABELS[action] ?? "Working" : "Ready";
-  const hint = stopped ? "Review the last activity in VS Code" : paused ? "Resume updates to follow progress" : done ? activity?.summary || "Turn finished"
+  const hint = stopped ? "Review the last activity in VSCodium" : paused ? "Resume updates to follow progress" : done ? activity?.summary || "Turn finished"
     : task.state === "approval" ? "Waiting for your decision" : task.state === "question" ? "Waiting for your reply"
-    : task.state === "ratelimit" ? "Waiting to resume" : failed ? "Review the result in VS Code"
+    : task.state === "ratelimit" ? "Waiting to resume" : failed ? "Review the result in VSCodium"
     : complete ? "Waiting for next action" : active ? "In progress" : "Waiting for activity";
   const target = activity ? codingTarget(activity, task.sessionCwd) : "";
   const completedCount = activity?.completedCount ?? activity?.completedActions?.length ?? 0;

@@ -9,8 +9,8 @@ export type MimoAppIcon = "github" | "n8n" | "vscode" | "vercel" | "stripe";
 export const MIMO_APPS: Record<string, { icon: MimoAppIcon; color: string; label: string }> = {
   integration_github: { icon: "github", color: MIMO_PICKER_COLORS.integration_github, label: "GitHub" },
   integration_n8n: { icon: "n8n", color: MIMO_PICKER_COLORS.integration_n8n, label: "n8n" },
-  integration_claude: { icon: "vscode", color: MIMO_PALETTE.loading, label: "VS Code" },
-  coding_codex: { icon: "vscode", color: MIMO_PALETTE.loading, label: "VS Code" },
+  integration_claude: { icon: "vscode", color: MIMO_PALETTE.loading, label: "VSCodium" },
+  coding_codex: { icon: "vscode", color: MIMO_PALETTE.loading, label: "VSCodium" },
   integration_vercel: { icon: "vercel", color: MIMO_PICKER_COLORS.integration_vercel, label: "Vercel" },
   integration_stripe: { icon: "stripe", color: MIMO_PICKER_COLORS.integration_stripe, label: "Stripe" },
 };

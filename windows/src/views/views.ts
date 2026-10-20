@@ -282,7 +282,7 @@ export function buildPill(
   actions: ViewActions,
   compact = false,
 ): HTMLElement {
-  const label = task.id === "integration_claude" ? "VS Code" : codingProvider(task) ? codingLabel(task) : task.name;
+  const label = task.id === "integration_claude" ? "VSCodium" : codingProvider(task) ? codingLabel(task) : task.name;
   const canvas = createMiniBot(task, 24);
   const pill = h(
     "button",

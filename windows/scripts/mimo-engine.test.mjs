@@ -24,7 +24,7 @@ function advance(engine, ms) {
   }
 }
 
-test("VS Code pokes briefly annoy Mimo and repeated pokes trigger confusion while work stays intact", (t) => {
+test("VSCodium pokes briefly annoy Mimo and repeated pokes trigger confusion while work stays intact", (t) => {
   mockDelays(t);
   const engine = new BotEngine(); engine.allowWorkPokes = true;
   let confused = 0; engine.onDizzy = () => { confused++; };

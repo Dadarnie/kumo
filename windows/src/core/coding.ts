@@ -37,7 +37,7 @@ export function codingProvider(task: AgentTask | null | undefined): CodingProvid
 
 export function codingLabel(task: AgentTask | null | undefined): string {
   const provider = codingProvider(task);
-  return provider === "claude" ? "Claude" : provider ? codingDefinition(provider).name : "VS Code";
+  return provider === "claude" ? "Claude" : provider ? codingDefinition(provider).name : "VSCodium";
 }
 
 export function chatAssistantName(settings: Pick<Settings, "chatProvider">): string {

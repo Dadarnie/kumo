@@ -97,7 +97,7 @@ function idleCard(task: AgentTask, openSettings: () => void): HTMLElement {
     actions.append(
       h("button", {
         class: "link-btn int-open",
-        text: "Open VS Code",
+        text: "Open VSCodium",
         onclick: () => void Bridge.openInVSCode(task.sessionCwd ?? null),
       }),
     );
@@ -142,7 +142,7 @@ function idleCard(task: AgentTask, openSettings: () => void): HTMLElement {
   return h(
     "div",
     { class: "int-card int-idle" },
-    header(task.color, !!codingProvider(task) ? "VS Code" : task.name, section?.[0] ?? "Integration"),
+    header(task.color, !!codingProvider(task) ? "VSCodium" : task.name, section?.[0] ?? "Integration"),
     h("div", { class: "int-status", role: "status" }, dot(statusColor, 5), h("span", { text: label })),
     hint ? h("div", { class: "int-hint", text: hint, title: hint }) : null,
     actions,

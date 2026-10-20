@@ -105,7 +105,7 @@ function modulesSection(): HTMLElement {
       "Artwork and playback controls, close at hand.",
     ),
     preference(
-      "VS Code",
+      "VSCodium",
       () => settings.modules.vscode,
       (value) => {
         settings.modules.vscode = value;
@@ -236,7 +236,7 @@ function codingSection(status: HookStatus, provider: CodingAssistant): HTMLEleme
     body.append(actions,
       h("p", { class: "hint", text: provider === "cursor"
         ? "Install hooks, then start an Agent conversation in Cursor. Restart Cursor if the hooks have not loaded."
-        : "Install hooks, restart your assistant in VS Code, and start coding." }),
+        : "Install hooks, restart your assistant in VSCodium, and start coding." }),
       h("p", { class: "hint", text: observer
         ? "Mimo follows activity. Permissions and sign-in stay in " + name + "."
         : "All coding tools can stay connected. Approvals return to your terminal when Mimo can’t show them." }),

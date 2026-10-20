@@ -178,7 +178,7 @@ function clearSession(id: string) {
   task.steps = [];
   task.stepIndex = 0;
   const provider = codingProvider(task);
-  task.name = provider && provider !== "claude" ? codingDefinition(provider).name : "VS Code";
+  task.name = provider && provider !== "claude" ? codingDefinition(provider).name : "VSCodium";
   task.pillBadge = null;
   task.activity = undefined;
   task.usage = undefined;

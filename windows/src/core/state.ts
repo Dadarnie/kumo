@@ -126,7 +126,7 @@ const task = (
 
 /** Stable integration identities, using the shared reference palette. */
 export const INTEGRATION_AGENTS: AgentTask[] = [
-  task("integration_claude", "VS Code", "#F5F6F8", "claudeCode"),
+  task("integration_claude", "VSCodium", "#F5F6F8", "claudeCode"),
   task("integration_resend", "Resend", "#22C55E", "n8n"),
   task("integration_n8n", "n8n", "#F29B38", "n8n"),
   task("integration_vercel", "Vercel", "#7C5CFF", "n8n"),

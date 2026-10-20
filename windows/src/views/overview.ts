@@ -138,7 +138,7 @@ export class ModuleOverview implements ViewHost {
   private choiceName(task: AgentTask): string {
     if (!codingProvider(task)) return task.name;
     const live = miniBotTask(task);
-    return live && (live.activity || live.state !== "idle") ? codingLabel(live) : "VS Code";
+    return live && (live.activity || live.state !== "idle") ? codingLabel(live) : "VSCodium";
   }
 
   private hooks(): IntegrationCardHooks {

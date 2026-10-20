@@ -67,7 +67,7 @@ export class CodingEdits {
       row.status.title = status;
       row.status.setAttribute("aria-label", status);
       row.state.querySelector("path")?.setAttribute("d", file.phase === "complete" ? ICONS.check : file.phase === "failed" ? ICONS.bang : ICONS.edit);
-      const preview = file.preview ?? { lines: ["Edit details are available in VS Code."] };
+      const preview = file.preview ?? { lines: ["Edit details are available in VSCodium."] };
       syncCodeRows(row.preview, row.rows, preview, { message: !file.preview });
       row.details.hidden = preview.lines.length <= 4;
     }
