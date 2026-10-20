@@ -9,7 +9,7 @@ use std::{
 
 const MAX_TEXT: usize = 64_000;
 const MAX_FILE: u64 = 512 * 1024;
-const MAX_LINES: usize = 12;
+const MAX_LINES: usize = 30;
 
 pub fn tool_name(name: &str) -> &str {
     let short = name.strip_prefix("functions.").unwrap_or(name);

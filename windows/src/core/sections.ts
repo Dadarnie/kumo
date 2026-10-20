@@ -40,6 +40,7 @@ export type IslandSection = "overview" | "prompt" | "media" | "grab" | "integrat
 export const SECTIONS = [
   { id: "overview", label: "Home" },
   { id: "prompt", label: "Chat" },
+  { id: "integrations", label: "Tools" },
   { id: "grab", label: "Mimo Shelf" },
 ] as const;
 
@@ -62,6 +63,7 @@ export function sectionEnabled(
 export function sectionForView(view: IslandViewName): IslandSection | null {
   if (view === "settings" || view === "greeting") return null;
   return view === "media" ? "media" : view === "grab" ? "grab" : view === "usage" ? "usage"
+    : view === "integrations" ? "integrations"
     : view === "prompt" || view === "voice" ? "prompt" : "overview";
 }
 
@@ -73,8 +75,8 @@ export function safeSectionView(
   connected = false,
 ): IslandViewName {
   // Old links from previous builds must never mount removed surfaces.
-  if (["activity", "utilities", "integrations", "history"].includes(view)) return "overview";
-  return (view === "media" || view === "usage") &&
+  if (["activity", "utilities", "history"].includes(view)) return "overview";
+  return (view === "media" || view === "usage" || view === "integrations") &&
     !sectionEnabled(view, modules, integrations, usageEnabled, connected)
     ? "overview"
     : view;

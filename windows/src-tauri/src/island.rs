@@ -17,8 +17,8 @@ use crate::settings::{DesktopCompanionPosition, IslandVisibility};
 use crate::windows::{self, cursor_physical, left_button_down};
 
 /// Logical size of the full window — the largest island view, like the macOS panel.
-pub const PANEL_W: f64 = 720.0;
-pub const PANEL_H: f64 = 432.0;
+pub const PANEL_W: f64 = 1080.0;
+pub const PANEL_H: f64 = 680.0;
 pub const ISLAND_W: f64 = 320.0;
 pub const ISLAND_H: f64 = 56.0;
 pub const PEEK_W: f64 = 156.0;
@@ -482,7 +482,7 @@ mod tests {
     use super::*;
     #[test]
     fn rendering_surface_stays_top_centered_and_constant_across_visibility_and_scale() {
-        assert_eq!(logical_size(IslandVisibility::Expanded), (720.0, 432.0));
+        assert_eq!(logical_size(IslandVisibility::Expanded), (1080.0, 680.0));
         assert_eq!(logical_size(IslandVisibility::Island), (320.0, 56.0));
         assert_eq!(logical_size(IslandVisibility::Peek), (156.0, 12.0));
         for visibility in [
@@ -502,20 +502,20 @@ mod tests {
     #[test]
     fn minimized_lip_excludes_browser_tabs_shadow_and_old_expanded_rectangle() {
         let stale = IslandRect {
-            x: 40.0,
+            x: 220.0,
             y: 0.0,
             w: 640.0,
             h: 240.0,
             radius: 26.0,
         };
-        assert!(accepts_pointer(IslandVisibility::Peek, stale, 360.0, 6.0));
+        assert!(accepts_pointer(IslandVisibility::Peek, stale, 540.0, 6.0));
         for (x, y) in [
-            (360.0, 12.0),
-            (360.0, 20.0),
-            (360.0, 32.0),
-            (250.0, 6.0),
-            (440.0, 6.0),
-            (600.0, 100.0),
+            (540.0, 12.0),
+            (540.0, 20.0),
+            (540.0, 32.0),
+            (430.0, 6.0),
+            (620.0, 6.0),
+            (780.0, 100.0),
         ] {
             assert!(
                 !accepts_pointer(IslandVisibility::Peek, stale, x, y),

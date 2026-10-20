@@ -5,13 +5,14 @@ import { Sound } from "../core/sound";
 import { prefersReducedMotion } from "../core/motion";
 import { icon, ICONS } from "./icons";
 import { codingLabel, codingProvider } from "../core/coding";
-import { codingTarget, type CodingPreview, type CodingActivity } from "../core/coding-activity";
+import { codingTarget, PREVIEW_LINES, type CodingPreview, type CodingActivity } from "../core/coding-activity";
 import { codingProgress, codingQuiet, compactCodingProgress } from "../core/coding-progress";
 import { codeRow, syncCodeRows } from "./coding-lines";
 import { CodingEdits } from "./coding-edits";
 import { CODING_ICONS, setCodingIdentity } from "./coding-icons";
 import { testResultsFromLines } from "../core/test-results";
 import { HOME_WORKSPACE_HEIGHT, CODING_PREVIEW_CARD_HEIGHT } from "../core/design";
+import { EXPANDED_W, WIDE_W } from "../core/layout";
 import type { AgentTask } from "../core/state";
 import "./coding-card.css";
 
@@ -168,7 +169,16 @@ export class CodingCard {
 
   /** Both modes have deliberate bounds; incoming hook content never resizes them. */
   requiredHeight(): number {
-    return this.expanded ? CODING_PREVIEW_CARD_HEIGHT : HOME_WORKSPACE_HEIGHT;
+    // The big panel fits its lines (18px each plus header and footer chrome), up to its maximum.
+    return this.expanded
+      ? Math.min(CODING_PREVIEW_CARD_HEIGHT, Math.max(320, 104 + this.lineCount * 18))
+      : HOME_WORKSPACE_HEIGHT;
+  }
+
+  /** Wide enough for the longest line (sidebar + gutter + ~6.7px per mono character). */
+  requiredWidth(): number {
+    const longest = Math.max(0, ...this.outputText.split("\n").map(line => line.length));
+    return Math.round(Math.min(WIDE_W, Math.max(EXPANDED_W, 190 + longest * 6.7)));
   }
 
   destroy(): void { this.el.dataset.visible = "false"; this.clearTransition(); }
@@ -296,7 +306,7 @@ export class CodingCard {
       phase: activity.phase ?? "running", toolUseId: activity.toolUseId, preview: activity.preview } : undefined);
     const tests = this.lastRun?.tests;
     if (this.lastRun) syncCodeRows(this.runOutput, this.runRows, {
-      lines: [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? []).filter(line=>!tests || !testResultsFromLines([line]) && !/^[#ℹ]\s*duration_ms\b/i.test(line.trim()))].slice(0, 12),
+      lines: [`$ ${this.lastRun.target}`, ...(this.lastRun.preview?.lines ?? []).filter(line=>!tests || !testResultsFromLines([line]) && !/^[#ℹ]\s*duration_ms\b/i.test(line.trim()))].slice(0, PREVIEW_LINES),
     }, { terminal: true });
     const resultKey = JSON.stringify([task.id, this.lastRun?.toolUseId, this.lastRun?.target, tests]);
     if (resultKey !== this.resultKey) {
@@ -473,7 +483,7 @@ export class CodingCard {
       : progress.active ? activity?.action === "Read" ? "Reading file…" : activity?.action === "Write" ? "Writing file…" : "Applying changes…"
       : "Open VSCodium to review this file.";
     const lines = activity?.action === "Run" && activity.target
-      ? [`$ ${activity.target}`, ...(activity.preview?.lines ?? [])].slice(0, 12)
+      ? [`$ ${activity.target}`, ...(activity.preview?.lines ?? [])].slice(0, PREVIEW_LINES)
       : activity?.preview?.lines ?? [fileAction ? filePlaceholder : target];
     const message = !activity?.preview && activity?.action !== "Run";
     this.preview.dataset.kind = message ? "message" : activity?.action === "Run" ? "terminal" : "code";
@@ -486,7 +496,7 @@ export class CodingCard {
         : sessionMessage || activity?.action === "Run" || !activity ? "" : codingTarget(activity, task.sessionCwd),
       title: activity?.target ?? "", icon: activity?.action === "Run" ? ICONS.terminal : sessionMessage ? ICONS.bubble : ICONS.doc,
     };
-    this.latestOutput = { preview: { ...activity?.preview, lines: lines.slice(0, 12) },
+    this.latestOutput = { preview: { ...activity?.preview, lines: lines.slice(0, PREVIEW_LINES) },
       message, terminal: activity?.action === "Run" };
     if (fileAction && activity?.preview) {
       this.sourceOutput = this.latestOutput;

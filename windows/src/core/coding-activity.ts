@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 /** One bounded, current activity per assistant. No file reads or activity cache. */
 import { reportedTestResults, testResultsFromLines, type CodingTestResults } from "./test-results";
+/** Lines kept per preview; the big session panel shows all of them. Matches MAX_LINES in hook/src/coding.rs. */
+export const PREVIEW_LINES = 30;
 export interface CodingPreview {
   lines: string[];
   startLine?: number;
@@ -79,7 +81,7 @@ export function activityText(value: unknown, limit = 160): string {
 export function codingPreview(value: CodingActivityEvent["mimo_preview"]): CodingPreview | undefined {
   if (typeof value?.text !== "string") return;
   const lines = value.text.slice(0, 2_000).replace(/\r\n?/g, "\n")
-    .split("\n").slice(0, 12).map(line => activityText(line));
+    .split("\n").slice(0, PREVIEW_LINES).map(line => activityText(line));
   if (!lines.some(line => line.trim())) return;
   const start = value.start_line;
   const startLine = typeof start === "number" && Number.isSafeInteger(start) && start > 0
@@ -124,7 +126,7 @@ function resultDiff(value: unknown): Pick<CodingActivity, "preview" | "changes">
       if (kind === "added") { added++; newLine++; }
       else if (kind === "removed") { removed++; oldLine++; }
       else { oldLine++; newLine++; }
-      if (preview.lines.length < 12) {
+      if (preview.lines.length < PREVIEW_LINES) {
         preview.lines.push(activityText(line.slice(1)));
         preview.kinds.push(kind);
         preview.lineNumbers.push(number > 0 ? number : null);
@@ -159,7 +161,7 @@ function editPreview(tool: string, input: Record<string, unknown>): Pick<CodingA
     ? value.replace(/\r\n?/g, "\n").replace(/\n$/, "").split("\n") : [];
   if (tool === "Write") {
     const content = lines(input.content);
-    return content.length ? { preview: { lines: content.slice(0, 12).map(line => activityText(line)) } } : {};
+    return content.length ? { preview: { lines: content.slice(0, PREVIEW_LINES).map(line => activityText(line)) } } : {};
   }
   if (["Edit", "MultiEdit"].includes(tool)) {
     for (const edit of edits) {
@@ -193,7 +195,7 @@ function relayEdits(value: unknown): Omit<CodingFileChange, "tool" | "phase">[] 
   return value.flatMap(item => {
     if (!item || typeof item !== "object" || typeof item.target !== "string" || !item.target) return [];
     const preview = item.preview;
-    const lines = Array.isArray(preview?.lines) ? preview.lines.slice(0, 12).map((line: unknown) => activityText(line)) : [];
+    const lines = Array.isArray(preview?.lines) ? preview.lines.slice(0, PREVIEW_LINES).map((line: unknown) => activityText(line)) : [];
     const kinds = lines.map((_: string, i: number) => ["added", "removed"].includes(preview.kinds?.[i]) ? preview.kinds[i] : "context") as CodingPreview["kinds"];
     const numbers = lines.map((_: string, i: number) => {
       const number = preview.lineNumbers?.[i];

@@ -103,7 +103,7 @@ test("Preview normalization strips terminal escapes and caps lines without split
   assert.equal(Array.from(preview.lines[1]).length, 160);
   assert.ok(preview.lines[1].endsWith("…"));
   assert.equal(preview.lines.length, 4);
-  assert.equal(codingPreview({text:Array.from({length:30},(_,i)=>`line ${i}`).join('\n')}).lines.length,12);
+  assert.equal(codingPreview({text:Array.from({length:40},(_,i)=>`line ${i}`).join('\n')}).lines.length,30);
   assert.equal(preview.startLine, undefined);
   assert.equal(codingPreview({ text: "\n\n" }), undefined);
   assert.equal(codingPreview({ text: { access_token: "private" } }), undefined);
@@ -125,9 +125,9 @@ test("Live edits show only actual change counts and a bounded current diff", () 
   assert.equal(codingActivity({hook_event_name:"PostToolUseFailure",tool_name:"Edit",tool_use_id:"old"},edit),edit);
   assert.equal(codingActivity({hook_event_name:"UserPromptSubmit",prompt:"Next turn"},edit).changes,undefined);
   const write=codingActivity({hook_event_name:"PreToolUse",tool_name:"Write",
-    tool_input:{file_path:"new.ts",content:Array.from({length:20},(_,i)=>`const n${i} = ${i};`).join("\n")}});
+    tool_input:{file_path:"new.ts",content:Array.from({length:40},(_,i)=>`const n${i} = ${i};`).join("\n")}});
   assert.equal(write.changes,undefined,"Writing content does not claim a net diff without the previous file");
-  assert.equal(write.preview.lines.length,12);
+  assert.equal(write.preview.lines.length,30);
   const patch=codingActivity({hook_event_name:"PreToolUse",tool_name:"apply_patch",
     tool_input:{input:"*** Begin Patch\n*** Update File: src/total.ts\n-return 0;\n+return 42;\n*** End Patch"}});
   assert.equal(patch.target,"src/total.ts");

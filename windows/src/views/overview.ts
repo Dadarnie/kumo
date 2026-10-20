@@ -16,6 +16,8 @@ import { Sound } from "../core/sound";
 import { icon, ICONS } from "./icons";
 import { codingQuiet } from "../core/coding-progress";
 
+const TOOLS_HEIGHT = 176;
+
 /** One rounded Home surface keeps the active work and mini Mimos together. */
 export class ModuleOverview implements ViewHost {
   readonly el = h("div", { class: "view overview module-layout" });
@@ -49,6 +51,7 @@ export class ModuleOverview implements ViewHost {
   private pickerKey = "";
   private visible = false;
   private contentHeight = HOME_WORKSPACE_HEIGHT;
+  private contentWidth = 0;
 
   constructor(private actions: ViewActions) {
     this.el.append(this.surface, this.sessionFooter);
@@ -88,11 +91,27 @@ export class ModuleOverview implements ViewHost {
     return active;
   }
 
+  /** The tool switcher and Connect slots live in their own Tools tab, so Home is only the agent's work. */
+  toolsView(): ViewHost {
+    const el = h("div", { class: "view overview module-layout tools-view" },
+      h("div", { class: "home-workspace" }, this.developer));
+    return {
+      el,
+      sync: () => {
+        this.developer.style.gridColumn = "span 2";
+        this.developer.style.height = TOOLS_HEIGHT - 52 + "px";
+        this.syncChoices(this.activeTask());
+      },
+      layout: () => ({ height: TOOLS_HEIGHT, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" }),
+      setVisible: visible => { if (!visible) this.more.close(); },
+    };
+  }
+
   plan(): ModuleLayout {
     const base = moduleLayout({
       media: false,
       vscode: true,
-      developerIntegrations: !this.fullPreview(),
+      developerIntegrations: false,
     }, false, 4);
     const activityHeight = Math.max(this.compactHeight(), this.contentHeight);
     return { ...base, activityHeight, height: 52 + activityHeight + (this.sessionFooter.hidden ? 0 : 26) };
@@ -113,6 +132,7 @@ export class ModuleOverview implements ViewHost {
       botY: this.detailOpen ? 24 : 96,
       botDiameter: this.detailOpen ? 18 : codingPreview ? 64 : codingProvider(this.companionTask) ? 60 : 52,
       agentMode: "pills",
+      ...(codingPreview ? { width: this.codingCard.requiredWidth() } : {}),
     };
   }
 
@@ -160,14 +180,11 @@ export class ModuleOverview implements ViewHost {
     const companion = this.companionTask;
     this.activity.dataset.state = companion?.activity?.stopped ? "stopped"
       : companion?.activity?.completed ? "finished" : companion?.state ?? "idle";
-    const desired = active
-      ? plan.modules.length > 1 ? [this.activity, this.developer] : [this.activity]
-      : [this.empty, this.developer];
-    for (const cell of [this.activity, this.developer, this.empty])
+    const desired = active ? [this.activity] : [this.empty];
+    for (const cell of [this.activity, this.empty])
       if (!desired.includes(cell)) cell.remove();
-    this.activity.style.gridColumn = plan.modules.length > 1 ? "span 1" : "span 2";
-    this.empty.style.gridColumn = "span 1";
-    this.developer.style.gridColumn = "span 1";
+    this.activity.style.gridColumn = "span 2";
+    this.empty.style.gridColumn = "span 2";
     desired.forEach((cell, index) => {
       if (this.surface.children[index] !== cell)
         this.surface.insertBefore(cell, this.surface.children[index] ?? null);
@@ -179,18 +196,13 @@ export class ModuleOverview implements ViewHost {
       this.codingCard.setVisible(false);
     }
     this.el.dataset.preview = String(this.fullPreview());
-    if (this.fullPreview()) {
-      this.more.close();
-      clear(this.choices);
-      this.pickerKey = "";
-      pruneMiniBots();
-    } else this.syncChoices(active);
-    this.developer.style.height = plan.activityHeight + "px";
     const height = this.activityBody.contains(this.codingCard.el)
       ? Math.max(this.compactHeight(), Math.min(PANEL_H - 52, this.codingCard.requiredHeight()))
       : this.detailOpen ? PANEL_H - 52 : this.compactHeight();
-    if (height !== this.contentHeight) {
+    const width = this.codingCard.requiredWidth();
+    if (height !== this.contentHeight || width !== this.contentWidth) {
       this.contentHeight = height;
+      this.contentWidth = width;
       this.el.style.setProperty("--activity-height", height + "px");
       queueMicrotask(() => { if (this.visible) State.notify(); });
     }
@@ -312,7 +324,7 @@ export class ModuleOverview implements ViewHost {
         class: "pill integration-tile", type: "button",
         title: name, "aria-label": "Show " + name + (miniNotificationLabel(task) ? ", " + miniNotificationLabel(task) : ""),
         "data-badge": miniNotificationLabel(task),
-        "data-integration": task.id, onclick: () => this.choose(task.id),
+        "data-integration": task.id, onclick: () => { this.choose(task.id); this.actions.setView("overview"); },
       }, avatar, h("span", { class: "integration-label", text: name }));
       button.style.setProperty("--integration-color", codingProvider(task)
         ? "var(--mini-work-blue)" : MIMO_PICKER_COLORS[task.id] ?? "var(--ink-2)");

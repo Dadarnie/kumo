@@ -56,12 +56,14 @@ export interface ViewLayout {
   botY: number | null; // null = auto-centred
   botDiameter: number;
   agentMode: AgentLayoutMode;
+  /** Expanded width override; defaults to EXPANDED_W. */
+  width?: number;
 }
 
 // Expanded bounds retain room for the largest view and mascot overhang.
 // Compact shapes share a single native surface and a top-center anchor.
-export const PANEL_W = 720;
-export const PANEL_H = 432;
+export const PANEL_W = 1080;
+export const PANEL_H = 680;
 
 // Phase 1 core dimensions. The native compact envelope includes shadow gutters.
 export const NOTCH_W = 184;
@@ -73,6 +75,8 @@ export const COMPACT_WINDOW_H = 56;
 export const MEDIA_HOVER_W = 400;
 export const MEDIA_HOVER_H = 48;
 export const EXPANDED_W = 640;
+/** The big live-session panel while an agent works. */
+export const WIDE_W = 1000;
 
 export const ROUNDED_CORNER = 16;
 // Parallel lower corners: the 16px card radius plus its 10px shell inset.

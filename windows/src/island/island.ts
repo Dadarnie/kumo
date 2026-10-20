@@ -508,6 +508,7 @@ export class Island {
       () => this.animateGeometry(false),
       buildHome(actions, this.overview),
     );
+    this.views.set("integrations", this.overview.toolsView());
     this.views.set("media", buildMediaPage(this.media));
 
     this.views.set("usage", buildUsage(actions));
@@ -1147,12 +1148,14 @@ export class Island {
   private targetSize(): { w: number; h: number; r: number } {
     if (State.visibility === "expanded" && this.coreMode === "hover")
       return { w: MEDIA_HOVER_W, h: MEDIA_HOVER_H, r: 24 };
-    const { w, h } = islandSize(
+    const size = islandSize(
       State.visibility,
       State.view,
       State.chatHistory.length,
     );
     const layout = this.views.get(State.view)?.layout?.();
+    const h = size.h;
+    const w = State.visibility === "expanded" && layout?.width ? layout.width : size.w;
     const r =
       State.visibility === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER;
     const bodyHeight =
@@ -1172,7 +1175,10 @@ export class Island {
   private animateGeometry(shrinking: boolean) {
     const { w, h, r } = this.targetSize();
     this.geometryHeight = h;
-    if (State.visibility === "expanded") this.contentEl.style.height = `${h}px`;
+    if (State.visibility === "expanded") {
+      this.contentEl.style.height = `${h}px`;
+      this.contentEl.style.width = `${w}px`;
+    }
     const mediaHeight = this.views.get(State.view)?.layout
       ? 0
       : this.media.heightFor(State.visibility, State.view);

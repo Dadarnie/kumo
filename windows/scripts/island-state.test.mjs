@@ -44,6 +44,8 @@ test("sections respect parent modules, current integration choices, and existing
     "overview",
   );
   assert.equal(safeSectionView("integrations", modules, 0), "overview");
+  assert.equal(safeSectionView("integrations", modules, 2), "integrations", "Tools tab opens once a tool is enabled");
+  assert.equal(sectionForView("integrations"), "integrations");
   assert.equal(safeSectionView("utilities", modules, 0), "overview");
   assert.equal(safeSectionView("activity", modules, 0), "overview");
   assert.equal(sectionForView("prompt"), "prompt");
@@ -54,12 +56,12 @@ test("sections respect parent modules, current integration choices, and existing
 });
 
 test("Home, Chat, and Mimo Shelf own their useful detail routes", () => {
-  assert.deepEqual(SECTIONS.map(s => s.id), ["overview", "prompt", "grab"]);
+  assert.deepEqual(SECTIONS.map(s => s.id), ["overview", "prompt", "integrations", "grab"]);
   assert.equal(sectionForView("grab"), "grab", "The shelf retains its own tab");
   assert.equal(sectionForView("usage"), "usage", "Limits owns the selected header control");
   assert.equal(sectionForView("voice"), "prompt");
   assert.equal(sectionForView("media"), "media", "The media header icon owns its selected state");
-  for (const view of ["integrations", "approvals", "error", "finished", "upload"])
+  for (const view of ["approvals", "error", "finished", "upload"])
     assert.equal(sectionForView(view), "overview", view);
 });
 
