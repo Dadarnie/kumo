@@ -674,17 +674,3 @@
   .coding-line[data-type], .coding-line[data-type] .coding-line-text { animation: none; }
 }
 
-/* Home: a small live editor fills the space beside the status and types like the big panel. */
-.coding-card[data-expanded="false"]:has(> .coding-preview:not([hidden])) {
-  grid-template-columns: minmax(170px, 260px) minmax(0, 1fr);
-  column-gap: 12px;
-}
-.coding-card[data-expanded="false"] > .coding-preview:not([hidden]) {
-  align-self: center;
-  height: 70px;
-  padding: 6px 8px;
-  border-radius: var(--radius-control);
-  background: var(--terminal-fill);
-  border: 1px solid var(--hairline);
-}
-.coding-card[data-expanded="false"] .coding-line:nth-child(n+5) { display: none; }

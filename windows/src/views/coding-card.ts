@@ -171,12 +171,13 @@ export class CodingCard {
   requiredHeight(): number {
     // The big panel fits its lines (18px each plus header and footer chrome), up to its maximum.
     return this.expanded
-      ? Math.min(CODING_PREVIEW_CARD_HEIGHT, Math.max(240, 104 + this.lineCount * 18))
+      ? Math.min(CODING_PREVIEW_CARD_HEIGHT, Math.max(290, 104 + this.lineCount * 18))
       : HOME_WORKSPACE_HEIGHT;
   }
 
   /** Wide enough for the longest line (sidebar + gutter + ~6.7px per mono character). */
   requiredWidth(): number {
+    if (!this.expanded) return EXPANDED_W;
     const longest = Math.max(0, ...this.outputText.split("\n").map(line => line.length));
     return Math.round(Math.min(WIDE_W, Math.max(EXPANDED_W, 190 + longest * 6.7)));
   }
@@ -237,8 +238,7 @@ export class CodingCard {
 
   private syncEditorView(): void {
     const edits = this.editCount > 0;
-    // Home shows a small live preview beside the status; the big panel keeps its own rules.
-    this.preview.hidden = this.expanded ? edits || (!!this.lastRun && !this.sourceOutput) : this.lineCount === 0;
+    this.preview.hidden = !this.expanded || edits || (!!this.lastRun && !this.sourceOutput);
     this.edits.el.hidden = !this.expanded || !edits;
     const showRun = !!this.lastRun;
     this.runRegion.hidden = !this.expanded || !showRun;
@@ -268,7 +268,6 @@ export class CodingCard {
     }
     this.outputText = nextText;
     this.lineCount = syncCodeRows(this.preview, this.rows, preview, { message, terminal });
-    if (!this.expanded) this.preview.hidden = this.lineCount === 0;
   }
 
   private async copyRenderedOutput(): Promise<void> {

@@ -52,6 +52,8 @@ export class ModuleOverview implements ViewHost {
   private visible = false;
   private contentHeight = HOME_WORKSPACE_HEIGHT;
   private contentWidth = 0;
+  /** Back from the live session keeps Home compact until the agent goes idle. */
+  private liveDismissed = false;
 
   constructor(private actions: ViewActions) {
     this.el.append(this.surface, this.sessionFooter);
@@ -69,7 +71,7 @@ export class ModuleOverview implements ViewHost {
       const task = this.companionTask;
       if (task) this.actions.setFocus(task.id);
       this.actions.returnToWork(task?.sessionCwd ?? null, task?.returnTarget, codingProvider(task));
-    }, () => { if (this.visible) State.notify(); }, () => this.actions.returnHome());
+    }, () => { if (this.visible) State.notify(); }, () => { this.liveDismissed = true; this.actions.returnHome(); });
     this.activity.prepend(this.codingCard.context);
   }
 
@@ -132,7 +134,7 @@ export class ModuleOverview implements ViewHost {
       botY: this.detailOpen ? 24 : 96,
       botDiameter: this.detailOpen ? 18 : codingPreview ? 64 : codingProvider(this.companionTask) ? 60 : 52,
       agentMode: "pills",
-      ...(codingPreview ? { width: this.codingCard.requiredWidth() } : {}),
+      ...(this.activityBody.contains(this.codingCard.el) ? { width: this.codingCard.requiredWidth() } : {}),
     };
   }
 
@@ -173,6 +175,9 @@ export class ModuleOverview implements ViewHost {
   sync(): void {
     const active = this.activeTask();
     if (active) this.syncActivity();
+    // Home opens straight into the live session (file, steps, output) while an agent works.
+    if (this.visible && !this.liveDismissed && this.activityBody.contains(this.codingCard.el)
+      && !this.codingCard.previewExpanded) this.codingCard.showPreview();
     const plan = this.plan();
     this.el.style.setProperty("--activity-height", plan.activityHeight + "px");
     this.el.dataset.mascot = active ? "activity" : "none";
@@ -240,6 +245,7 @@ export class ModuleOverview implements ViewHost {
     const coding = !!codingProvider(task) || task.source === "agent";
     const codingActive = coding && (task.state !== "idle" || task.steps.length > 0
       || !!task.activity?.completed || !!task.activity?.stopped);
+    if (!codingActive) this.liveDismissed = false;
     const connections = codingConnections(State.settings, State.tasks);
     const providers = CODING_PROVIDERS.map(p => p.id).filter(provider => connections[provider]);
     const sessions = State.tasks.filter(session => {
