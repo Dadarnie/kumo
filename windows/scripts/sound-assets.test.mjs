@@ -9,7 +9,8 @@ import {waveSamples,peakLoudness} from './sound-levels.mjs';
 const {SOUND_NAMES}=await import(await loadSource('../src/core/sound.ts'));
 const directory=new URL('../assets/sounds/',import.meta.url);
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',directory),'utf8'));
-const retained=new Set(['peek','open','close','hover','blip','gulp','tick','finish','greet']);
+// Kumo lantern pack: every cue is synthesized by scripts/kumo-sounds.mjs (44.1 kHz mono).
+const retained=new Set();
 function wave(name){
   const data=readFileSync(new URL(`console-${name}.wav`,directory));
   assert.equal(data.toString('ascii',0,4),'RIFF',name);assert.equal(data.toString('ascii',8,12),'WAVE',name);
@@ -45,8 +46,8 @@ test('the selected pack has exactly 28 complete PCM cues with headroom and clean
   }
 });
 
-test('the capture manifest identifies every selected recording and source format',()=>{
-  assert.equal(manifest.events,28);assert.equal(manifest.new_cues,19);
+test('the manifest identifies every synthesized cue and its format',()=>{
+  assert.equal(manifest.events,28);assert.equal(manifest.new_cues,28);
   assert.deepEqual([...manifest.retained_cues].sort(),[...retained].sort());
   assert.deepEqual(manifest.files.map(file=>file.name).sort(),[...SOUND_NAMES].sort());
   for(const file of manifest.files){
@@ -59,7 +60,7 @@ test('the capture manifest identifies every selected recording and source format
 });
 
 test('each cue meets its measured role level without clipping or flattening quiet UI feedback',()=>{
-  assert.equal(manifest.leveling.profile,'mimo-ui-v1');
+  assert.equal(manifest.leveling.profile,'kumo-lantern-v1');
   for(const file of manifest.files){
     const measured=peakLoudness(waveSamples(new URL(file.file,directory)));
     assert(Math.abs(measured-file.leveling.target_db)<.15,file.name+' matches its loudness target');

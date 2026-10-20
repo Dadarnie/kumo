@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Export the supplied Mimo app artwork for Windows and the shared UI.
+// Export the Kumo app artwork (kumo-app-icon/kumo-app-icon.svg → .png) for Windows and the shared UI.
 // Run: node scripts/gen-icons.mjs
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -7,14 +7,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE = join(ROOT, "mimo-app--icon", "mimo-app-icon.png");
+const SOURCE = join(ROOT, "kumo-app-icon", "kumo-app-icon.png");
 const OUT = join(ROOT, "src-tauri", "icons");
 const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
 const source = readFileSync(SOURCE);
 if (!source.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
   || source.readUInt32BE(16) !== source.readUInt32BE(20)
   || source.readUInt32BE(16) < 512)
-  throw new Error("The supplied Mimo icon must be a square PNG at least 512px wide.");
+  throw new Error("The Kumo icon must be a square PNG at least 512px wide.");
 
 mkdirSync(join(ROOT, "target"), { recursive: true });
 const exported = mkdtempSync(join(ROOT, "target", "app-icons-"));
@@ -69,4 +69,4 @@ writeFileSync(
 // 256px covers the largest 64px UI mark at 400% DPI without decoding the master.
 copyFileSync(join(exported, "256x256.png"), join(ROOT, "src", "assets", "app-icon-ui.png"));
 copyFileSync(join(exported, "512x512.png"), join(ROOT, "src", "assets", "app-icon.png"));
-console.log("Exported the supplied Mimo app icon to src-tauri/icons and the shared UI assets.");
+console.log("Exported the Kumo app icon to src-tauri/icons and the shared UI assets.");

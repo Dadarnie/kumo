@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Kumo app icon: cream cloud spirit on deep ink with a lantern glow. MIT, generated for this fork. -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="56%" r="50%">
+      <stop offset="0" stop-color="#f2a84b" stop-opacity=".55"/>
+      <stop offset=".55" stop-color="#f2a84b" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#f2a84b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="body" cx="38%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#fffdf7"/>
+      <stop offset=".45" stop-color="#fff4e2"/>
+      <stop offset="1" stop-color="#d9b88e"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="#0d0b12"/>
+  <rect width="1024" height="1024" rx="230" fill="url(#glow)"/>
+  <g fill="url(#body)">
+    <circle cx="512" cy="450.0" r="186.0"/>
+    <circle cx="347.0" cy="525.0" r="150.0"/>
+    <circle cx="677.0" cy="525.0" r="150.0"/>
+    <circle cx="278.0" cy="636.0" r="114.0"/>
+    <circle cx="746.0" cy="636.0" r="114.0"/>
+    <circle cx="422.0" cy="645.0" r="156.0"/>
+    <circle cx="602.0" cy="645.0" r="156.0"/>
+    <rect x="257.0" y="555.0" width="510.0" height="186.0" rx="90.0"/>
+  </g>
+  <ellipse cx="330.5" cy="648.0" rx="51.0" ry="25.5" fill="#ff8fb1" opacity=".45"/>
+  <ellipse cx="693.5" cy="648.0" rx="51.0" ry="25.5" fill="#ff8fb1" opacity=".45"/>
+  <rect x="367.0" y="490.4" width="82.5" height="135.3" rx="41.2" fill="#1a1420"/>
+  <rect x="574.5" y="490.4" width="82.5" height="135.3" rx="41.2" fill="#1a1420"/>
+  <ellipse cx="396.2" cy="531.0" rx="15.0" ry="19.5" fill="#fff"/>
+  <ellipse cx="603.8" cy="531.0" rx="15.0" ry="19.5" fill="#fff"/>
+</svg>

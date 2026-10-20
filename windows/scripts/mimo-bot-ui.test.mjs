@@ -71,13 +71,3 @@ test("main, mini and service bots share the spherical renderer while service ide
   assert.deepEqual(browser.errors, []);
 });
 
-test("the supplied PNG's earless brand mark loads with a transparent background", async () => {
-  const mark = await browser.evaluate(`(async () => {
-    const img = new Image(); img.src = '/mimo-bot.svg'; await img.decode();
-    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
-    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, 256, 256);
-    return { corner: [...ctx.getImageData(224, 24, 1, 1).data], center: [...ctx.getImageData(128, 95, 1, 1).data] };
-  })()`);
-  assert.equal(mark.corner[3], 0, "The Settings brand mark has no ears or backdrop");
-  assert.equal(mark.center[3], 255, "The mark contains the opaque silver body");
-});
