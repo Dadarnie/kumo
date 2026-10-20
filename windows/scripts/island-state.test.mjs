@@ -694,8 +694,8 @@ test("frontend bounds match each state and rapid transitions cancel stale native
     h: 40,
   });
   assert.deepEqual(islandSize("peek", "overview", 0, false, false), {
-    w: 156,
-    h: 18,
+    w: 190,
+    h: 28,
   });
   const applied = [];
   const bounds = new IslandWindowBounds(async (state) => {

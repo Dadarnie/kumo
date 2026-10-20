@@ -94,6 +94,9 @@ const PRE_PROGRESS = USC.T_PROG_START - USC.T_DROP;
 const modeOrder = (m: IslandVisibility) =>
   m === "peek" ? 0 : m === "island" ? 1 : 2;
 
+/** ~60 fps frame budget for the island loop (a little under 16.7 ms to absorb timer jitter). */
+const MIN_FRAME_MS = 15;
+
 export class Island {
   readonly visibility = Visibility;
 
@@ -1009,7 +1012,7 @@ export class Island {
       && this.fileDragDistance() <= FILE_APPROACH_MARGIN;
     if (approaching && !this.fileApproaching) this.engine.triggerExpression("surprised", .6);
     this.fileApproaching = approaching;
-    this.botCanvas.dataset.fileApproach = String(approaching);
+    if (this.botCanvas.dataset.fileApproach !== String(approaching)) this.botCanvas.dataset.fileApproach = String(approaching);
   }
 
   private showFileDrop() {
@@ -1607,6 +1610,12 @@ export class Island {
       this.running = false;
       return;
     }
+    // Cap at ~60 fps: high-refresh monitors (144–360 Hz) would otherwise redraw the
+    // mascot and restyle the island several times faster for no visible gain.
+    if (nowMs - this.lastFrame < MIN_FRAME_MS) {
+      this.raf = requestAnimationFrame(this.frame);
+      return;
+    }
     const dt = Math.min(0.05, (nowMs - this.lastFrame) / 1000);
     this.lastFrame = nowMs;
 
@@ -1647,7 +1656,7 @@ export class Island {
     const uploadActive = this.uploadActive;
     if (uploadActive) this.uploadCanvas.draw(UploadSeq.frame(), nowMs / 1000);
     this.uploadCanvas.el.classList.toggle("on", uploadActive);
-    this.uploadCanvas.el.inert = !uploadActive;
+    if (this.uploadCanvas.el.inert === uploadActive) this.uploadCanvas.el.inert = !uploadActive;
     this.viewsEl.inert = uploadActive;
     this.viewsEl.classList.toggle("hidden-by-upload", uploadActive);
 
@@ -1789,7 +1798,8 @@ export class Island {
       this.companionColor = colorHex ? hexToRGB(colorHex) : null;
     }
     this.engine.bodyColor = this.companionColor;
-    this.botCanvas.dataset.color=this.companionColorHex??"";
+    const color = this.companionColorHex ?? "";
+    if (this.botCanvas.dataset.color !== color) this.botCanvas.dataset.color = color;
     // While an agent works in the small island, Mimo strikes its thinking pose.
     this.engine.setState(state === "working" && State.visibility !== "expanded" ? "thinking" : state);
     this.engine.setStatus(mimoAppStatus(this.engine.state, info, focused?.id));

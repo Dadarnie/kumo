@@ -281,15 +281,15 @@
   transform: none;
 }
 /* Lip: time on the left, mascot on the right; nothing else fits. */
-#island[data-visibility="peek"] .activity-strip { inset: 0 28px 0 10px; }
+#island[data-visibility="peek"] .activity-strip { inset: 0 40px 0 14px; }
 #island[data-visibility="peek"] .activity-strip > :not(.activity-time) { display: none !important; }
 #island[data-visibility="peek"] .activity-time:not([hidden]) {
   position: static;
   transform: none;
   display: flex;
-  font: 600 10px/18px var(--font-compact);
+  font: 600 13px/28px var(--font-compact);
 }
-#island[data-visibility="peek"] .activity-time small { font-size: 7px; }
+#island[data-visibility="peek"] .activity-time small { font-size: 9px; }
 /* The mascot's thinking pose shows work; the three-dot indicator is redundant. */
 .activity-work-indicator { display: none !important; }
 /* Compact island: time on the left, clear of the transport controls. */
@@ -367,7 +367,6 @@
 .call-mic:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
 @media (prefers-reduced-motion: reduce) { .call-dot { animation: none; } }
 /* Calm compact island: one line of work, no extras. Details live in the expanded view. */
-#island[data-visibility="island"] .activity-work-detail,
 #island[data-visibility="island"] .activity-work-metric,
 #island[data-visibility="island"] .activity-work-changes,
 #island[data-visibility="island"] .activity-review { display: none !important; }
@@ -379,3 +378,14 @@
 /* Music pill like the reference: artwork left, waveform right (before the mascot). */
 .activity-strip[data-kind="music"] .activity-art { order: -1; }
 .activity-strip[data-kind="music"] .spotify-equalizer { margin-left: auto; }
+/* Small live detail under the status: the command, file or step, one line. */
+#island[data-visibility="island"] .activity-work-detail {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dim);
+  font-size: 9.5px;
+  line-height: 12px;
+}

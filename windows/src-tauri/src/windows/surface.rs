@@ -240,7 +240,7 @@ mod tests {
                 },
                 1.0
             ),
-            Mask::Rect(462, 0, 618, 18)
+            Mask::Rect(445, 0, 635, 28)
         );
         assert_eq!(
             window_mask(IslandVisibility::Expanded, IslandRect::default(), 1.0),
@@ -270,8 +270,9 @@ mod tests {
                 assert_eq!(right - left, (crate::island::PEEK_W * scale).round() as i32);
                 assert_eq!(bottom, (crate::island::PEEK_H * scale).round() as i32);
                 assert!(
-                    bottom < (20.0 * scale) as i32,
-                    "tab strip remains outside the region"
+                    // Raised from 20 px at the owner's request for a bigger, easier-to-see lip.
+                    bottom < (32.0 * scale) as i32,
+                    "the lip stays a thin strip at the top"
                 );
             }
         }
