@@ -502,8 +502,12 @@ export function handleHook(island: Island, payload: HookPayload) {
       // Questions and permissions take priority over Working mode and open
       // content. Keep the selected request and any unfinished answer in place.
       State.focusId=State.pendingApproval?.taskId ?? agentId;
-      if (State.visibility !== 'expanded' || State.view !== State.pendingReviewView)
-        island.expand(State.pendingReviewView,true);
+      // Plain approvals are answered in the pill (Deny / Allow) unless Mimo is already
+      // open; questions always need the full view.
+      if (request.questions || State.visibility === 'expanded') {
+        if (State.visibility !== 'expanded' || State.view !== State.pendingReviewView)
+          island.expand(State.pendingReviewView,true);
+      } else if (State.visibility === 'peek') Visibility.island();
       State.setPillBadge(agentId,'approval');
       void Bridge.approvalAck(requestId);
       if (!approvalTimers.has(requestId)) approvalTimers.set(requestId,window.setTimeout(()=>expireApprovals(island),107_000));

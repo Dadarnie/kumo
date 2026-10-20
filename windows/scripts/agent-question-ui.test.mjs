@@ -35,7 +35,8 @@ test('questions and permissions interrupt open content and hold the working lip 
       {working:false,auto:false,from:'compact'},
       {working:true,auto:false,from:'lip'},
       {working:true,auto:true,from:'chat'},
-    ].entries())for(const kind of ['question','approval']){
+    // From the compact island or lip, plain approvals stay in the pill (Deny / Allow).
+    ].entries())for(const kind of mode.from==='chat'?['question','approval']:['question']){
       const id=`priority-${index}-${kind}`;
       await browser.evaluate(`clearAttention();mediaPreview.preferences({workingModeEnabled:${mode.working},autoCollapseEnabled:${mode.auto}});${mode.from==='chat'?"mediaPreview.open('prompt')":"mediaPreview.compact()"}`);
       assert.equal(await browser.evaluate('mediaPreview.state.visibility'),mode.from==='chat'?'expanded':mode.working?'peek':'island');

@@ -304,3 +304,38 @@
   box-shadow: 0 0 0 1.5px rgb(255 255 255 / 35%);
   border-radius: 50%;
 }
+/* Pill reads like the iPhone island: just play until you reach for the controls. */
+.media-ambient.is-compact-transport:not(.has-full-controls) { width: 34px; }
+.media-ambient.is-compact-transport:not(.has-full-controls) .media-control:not(.media-ambient-primary) { display: none; }
+/* Agent progress ring: fills with the steps, colored by state. */
+@property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
+.activity-work-ring {
+  --ring: var(--accent);
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ring) calc(var(--p) * 1turn), rgb(255 255 255 / 14%) 0);
+  mask: radial-gradient(circle, transparent 4.5px, #000 5px);
+  transition: --p 400ms var(--ease-out);
+}
+.activity-work-ring[data-state="active"] { animation: activity-work-spin 2.4s linear infinite; }
+.activity-work-ring[data-state="waiting"],
+.activity-work-ring[data-state="attention"] { --ring: var(--amber); }
+.activity-work-ring[data-state="complete"] { --ring: var(--green); }
+.activity-work-ring[data-state="failed"] { --ring: var(--red); }
+.activity-strip:not(.is-visible) .activity-work-ring { animation-play-state: paused; }
+/* Approval right in the pill. */
+.activity-decide {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  font: 600 11px var(--font-compact);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.activity-deny { background: var(--control-fill); color: var(--ink); }
+.activity-allow { background: var(--ink); color: #000; }
+.activity-decide:hover { filter: brightness(1.15); }
+.activity-decide:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }

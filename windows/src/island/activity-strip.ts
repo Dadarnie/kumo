@@ -38,9 +38,14 @@ export class ActivityStrip {
   private indicator = h("span", { class: "activity-work-indicator", "aria-hidden": "true" },
     ...[0, 1, 2].map(() => h("i")));
   private review = h("button", { class: "activity-review", type: "button", text: "Review", hidden: true });
+  /** Approvals are answered right in the pill; questions still open the full view. */
+  private deny = h("button", { class: "activity-decide activity-deny", type: "button", text: "Deny", hidden: true });
+  private allow = h("button", { class: "activity-decide activity-allow", type: "button", text: "Allow", hidden: true });
+  /** Fills as the agent moves through its steps; colored by state. */
+  private ring = h("span", { class: "activity-work-ring", "aria-hidden": "true" });
   private stopped = h("span", { class: "activity-work-stopped", hidden: true, "aria-hidden": "true" }, icon(ICONS.pause, 12));
   private workStatus = h("span", { class: "activity-work-status", hidden: true },
-    this.workMetric, this.changes, this.indicator, this.stopped, this.review);
+    this.workMetric, this.changes, this.ring, this.indicator, this.stopped, this.review, this.deny, this.allow);
   readonly el = h(
     "div",
     { class: "activity-strip", "aria-hidden": "true" },
@@ -60,7 +65,9 @@ export class ActivityStrip {
   private key = "";
   private lifetime = new Lifetime();
   private controlsHeld = false;
-  constructor(onReview: (task: AgentTask) => void) {
+  constructor(onReview: (task: AgentTask) => void, onDecide: (decision: "allow" | "deny") => void) {
+    for (const [button, decision] of [[this.allow, "allow"], [this.deny, "deny"]] as const)
+      button.addEventListener("click", event => { event.stopPropagation(); onDecide(decision); }, { signal: this.lifetime.signal });
     document.addEventListener("visibilitychange", () => this.sync(this.controlsHeld),
       { signal: this.lifetime.signal });
     this.review.addEventListener("click", event => {
@@ -73,7 +80,8 @@ export class ActivityStrip {
     return this.el.classList.contains("is-visible");
   }
   get clickOnly(): boolean {
-    return this.visible && this.el.dataset.kind === "coding" && this.el.dataset.state === "quiet";
+    // Quiet work and in-pill approvals open only on click, so reaching for Allow never expands.
+    return this.visible && this.el.dataset.kind === "coding" && (this.el.dataset.state === "quiet" || !this.allow.hidden);
   }
   get codingTask(): AgentTask | null {
     if (!State.settings.modules.vscode) return null;
@@ -84,9 +92,12 @@ export class ActivityStrip {
       ? task : null;
   }
   reviewHit(x: number, y: number, margin = 0): boolean {
-    if (!this.visible || this.el.dataset.kind !== "coding" || this.review.hidden) return false;
-    const rect = this.review.getBoundingClientRect();
-    return x >= rect.left - margin && x <= rect.right + margin && y >= rect.top - margin && y <= rect.bottom + margin;
+    if (!this.visible || this.el.dataset.kind !== "coding") return false;
+    return [this.review, this.deny, this.allow].some(button => {
+      if (button.hidden) return false;
+      const rect = button.getBoundingClientRect();
+      return x >= rect.left - margin && x <= rect.right + margin && y >= rect.top - margin && y <= rect.bottom + margin;
+    });
   }
 
   sync(controlsHeld = this.controlsHeld): void {
@@ -231,7 +242,7 @@ export class ActivityStrip {
   private syncWork(task: AgentTask | null): void {
     this.workCopy.hidden = this.workStatus.hidden = !task;
     this.review.hidden = !task;
-    if (!task) return;
+    if (!task) { this.deny.hidden = this.allow.hidden = true; return; }
     const work = compactCodingProgress(task, State.paused);
     this.el.dataset.state = work.state;
     if (this.workTitle.textContent !== work.title) this.workTitle.textContent = work.title;
@@ -246,7 +257,14 @@ export class ActivityStrip {
     this.indicator.dataset.kind = work.indicator;
     this.indicator.hidden = work.indicator === "none";
     this.stopped.hidden = work.state !== "stopped";
-    this.review.hidden = !work.review;
+    const steps = task.steps.length;
+    const progress = work.state === "complete" ? 1 : steps ? Math.min(0.9, (task.stepIndex + 1) / (steps + 1)) : 0.25;
+    this.ring.style.setProperty("--p", String(progress));
+    this.ring.dataset.state = task.state === "approval" || task.state === "question" ? "attention" : work.state;
+    this.ring.hidden = work.state === "stopped" || work.state === "idle";
+    const deciding = task.state === "approval" && !!State.pendingApproval && !State.pendingApproval.questions;
+    this.deny.hidden = this.allow.hidden = !deciding;
+    this.review.hidden = !work.review || deciding;
     this.review.dataset.urgent = String(task.state === "approval" || task.state === "question");
     this.review.setAttribute("aria-label", `Review ${work.title.toLowerCase()} · ${codingLabel(task)}`);
   }

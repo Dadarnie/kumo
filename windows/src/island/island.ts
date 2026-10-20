@@ -454,7 +454,7 @@ export class Island {
     this.restoreTarget.addEventListener("pointerenter", event => {
       if (!IS_TAURI || State.visibility === "peek") this.onCursor(event.clientX, event.clientY,{x:event.clientX,y:event.clientY,control:event.ctrlKey});
     });
-    this.activity = new ActivityStrip(task => this.reviewCodingTask(task));
+    this.activity = new ActivityStrip(task => this.reviewCodingTask(task), decision => this.decideApproval(decision));
     this.botCanvas = h("canvas", { id: "bot-canvas", role: "img", "aria-label": "Mimo companion" });
     this.patTarget = h("button", { id: "pat-mimo", type: "button", "aria-label": "Mimo companion",
       hidden: "", onclick: event => {
@@ -892,6 +892,13 @@ export class Island {
   }
   alert(view: IslandViewName, userInteraction = false) {
     if (Activity.voice.active && view !== "approval" && view !== "question") { State.notify(); return; }
+    // Approvals are answered in the pill (Deny / Allow); only questions need the full view.
+    if (view === "approval" && State.pendingApproval && !State.pendingApproval.questions && !userInteraction && State.visibility !== "expanded") {
+      Visibility.setPinned(true);
+      if (State.visibility === "peek") Visibility.island();
+      State.notify();
+      return;
+    }
     if ((view === "approval" || view === "question") && State.pendingApproval) {
       Visibility.setPinned(true);
       this.expand(State.pendingReviewView);
