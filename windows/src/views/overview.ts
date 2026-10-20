@@ -7,6 +7,7 @@ import { PANEL_H, type ViewLayout } from "../core/layout";
 import { ACTIVITY_CARD_HEIGHT, HOME_WORKSPACE_HEIGHT } from "../core/design";
 import { h, clear } from "./dom";
 import { CodingCard } from "./coding-card";
+import { ToolsPanel } from "./tools";
 import { renderIntegrationCard, type IntegrationCardHooks } from "./integrations";
 import type { ViewActions, ViewHost } from "./views";
 import { createMiniBot, pruneMiniBots, miniNotificationLabel, miniBotTask } from "../mimo/minibots";
@@ -94,18 +95,31 @@ export class ModuleOverview implements ViewHost {
   }
 
   /** The tool switcher and Connect slots live in their own Tools tab, so Home is only the agent's work. */
+  /** Tools tab: your app launcher, Docker, Ollama and Obsidian, then connected services. */
   toolsView(): ViewHost {
-    const el = h("div", { class: "view overview module-layout tools-view" },
-      h("div", { class: "home-workspace" }, this.developer));
+    let height = TOOLS_HEIGHT;
+    const services = h("div", { class: "home-workspace tools-services" }, this.developer);
+    const panel = new ToolsPanel(() => { if (this.visible || el.classList.contains("on")) queueMicrotask(measure); });
+    const el = h("div", { class: "view overview module-layout tools-view" }, panel.el, services);
+    const measure = () => {
+      const next = Math.min(PANEL_H, Math.max(TOOLS_HEIGHT, 52 + el.scrollHeight));
+      if (next !== height) { height = next; State.notify(); }
+    };
     return {
       el,
       sync: () => {
-        this.developer.style.gridColumn = "span 2";
-        this.developer.style.height = TOOLS_HEIGHT - 52 + "px";
-        this.syncChoices(this.activeTask());
+        const hasServices = this.integrationTasks().some(task => !codingProvider(task));
+        services.hidden = !hasServices;
+        if (hasServices) {
+          this.developer.style.gridColumn = "span 2";
+          this.developer.style.height = "120px";
+          this.syncChoices(this.activeTask());
+        }
+        measure();
       },
-      layout: () => ({ height: TOOLS_HEIGHT, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" }),
-      setVisible: visible => { if (!visible) this.more.close(); },
+      layout: () => ({ height, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" }),
+      setVisible: visible => { panel.setVisible(visible); if (!visible) this.more.close(); },
+      destroy: () => panel.destroy(),
     };
   }
 

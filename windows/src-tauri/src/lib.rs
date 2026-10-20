@@ -28,6 +28,7 @@ mod openai;
 mod pipe;
 mod secrets;
 mod settings;
+mod tools;
 mod tray;
 mod voice_chat;
 mod webview_memory;
@@ -405,6 +406,61 @@ fn call_focus() -> bool {
     windows::call::active_call()
         .and_then(|call| call.path)
         .is_some_and(|path| windows::call::focus_call_app(&path))
+}
+
+// ── Tools tab ────────────────────────────────────────────────────────────────
+
+async fn blocking<T: Send + 'static>(
+    work: impl FnOnce() -> T + Send + 'static,
+) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+async fn tools_apps(refresh: bool) -> Result<Vec<tools::StartApp>, String> {
+    blocking(move || tools::start_apps(refresh)).await?
+}
+
+#[tauri::command]
+fn tools_launch(id: String) -> Result<(), String> {
+    tools::launch_app(&id)
+}
+
+#[tauri::command]
+async fn tools_docker() -> Result<tools::DockerState, String> {
+    blocking(tools::docker_state).await
+}
+
+#[tauri::command]
+async fn tools_docker_action(id: String, action: String) -> Result<(), String> {
+    blocking(move || tools::docker_action(&id, &action)).await?
+}
+
+#[tauri::command]
+async fn tools_ollama() -> tools::OllamaState {
+    tools::ollama_state().await
+}
+
+#[tauri::command]
+async fn tools_ollama_unload(name: String) -> Result<(), String> {
+    tools::ollama_unload(&name).await
+}
+
+#[tauri::command]
+fn tools_vaults() -> Vec<tools::Vault> {
+    tools::vaults()
+}
+
+#[tauri::command]
+fn tools_quick_note(vault: String, text: String) -> Result<(), String> {
+    tools::quick_note(&vault, &text)
+}
+
+#[tauri::command]
+fn tools_open_inbox(vault: String) -> Result<(), String> {
+    tools::open_inbox(&vault)
 }
 
 #[tauri::command]
@@ -1100,6 +1156,15 @@ pub fn run() {
             call_state,
             call_set_muted,
             call_focus,
+            tools_apps,
+            tools_launch,
+            tools_docker,
+            tools_docker_action,
+            tools_ollama,
+            tools_ollama_unload,
+            tools_vaults,
+            tools_quick_note,
+            tools_open_inbox,
             open_in_vscode,
             quit_app,
             hooks_status,

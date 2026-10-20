@@ -33,18 +33,17 @@ test("media presentation is explicit and dedicated content outranks the compact 
 test("sections respect parent modules, current integration choices, and existing utility routes", () => {
   const modules = { media: true, vscode: false, developerIntegrations: true };
   assert.equal(sectionEnabled("media", modules, 0), true);
-  assert.equal(sectionEnabled("integrations", modules, 0), false);
+  assert.equal(sectionEnabled("integrations", modules, 0), true, "Tools always holds the app launcher");
   assert.equal(sectionEnabled("integrations", modules, 2), true);
   assert.equal(
     sectionEnabled("integrations", { ...modules, vscode: true }, 0),
-    false,
-    "coding tools alone do not need the Tools tab",
+    true,
   );
   assert.equal(
     safeSectionView("media", { ...modules, media: false }, 2),
     "overview",
   );
-  assert.equal(safeSectionView("integrations", modules, 0), "overview");
+  assert.equal(safeSectionView("integrations", modules, 0), "integrations");
   assert.equal(safeSectionView("integrations", modules, 2), "integrations", "Tools tab opens once a tool is enabled");
   assert.equal(sectionForView("integrations"), "integrations");
   assert.equal(safeSectionView("utilities", modules, 0), "overview");

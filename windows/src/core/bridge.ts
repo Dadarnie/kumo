@@ -71,6 +71,13 @@ export interface CallState {
   readonly muted: boolean | null;
 }
 
+export interface StartApp { readonly name: string; readonly id: string; }
+export interface DockerContainer { readonly id: string; readonly name: string; readonly image: string; readonly state: string; readonly status: string; }
+export interface DockerState { readonly installed: boolean; readonly running: boolean; readonly containers: readonly DockerContainer[]; }
+export interface OllamaModel { readonly name: string; readonly sizeVram: number; readonly size: number; }
+export interface OllamaState { readonly running: boolean; readonly models: readonly OllamaModel[]; }
+export interface ObsidianVault { readonly id: string; readonly name: string; }
+
 export const Bridge = {
   grabRead: () => callOrThrow<import("./grab").GrabSnapshot>("grab_read"),
   grabAction: <T = unknown>(action:string,args:Record<string,unknown> = {}) => callOrThrow<T>("grab_action",{action,args}),
@@ -109,6 +116,15 @@ export const Bridge = {
   callState: () => call<CallState | null>("call_state"),
   callSetMuted: (muted: boolean) => call<boolean>("call_set_muted", { muted }),
   callFocus: () => call<boolean>("call_focus"),
+  toolsApps: (refresh = false) => call<StartApp[]>("tools_apps", { refresh }),
+  toolsLaunch: (id: string) => call<void>("tools_launch", { id }),
+  toolsDocker: () => call<DockerState>("tools_docker"),
+  toolsDockerAction: (id: string, action: "start" | "stop" | "restart") => call<void>("tools_docker_action", { id, action }),
+  toolsOllama: () => call<OllamaState>("tools_ollama"),
+  toolsOllamaUnload: (name: string) => call<void>("tools_ollama_unload", { name }),
+  toolsVaults: () => call<ObsidianVault[]>("tools_vaults"),
+  toolsQuickNote: (vault: string, text: string) => call<void>("tools_quick_note", { vault, text }),
+  toolsOpenInbox: (vault: string) => call<void>("tools_open_inbox", { vault }),
 
   /** "Open terminal" → opens the folder in VS Code when `code` is on PATH. */
   openInVSCode: (path: string | null) =>

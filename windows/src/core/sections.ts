@@ -47,14 +47,13 @@ export const SECTIONS = [
 export function sectionEnabled(
   section: IslandSection,
   modules: ModulePreferences,
-  integrations: number,
+  _integrations: number,
   usageEnabled = false,
   connected = false,
 ): boolean {
   if (section === "usage") return usageEnabled && modules.vscode && connected;
   if (section === "media") return modules.media;
-  // Coding tools live on Home and in Settings; the Tools tab is only for connected services.
-  if (section === "integrations") return modules.developerIntegrations && integrations > 0;
+  // Everything else, including Tools (app launcher, Docker, Ollama, Obsidian), is always there.
   return true;
 }
 
