@@ -239,8 +239,9 @@ fn set_island_visibility(app: AppHandle, shared: State<Shared>, visibility: Isla
         ..Default::default()
     });
     island::refresh_click_through(&app, &shared.gate);
-    // The working lip receives explicit DOM clicks inside its exact native clip.
-    shared.gate.set_active(visibility != IslandVisibility::Peek);
+    // The poll keeps running in the working lip so its mascot can follow the
+    // cursor; the lip still only accepts clicks inside its exact native clip.
+    shared.gate.set_active(true);
     if changed {
         if let Err(error) = settings::save(&settings) {
             log::line(format!("visibility preference: {error}"));
@@ -357,6 +358,36 @@ fn show_mimo_menu(app: AppHandle) -> Result<(), String> {
     tray::popup(&app).map_err(|error| error.to_string())
 }
 
+/// Brings the app that owns the current media session to the front, by its
+/// AppUserModelID (e.g. `Simpmusic_ejp2bhxmz1qq6!Simpmusic`). Only plain ID
+/// characters pass, so nothing else can ride along to explorer.
+fn media_app_id_ok(app_id: &str) -> bool {
+    !app_id.is_empty()
+        && app_id.len() <= 256
+        && app_id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "._-!".contains(c))
+}
+
+#[test]
+fn media_app_ids_reject_anything_but_plain_ids() {
+    assert!(media_app_id_ok("Simpmusic_ejp2bhxmz1qq6!Simpmusic"));
+    assert!(media_app_id_ok("Spotify.exe"));
+    for bad in ["", "a b", r"x\..\cmd", "a&calc", "\"q\"", "a;b"] {
+        assert!(!media_app_id_ok(bad), "{bad}");
+    }
+}
+
+#[tauri::command]
+fn open_media_source(app_id: String) -> bool {
+    if !media_app_id_ok(&app_id) {
+        return false;
+    }
+    let mut cmd = Command::new("explorer.exe");
+    cmd.arg(format!(r"shell:AppsFolder\{app_id}"));
+    windows::no_console(&mut cmd).spawn().is_ok()
+}
+
 #[tauri::command]
 fn open_url(url: String) {
     if !(url.starts_with("http://") || url.starts_with("https://")) {
@@ -369,7 +400,11 @@ fn open_url(url: String) {
 /// (`code`), whichever is on PATH first, and falls back to the file manager.
 #[tauri::command]
 fn open_in_vscode(path: Option<String>) -> bool {
-    let launcher = if windows::find_on_path("codium").is_some() { "codium" } else { "code" };
+    let launcher = if windows::find_on_path("codium").is_some() {
+        "codium"
+    } else {
+        "code"
+    };
     open_in_editor(path, launcher)
 }
 fn open_in_editor(path: Option<String>, launcher: &str) -> bool {
@@ -1042,6 +1077,7 @@ pub fn run() {
             cancel_island_move,
             show_mimo_menu,
             open_url,
+            open_media_source,
             open_in_vscode,
             quit_app,
             hooks_status,

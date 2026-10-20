@@ -2,6 +2,7 @@
 // The store remains the sole source of media state and native actions;
 // context and the render key below describe presentation, not another cache.
 import { mediaStore, type MediaStore } from "../core/media-store";
+import { Bridge } from "../core/bridge";
 import type { MediaState } from "../core/media";
 import {
   mediaTime,
@@ -14,6 +15,7 @@ import { ICONS, icon } from "../views/icons";
 import { musicMode, sound } from "../icons/glyphs";
 import { mimoIcon } from "../icons/render";
 import { mediaSource } from "./media-source";
+import { CompactDropdown } from "../views/device-picker";
 import "./media.css";
 import { MasterAudioController } from "./audio-controller";
 import { Visibility } from "../core/visibility";
@@ -62,6 +64,8 @@ export class IslandMedia {
   private artist = h("span", { class: "media-artist", dir: "auto" });
   private status = h("span", { class: "media-status" });
   private source = h("span", { class: "media-source" });
+  /** Pick which app the notch shows when several are playing. */
+  private apps = new CompactDropdown("Playing app", "media-app-select", id => { void this.store.selectSession(id); });
   private renderedSource: string | null | undefined;
   private elapsed = h("span", { class: "media-elapsed", text: "—:—" });
   private duration = h("span", { class: "media-duration", text: "—:—" });
@@ -212,7 +216,7 @@ export class IslandMedia {
       { class: "media-copy" },
       this.title,
       this.artist,
-      h("div", { class: "media-secondary" }, this.source, this.status),
+      h("div", { class: "media-secondary" }, this.source, this.apps.el, this.status),
     ),
     this.timelineEl,
     this.controls,
@@ -259,6 +263,14 @@ export class IslandMedia {
         this.render();
       }
     }, { signal: this.lifetime.signal });
+    // Artwork and title open the app that is playing.
+    for (const el of [this.art, this.title]) {
+      el.classList.add("media-open-source");
+      el.addEventListener("click", () => {
+        const id = this.store.snapshot().state.sourceAppId;
+        if (id) void Bridge.openMediaSource(id);
+      }, { signal: this.lifetime.signal });
+    }
     this.progress.append(this.seek);
     this.seek.addEventListener("pointerdown", (event) => {
       this.seeking = true;
@@ -651,6 +663,7 @@ export class IslandMedia {
       row && player.volume,
       row && player.volumeStep,
       row && state.sourceAppId,
+      row && player.sessions,
       row && this.view === "media" && player.timeline,
       ambient && this.compactFullControls,
       this.coreMode,
@@ -702,6 +715,13 @@ export class IslandMedia {
     this.artist.hidden = artist.length === 0;
     this.status.textContent = status;
     this.status.hidden = status.length === 0;
+    const sessions = row ? player.sessions ?? [] : [];
+    this.apps.el.hidden = sessions.length < 2;
+    if (sessions.length >= 2) this.apps.update(sessions.map(session => ({
+      id: session.id,
+      name: mediaSource(session.sourceAppId).name || "App",
+      detail: session.playing ? "Playing" : "Paused",
+    })), sessions.find(session => session.sourceAppId === state.sourceAppId)?.id, true, "Choose app");
     const sourceId = row ? state.sourceAppId : null;
     if (sourceId !== this.renderedSource) {
       this.renderedSource = sourceId;
@@ -711,8 +731,9 @@ export class IslandMedia {
         h("span", { text: source.name }),
       );
       this.source.dataset.source = source.id;
-      this.source.hidden = !source.name;
     }
+    // The app switcher replaces the source line when several apps have media.
+    this.source.hidden = sessions.length >= 2 || !this.source.textContent;
     this.announcement.textContent = error
       ? "Could not update playback. Try again."
       : "";

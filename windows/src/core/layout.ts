@@ -84,7 +84,7 @@ export const EXPANDED_CORNER = 26;
 
 /** Working-mode lip attached to the display top, above browser tabs. */
 export const PEEK_W = 156;
-export const PEEK_H = 12;
+export const PEEK_H = 18;
 
 export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   overview: { height: 160, botX: 68, botY: null, botDiameter: 52, agentMode: "pills" },
@@ -159,9 +159,11 @@ export function botPosition(
 ): BotPlacement {
   switch (mode) {
     case "peek":
-      return { cx: PEEK_W / 2, cy: PEEK_H / 2, diameter: 0, opacity: 0 };
+      // A small mascot peeks out of the lip so it is easy to spot.
+      return { cx: PEEK_W - 14, cy: PEEK_H / 2 + 1, diameter: 13, opacity: 1 };
     case "island":
-      return { cx: 30, cy: 20, diameter: 24, opacity: 1 };
+      // Mascot on the right; the time takes the left.
+      return { cx: COMPACT_W - 30, cy: 20, diameter: 24, opacity: 1 };
     case "expanded": {
       const layout = VIEW_LAYOUTS[view];
       if (view === "uploading") {

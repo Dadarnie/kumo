@@ -43,7 +43,7 @@ export class IslandVisibilityController {
   private dragging = false;
   private grabReady = false;
   private working = false;
-  /** A minimize during work keeps Mimo closed until that work ends. */
+  /** A minimize during work keeps the lip until that work ends. */
   private minimizedDuringWork = false;
   private dense = false;
   private presentation = new Set<() => void>();
@@ -53,7 +53,10 @@ export class IslandVisibilityController {
   constructor(private clock: Scheduler = scheduler) {}
   get state(): IslandVisibility { return this.current; }
   get compact(): boolean { return this.current === "island" && this.dense; }
-  private get minimizeForWork(): boolean { return this.preferences.workingModeEnabled === true; }
+  private mediaPlaying = false;
+  private get minimizeForWork(): boolean {
+    return this.preferences.workingModeEnabled === true && !this.mediaPlaying && !this.working;
+  }
 
   subscribePresentation(fn: () => void): () => void {
     this.presentation.add(fn);
@@ -83,13 +86,18 @@ export class IslandVisibilityController {
     if (this.working === active) return;
     this.working = active;
     this.cancel();
-    // Follow the agent: open when work starts, then settle closed once it stops.
-    if (active && this.current !== "expanded" && !this.minimizedDuringWork) this.change("expanded", "automatic");
+    // Work shows its status in the small island; only approvals and questions expand.
+    if (active && this.current === "peek" && !this.minimizedDuringWork) this.change("island", "automatic");
     if (!active) this.minimizedDuringWork = false;
     this.schedule();
   }
-  // Media has its own compact controls and never activates the working lip.
-  setMediaPlaying(_playing: boolean): void {}
+  /** While music plays, minimizing shows the artwork pill instead of the bare lip. */
+  setMediaPlaying(playing: boolean): void {
+    if (this.mediaPlaying === playing) return;
+    this.mediaPlaying = playing;
+    if (playing && this.current === "peek") this.change("island", "automatic");
+    else { this.cancel(); this.schedule(); }
+  }
   setMediaPeekFlow(_value: boolean): void {}
   setDragging(value: boolean): void {
     this.dragging = value; this.cancel();
@@ -134,8 +142,7 @@ export class IslandVisibilityController {
   }
   pointerLeft(_legacyMediaPeek = false): void {
     this.inside = false;
-    if (this.preferences.autoCollapseEnabled && !this.protectedContent && !this.grabReady && !this.dragging && !this.pinned && this.current !== "peek"
-      && !(this.working && this.current === "expanded")) {
+    if (this.preferences.autoCollapseEnabled && !this.protectedContent && !this.grabReady && !this.dragging && !this.pinned && this.current !== "peek") {
       this.change(this.minimizeForWork ? "peek" : "island", "automatic");
       this.setCompact(this.current === "island");
     } else this.schedule();
@@ -153,8 +160,7 @@ export class IslandVisibilityController {
   private schedule(): void {
     if (this.timer !== undefined || !this.preferences.autoCollapseEnabled || this.current === "peek" ||
       (this.current === "island" && this.dense && !this.minimizeForWork) ||
-      this.protectedContent || this.grabReady || this.dragging || this.inside || this.pinned ||
-      (this.working && this.current === "expanded")) return;
+      this.protectedContent || this.grabReady || this.dragging || this.inside || this.pinned) return;
     this.deadline = this.clock.now() + ACTIVITY_SETTLE_MS;
     this.timer = this.clock.after(() => {
       this.timer = undefined; this.deadline = null;

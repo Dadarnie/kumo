@@ -1043,3 +1043,27 @@
     transition: none;
   }
 }
+
+/* App switcher: reads like the source line it replaces, "Simpmusic ⌄". */
+.media-secondary .audio-device-picker[hidden],
+.media-secondary .audio-device-label { display: none !important; }
+.media-secondary:has(.audio-device-picker:not([hidden])) .media-source { display: none !important; }
+.media-secondary .audio-device-picker { flex: 0 1 auto; min-width: 0; }
+.media-secondary .media-app-select {
+  height: auto;
+  min-height: 0;
+  padding: 2px 4px;
+  margin: 0 -4px;
+  gap: 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dim-2);
+  font: inherit;
+}
+.media-secondary .media-app-select:hover { color: var(--ink); background: var(--control-fill); }
+.media-secondary .media-app-select .audio-device-name { font-weight: 500; }
+.media-secondary .audio-device-picker + .media-status:not([hidden])::before {
+  content: "\00b7";
+  margin-right: var(--space-2);
+}

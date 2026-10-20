@@ -60,6 +60,11 @@ export function mediaSource(source: string | null): {
     shape("path", { d: "M9.5 8h5l1.4 3H8.1Zm-3.3 8h11.6l1.3 3H4.9Z", fill: "#fff4e8" });
     return { name: "VLC", logo: svg, id: "vlc" };
   }
-  const name = source && !/[!_\\/]/.test(source) ? source.replace(/\.exe$/i, "") : "";
+  // Firefox-family browsers (Zen, Firefox) report a 16-digit install hash.
+  if (/^[0-9a-f]{16}$/i.test(source ?? "")) return { name: "Browser", logo: mimoIcon(musicMode, 16), id: "browser" };
+  // Store apps report Package_hash!App; the part after "!" is the app name.
+  const packaged = source?.match(/!([A-Za-z0-9.]+)$/)?.[1];
+  const name = packaged ? packaged.replace(/^App$/, "")
+    : source && !/[!_\\/]/.test(source) ? source.replace(/\.exe$/i, "") : "";
   return { name, logo: mimoIcon(musicMode, 16), id: "generic" };
 }

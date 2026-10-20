@@ -99,7 +99,8 @@ export class ActivityStrip {
       this.equalizer.setVisible(false);
       return;
     }
-    const baseline = State.visibility === "island" && !ownsContent(State.view);
+    // The lip shows only the time (CSS); the island shows the full strip.
+    const baseline = (State.visibility === "island" || State.visibility === "peek") && !ownsContent(State.view);
     const media = mediaStore.snapshot();
     const hasMedia =
       State.settings.modules.media &&
@@ -194,7 +195,9 @@ export class ActivityStrip {
     this.notice.style.display = shown && kind !== "coding" ? "" : "none";
     this.label.textContent = kind === "coding" ? "" : shown;
     this.label.hidden = !shown || kind === "coding";
-    this.time.hidden = kind === "coding" || !State.settings.clockEnabled;
+    // The lip always shows the clock; the island swaps it for coding status.
+    const lip = State.visibility === "peek";
+    this.time.hidden = (kind === "coding" && !lip) || !State.settings.clockEnabled;
     this.syncWork(kind === "coding" ? coding : null);
     this.progress.hidden = !upload || !visible;
     this.progress.style.setProperty(
@@ -288,7 +291,7 @@ export class ActivityStrip {
 
   private tick(): void {
     if (!this.lifetime.active || document.hidden || !this.visible) return;
-    if (this.el.dataset.kind === "coding") {
+    if (this.el.dataset.kind === "coding" && State.visibility !== "peek") {
       const task = this.codingTask;
       const work = task && compactCodingProgress(task, State.paused);
       if (work && this.el.dataset.state !== work.state) { this.sync(); State.notify(); return; }

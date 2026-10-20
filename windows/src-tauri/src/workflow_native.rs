@@ -416,9 +416,14 @@ fn process_stamp(pid: u32) -> Option<String> {
 }
 fn editor_process(image: &str) -> bool {
     let name = image.rsplit(['\\', '/']).next().unwrap_or("");
-    ["code.exe", "code - insiders.exe", "vscodium.exe", "cursor.exe"]
-        .iter()
-        .any(|editor| name.eq_ignore_ascii_case(editor))
+    [
+        "code.exe",
+        "code - insiders.exe",
+        "vscodium.exe",
+        "cursor.exe",
+    ]
+    .iter()
+    .any(|editor| name.eq_ignore_ascii_case(editor))
 }
 struct WindowsForPid {
     pid: u32,

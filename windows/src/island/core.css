@@ -31,7 +31,7 @@
   display: none;
 }
 #island[data-core="island"] .activity-strip {
-  inset: 0 24px;
+  inset: 0 56px 0 24px;
   gap: 10px;
 }
 .activity-time {
@@ -61,7 +61,7 @@
 }
 /* Supplied working-island reference: two retained lines, one small status. */
 #island[data-core="island"] .activity-strip[data-kind="coding"] {
-  inset: 0 14px 0 54px;
+  inset: 0 54px 0 18px;
   gap: 7px;
 }
 .activity-work-copy {
@@ -173,7 +173,8 @@
   to { opacity: 1; filter: blur(0); transform: scaleY(1); }
 }
 .media-ambient.is-compact-transport {
-  inset: 0 18px 0 auto;
+  /* Clear of the mascot on the right. */
+  inset: 0 46px 0 auto;
   width: 82px;
 }
 .media-ambient.is-compact-transport > :not(.media-ambient-controls) {
@@ -273,4 +274,33 @@
 @media (prefers-reduced-motion: reduce) {
   .activity-strip .spotify-equalizer { animation: none; }
   .spotify-equalizer i { transition-duration: 0ms !important; }
+}
+/* Default island: time on the left, mascot on the right. */
+.activity-strip[data-kind="idle"] .activity-time {
+  position: static;
+  transform: none;
+}
+/* Lip: time on the left, mascot on the right; nothing else fits. */
+#island[data-visibility="peek"] .activity-strip { inset: 0 28px 0 10px; }
+#island[data-visibility="peek"] .activity-strip > :not(.activity-time) { display: none !important; }
+#island[data-visibility="peek"] .activity-time:not([hidden]) {
+  position: static;
+  transform: none;
+  display: flex;
+  font: 600 10px/18px var(--font-compact);
+}
+#island[data-visibility="peek"] .activity-time small { font-size: 7px; }
+/* The mascot's thinking pose shows work; the three-dot indicator is redundant. */
+.activity-work-indicator { display: none !important; }
+/* Compact island: time on the left, clear of the transport controls. */
+#island[data-core="island"] .activity-time {
+  position: static;
+  transform: none;
+  margin-right: auto;
+}
+/* A quiet focus ring that fits the small transport buttons. */
+.media-ambient.is-compact-transport .media-control:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 35%);
+  border-radius: 50%;
 }

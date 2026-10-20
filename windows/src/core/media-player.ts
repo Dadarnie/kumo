@@ -32,6 +32,13 @@ export interface MediaPlayerState {
   readonly volumeStep?: number;
   readonly shuffle?: boolean | null;
   readonly repeatMode?: RepeatMode | null;
+  /** Every app with a media session; the notch can switch between them. */
+  readonly sessions?: readonly MediaSessionInfo[];
+}
+export interface MediaSessionInfo {
+  readonly id: string;
+  readonly sourceAppId: string | null;
+  readonly playing: boolean;
 }
 export interface MediaTimeline {
   readonly positionMs: number;
@@ -41,7 +48,7 @@ export interface MediaTimeline {
 }
 export type MediaController = (
   sessionId: string,
-  action: MediaAction,
+  action: MediaAction | "select",
 ) => Promise<void>;
 
 export function emptyMediaPlayer(): MediaPlayerState {
@@ -75,6 +82,7 @@ export function freezeMediaPlayer(
     ...(Number.isInteger(player.volumeStep) && player.volumeStep! > 0 && player.volumeStep! <= 100 ? { volumeStep: player.volumeStep } : {}),
     shuffle: typeof player.shuffle === "boolean" ? player.shuffle : null,
     repeatMode: ["off", "list", "track"].includes(player.repeatMode ?? "") ? player.repeatMode : null,
+    sessions: Object.freeze((player.sessions ?? []).map(session => Object.freeze({ ...session }))),
   });
 }
 

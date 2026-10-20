@@ -96,6 +96,8 @@ export const Bridge = {
   showMimoMenu: () => call<void>("show_mimo_menu"),
 
   openUrl: (url: string) => call<void>("open_url", { url }),
+  /** Brings the app playing the current media to the front. */
+  openMediaSource: (appId: string) => call<boolean>("open_media_source", { appId }),
 
   /** "Open terminal" → opens the folder in VS Code when `code` is on PATH. */
   openInVSCode: (path: string | null) =>

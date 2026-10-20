@@ -26,7 +26,7 @@ use windows_future::{AsyncOperationCompletedHandler, IAsyncOperation};
 use crate::media::{MediaProvider, MediaSession, MediaState, PlaybackState};
 use crate::media_player::{
     authorize_action, ControlReceiver, ControlReply, MediaAction, MediaControls, MediaPlayerState,
-    MediaTimeline, MediaUpdate, RepeatMode,
+    MediaSessionInfo, MediaTimeline, MediaUpdate, RepeatMode,
 };
 use tokio::sync::oneshot;
 
@@ -528,6 +528,10 @@ struct Worker {
     selected: Option<SelectedSession>,
     generation: u64,
     selection_epoch: u64,
+    /// The session the notch follows: the app that most recently started
+    /// playing, or the one you picked. Falls back to Windows' choice.
+    pinned: Option<SessionId>,
+    last_playback: Option<Vec<(SessionId, PlaybackState)>>,
     metadata: Option<MetadataRead>,
     artwork: Option<ArtworkRead>,
     control: Option<ControlOperation>,
@@ -561,6 +565,8 @@ fn run_worker(
         selected: None,
         generation: 0,
         selection_epoch: 0,
+        pinned: None,
+        last_playback: None,
         metadata: None,
         artwork: None,
         control: None,
@@ -677,6 +683,30 @@ impl Worker {
                 entry.repeat_mode,
             ) = playback_details(&entry.session);
         }
+        // A closed app's id can be reused by Windows; never keep pinning it.
+        if let Some(pinned) = self.pinned {
+            if !self.sessions.iter().any(|entry| entry.id == pinned) {
+                self.pinned = None;
+            }
+        }
+        // Follow the latest: an app that starts playing takes over the notch.
+        if let Some(last) = &self.last_playback {
+            for entry in &self.sessions {
+                let was = last
+                    .iter()
+                    .find(|(id, _)| *id == entry.id)
+                    .map(|(_, state)| *state);
+                if entry.playback == PlaybackState::Playing && was != Some(PlaybackState::Playing) {
+                    self.pinned = Some(entry.id);
+                }
+            }
+        }
+        self.last_playback = Some(
+            self.sessions
+                .iter()
+                .map(|entry| (entry.id, entry.playback))
+                .collect(),
+        );
         let current = match self.manager.as_ref().unwrap().manager.GetCurrentSession() {
             Ok(session) => {
                 let (id, _identity) = identity(&session)?;
@@ -710,7 +740,20 @@ impl Worker {
             .map(|entry| (entry.id, entry.playback))
             .collect();
         let previous = self.selected.as_ref().map(|selected| selected.id);
-        let next = select_session(&available, current, previous);
+        let next = self
+            .pinned
+            .filter(|id| available.iter().any(|(candidate, _)| candidate == id))
+            .or_else(|| select_session(&available, current, previous));
+        let session_list: Vec<MediaSessionInfo> = self
+            .sessions
+            .iter()
+            .filter(|entry| available.iter().any(|(id, _)| *id == entry.id))
+            .map(|entry| MediaSessionInfo {
+                id: entry.id.0.to_string(),
+                source_app_id: entry.source_app_id.clone(),
+                playing: entry.playback == PlaybackState::Playing,
+            })
+            .collect();
         #[cfg(test)]
         if std::env::var_os("MIMO_MEDIA_LIVE_TRACE").is_some() {
             eprintln!(
@@ -814,6 +857,7 @@ impl Worker {
             return Ok(());
         }
         self.selection_epoch = epoch;
+        self.selected.as_mut().unwrap().player.sessions = session_list;
         self.refresh_volume();
         self.refresh_timeline();
         self.publish_selected();
@@ -1096,6 +1140,24 @@ impl Worker {
     }
 
     fn start_control(&mut self, request: ControlRequest) {
+        if request.action == MediaAction::Select {
+            let target = request
+                .session_id
+                .parse::<usize>()
+                .ok()
+                .map(SessionId)
+                .filter(|id| self.sessions.iter().any(|entry| entry.id == *id));
+            let result = match target {
+                Some(id) => {
+                    self.pinned = Some(id);
+                    self.signals.signal(SELECTION);
+                    Ok(())
+                }
+                None => Err("That app is no longer playing".into()),
+            };
+            let _ = request.reply.send(result);
+            return;
+        }
         // Re-resolve audio ownership before writing, including after topology changes.
         if matches!(request.action, MediaAction::Volume { .. }) {
             self.refresh_volume();
@@ -1138,6 +1200,7 @@ impl Worker {
                 return Err("Playback information is unavailable".into());
             }
             let operation = match request.action {
+                MediaAction::Select => unreachable!("handled before playback checks"),
                 MediaAction::Previous => entry.session.TrySkipPreviousAsync(),
                 MediaAction::Play => {
                     expected = Some(PlaybackExpectation::Playback(PlaybackState::Playing));

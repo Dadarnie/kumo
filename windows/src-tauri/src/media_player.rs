@@ -10,6 +10,8 @@ use crate::media::MediaState;
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum MediaAction {
+    /// Show and control this session (its id rides in the session_id field).
+    Select,
     Previous,
     Play,
     Pause,
@@ -49,6 +51,7 @@ pub struct MediaControls {
 impl MediaControls {
     pub fn supports(self, action: MediaAction) -> bool {
         match action {
+            MediaAction::Select => true,
             MediaAction::Previous => self.previous,
             MediaAction::Play => self.play,
             MediaAction::Pause => self.pause,
@@ -79,6 +82,17 @@ pub struct MediaPlayerState {
     pub volume_step: Option<u16>,
     pub shuffle: Option<bool>,
     pub repeat_mode: Option<RepeatMode>,
+    /// Every app with a media session, so the notch can switch between them.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub sessions: Vec<MediaSessionInfo>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaSessionInfo {
+    pub id: String,
+    pub source_app_id: Option<String>,
+    pub playing: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

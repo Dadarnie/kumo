@@ -234,6 +234,8 @@ export class Island {
   private compactControlsHeld = false;
   private quickMenu: MimoQuickMenu | null = null;
   private hoverExpanded = false;
+  /** Opened by agent work, not by you: it must not take keyboard focus from your app. */
+  private autoOpened = false;
   private cursorPosition: { x: number; y: number } | null = null;
   private cursorDesktop = false;
 
@@ -328,7 +330,7 @@ export class Island {
     };
     this.subscriptions.push(
       State.subscribe(() => {
-        Visibility.setWorking(this.codingWorkActive);
+        this.syncWorking();
         this.dirty = true;
         this.ensureRunning();
       }),
@@ -598,7 +600,7 @@ export class Island {
         this.animateGeometry(Visibility.compact);
       }),
       mediaStore.subscribe((snapshot) => {
-        Visibility.setWorking(this.codingWorkActive);
+        this.syncWorking();
         Visibility.setMediaPlaying(
           State.settings.modules.media &&
             snapshot.state.playbackState === "playing",
@@ -627,8 +629,9 @@ export class Island {
           this.animateGeometry(!playing);
         }
       }),
-      Visibility.subscribe((previous, next) => {
+      Visibility.subscribe((previous, next, reason) => {
         if (next !== "expanded") this.hoverExpanded = false;
+        if (next === "expanded" && previous !== "expanded") this.autoOpened = reason === "automatic";
         if (next === "expanded") {
           Sound.play("open");
           if (!this.coreMode) {
@@ -702,6 +705,19 @@ export class Island {
     }
     this.holdCompactControls(false);
     Visibility.pointerLeft();
+  }
+
+  private workWasActive = false;
+  /** Agent work takes over the island: music steps aside for the live session. */
+  private syncWorking(): void {
+    const active = this.codingWorkActive;
+    if (active && !this.workWasActive && (State.view === "media" || this.coreMode === "hover")) {
+      this.coreMode = null;
+      State.view = "overview";
+      this.animateGeometry(false);
+    }
+    this.workWasActive = active;
+    Visibility.setWorking(active);
   }
 
   private get codingWorkActive(): boolean {
@@ -1432,7 +1448,11 @@ export class Island {
     if (moved && Number.isFinite(x) && Number.isFinite(y) && !(x <= -9000 && y <= -9000))
       State.lastActivity = performance.now();
 
+    // A click inside means you want Mimo: keyboard focus may follow.
+    if (sample?.down && inIsland && this.autoOpened) { this.autoOpened = false; State.notify(); }
     if (State.visibility === "peek") {
+      // The peeking mascot follows the cursor; redraw only when it moves.
+      if (moved) { this.dirty = true; this.ensureRunning(); }
       if (inIsland && !this.wasInIsland) Visibility.pointerEntered(true);
       if (!inIsland && this.wasInIsland) Visibility.pointerLeft();
       this.wasInIsland = inIsland;
@@ -1661,6 +1681,8 @@ export class Island {
       };
     }
     if (this.coreMode) p = { cx: 34, cy: 24, diameter: 30, opacity: 0 };
+    // The island widens for coding and media; keep the mascot on its right edge.
+    else if (State.visibility === "island") p = { ...p, cx: this.targetSize().w - 30 };
     this.botCx.target = p.cx;
     this.botCy.target = p.cy;
     this.botSize.target = p.diameter / 0.6;
@@ -1724,7 +1746,7 @@ export class Island {
     this.engine.tile = false;
     this.engine.backdrop = State.view !== "media";
     this.engine.voiceMode = voiceVisible && voicePhase !== "error" ? voicePhase === "recording" ? "listening" : voicePhase === "speaking" ? "speaking" : voicePhase === "idle" || voicePhase === "paused" ? "ready" : "waiting" : null;
-    this.engine.showBadge = State.visibility !== "peek";
+    this.engine.showBadge = State.visibility !== "peek" && !(State.visibility === "island" && this.engine.status === "loading");
     this.engine.badgeMode = "contextual";
     this.engine.setIntegration(integration?.id ?? null);
     this.engine.allowWorkPokes = true;
@@ -1739,7 +1761,8 @@ export class Island {
     }
     this.engine.bodyColor = this.companionColor;
     this.botCanvas.dataset.color=this.companionColorHex??"";
-    this.engine.setState(state);
+    // While an agent works in the small island, Mimo strikes its thinking pose.
+    this.engine.setState(state === "working" && State.visibility !== "expanded" ? "thinking" : state);
     this.engine.setStatus(mimoAppStatus(this.engine.state, info, focused?.id));
     this.engine.setExpressionContext(expressionForContext({
       editing: State.visibility === "expanded" && !!document.activeElement
@@ -1861,7 +1884,7 @@ export class Island {
 
     // Hover can reveal the full tool without taking focus from the user's app.
     // A click, keyboard activation or explicit navigation enables Media focus.
-    const keyboardActive = appExpanded && !this.hoverExpanded &&
+    const keyboardActive = appExpanded && !this.hoverExpanded && !this.autoOpened &&
       (this.homeReturnHeld || this.workShortcutActive || State.view === "voice" || State.view === "prompt" || State.view === "media" || State.view === "usage" || State.view === "grab" ||
         State.view === "overview" && this.overview.el.dataset.preview === "true" ||
         ["approval", "approvals"].includes(State.view));
@@ -1894,7 +1917,7 @@ export class Island {
     Sound.setEnabled(State.settings.soundEnabled);
     Sound.setVolume(State.settings.soundVolume);
     Visibility.configure(State.settings);
-    Visibility.setWorking(this.codingWorkActive);
+    this.syncWorking();
     this.media.setEnabled(State.settings.modules.media);
     if (!State.settings.modules.media) this.coreMode = null;
     if (

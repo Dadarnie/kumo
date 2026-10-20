@@ -22,7 +22,7 @@ pub const PANEL_H: f64 = 680.0;
 pub const ISLAND_W: f64 = 320.0;
 pub const ISLAND_H: f64 = 56.0;
 pub const PEEK_W: f64 = 156.0;
-pub const PEEK_H: f64 = 12.0;
+pub const PEEK_H: f64 = 18.0;
 
 pub const WINDOW_LABEL: &str = "island";
 
@@ -484,7 +484,7 @@ mod tests {
     fn rendering_surface_stays_top_centered_and_constant_across_visibility_and_scale() {
         assert_eq!(logical_size(IslandVisibility::Expanded), (1080.0, 680.0));
         assert_eq!(logical_size(IslandVisibility::Island), (320.0, 56.0));
-        assert_eq!(logical_size(IslandVisibility::Peek), (156.0, 12.0));
+        assert_eq!(logical_size(IslandVisibility::Peek), (156.0, 18.0));
         for visibility in [
             IslandVisibility::Expanded,
             IslandVisibility::Island,
@@ -510,9 +510,9 @@ mod tests {
         };
         assert!(accepts_pointer(IslandVisibility::Peek, stale, 540.0, 6.0));
         for (x, y) in [
-            (540.0, 12.0),
-            (540.0, 20.0),
-            (540.0, 32.0),
+            (540.0, 22.0),
+            (540.0, 30.0),
+            (540.0, 42.0),
             (430.0, 6.0),
             (620.0, 6.0),
             (780.0, 100.0),

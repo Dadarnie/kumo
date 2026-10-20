@@ -340,23 +340,21 @@ test("idle activity and media never start a sleeping or minimized timer", () => 
   assert.equal(f.timers.size, 0);
 });
 
-test("agent work opens Mimo, holds it open, and settles closed when the work ends", () => {
+test("agent work shows its status in the small island and returns to the lip when done", () => {
   const f = fixture(true);
   f.visibility.configure({ ...f.preferences, workingModeEnabled: true });
   f.advance(1000); assert.equal(f.visibility.state, "peek");
-  f.visibility.setWorking(true); assert.equal(f.visibility.state, "expanded", "work opens Mimo");
-  f.visibility.pointerEntered(); f.visibility.pointerLeft(); f.advance(60000);
-  assert.equal(f.visibility.state, "expanded", "stays open while the agent works");
-  f.visibility.setWorking(false);
-  f.advance(999); assert.equal(f.visibility.state, "expanded");
-  f.advance(1); assert.equal(f.visibility.state, "peek", "settles closed when done");
+  f.visibility.setWorking(true); assert.equal(f.visibility.state, "island", "work shows the island, not the big panel");
+  f.advance(60000); assert.notEqual(f.visibility.state, "expanded", "routine work never expands");
+  assert.equal(f.visibility.state, "island", "status stays visible while the agent works");
+  f.visibility.pointerEntered(); assert.equal(f.visibility.state, "expanded", "hover still opens it");
+  f.visibility.pointerLeft(); assert.equal(f.visibility.state, "island", "leaving closes it again during work");
+  f.visibility.setWorking(false); f.advance(1000);
+  assert.equal(f.visibility.state, "peek", "settles back to the lip when done");
   f.visibility.setWorking(true); f.visibility.minimize(); f.advance(60000);
-  assert.equal(f.visibility.state, "peek", "a minimize holds until that work ends");
+  assert.equal(f.visibility.state, "peek", "a minimize holds the lip until that work ends");
   f.visibility.setWorking(false); f.visibility.setWorking(true);
-  assert.equal(f.visibility.state, "expanded", "the next piece of work opens again");
-  f.visibility.setWorking(false);
-  f.visibility.configure({...f.preferences, workingModeEnabled:false});
-  f.advance(60000); assert.equal(f.visibility.state, "island", "disabled working mode settles to the island");
+  assert.equal(f.visibility.state, "island", "the next piece of work shows the island again");
 });
 
 test("working mode never minimizes pinned, typing, or dragging content", () => {
@@ -698,7 +696,7 @@ test("frontend bounds match each state and rapid transitions cancel stale native
   });
   assert.deepEqual(islandSize("peek", "overview", 0, false, false), {
     w: 156,
-    h: 12,
+    h: 18,
   });
   const applied = [];
   const bounds = new IslandWindowBounds(async (state) => {

@@ -240,7 +240,7 @@ mod tests {
                 },
                 1.0
             ),
-            Mask::Rect(462, 0, 618, 12)
+            Mask::Rect(462, 0, 618, 18)
         );
         assert_eq!(
             window_mask(IslandVisibility::Expanded, IslandRect::default(), 1.0),

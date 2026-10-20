@@ -321,6 +321,12 @@ export class MediaStore {
     }
   }
 
+  /** Makes the notch show and control another app's media session. */
+  async selectSession(id: string): Promise<void> {
+    if (!this.controller || this.current.state.providerStatus !== "ready") return;
+    await this.controller(id, "select");
+  }
+
   private notify(): void {
     const snapshot = this.current;
     for (const subscriber of this.subscribers) subscriber(snapshot);
