@@ -1959,6 +1959,10 @@ input[type="range"]::-webkit-slider-thumb {
 #island[data-visibility="island"]::before {
   box-shadow: none;
 }
+#island[data-visibility="island"] #bot-canvas {
+  animation: mimo-sleep 3.6s ease-in-out infinite;
+  transform-origin: 50% 65%;
+}
 #island[data-visibility="peek"] {
   backdrop-filter: none;
 }

@@ -8,20 +8,19 @@
   --code-string: color-mix(in srgb, var(--mini-amber) 55%, var(--ink));
   --code-function: color-mix(in srgb, var(--mini-amber) 35%, var(--ink));
   --code-type: color-mix(in srgb, var(--mini-mint) 55%, var(--ink));
-  --ink: #f1edff;
-  --ink-2: #dcd5f0;
-  --dim: #a9a2bf;
-  --dim-2: #948dab;
+  --ink: #f4f4f5;
+  --ink-2: #dddddf;
+  --dim: #aaa9ae;
+  --dim-2: #95949a;
   --dim-3: var(--dim-2);
   --dim-4: var(--dim-2);
   --dim-5: var(--dim-2);
-  /* Midnight purple theme. */
-  --bg: #0b0814;
-  --card: #140f22;
-  --card-flat: #110d1d;
-  --tab-on: #2a2140;
-  --hairline: rgba(200, 180, 255, 0.06);
-  --accent: #9b6bff;
+  --bg: #000000;
+  --card: #090909;
+  --card-flat: #070707;
+  --tab-on: #252525;
+  --hairline: rgba(255, 255, 255, 0.035);
+  --accent: var(--mini-work-blue);
   /* Local Home identity colors sampled from the supplied video at 8 seconds. */
   --mini-work-blue: #2da4f9;
   --mini-mint: #4fb29e;
@@ -29,7 +28,7 @@
   --mini-amber: #e69537;
   --mini-violet: #8358e9;
   --home-workspace-fill: var(--card);
-  --accent-surface: color-mix(in srgb, var(--accent) 18%, var(--bg));
+  --accent-surface: color-mix(in srgb, var(--mini-work-blue) 18%, var(--bg));
   --green: var(--mini-mint);
   --green-2: color-mix(in srgb, var(--mini-mint) 75%, var(--ink));
   --red: var(--mini-coral);
@@ -57,7 +56,7 @@
   --motion-enter: 180ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.004), transparent 55%);
-  --terminal-fill: #0e0a18;
+  --terminal-fill: #080808;
   --terminal-glow: radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
   --shadow-shell: 0 8px 24px rgba(0, 0, 0, 0.32);
   --shell-fill: var(--bg);
