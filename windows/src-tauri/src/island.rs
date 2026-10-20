@@ -339,6 +339,7 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
             gate.wait_until_active();
             let mut last = (f64::MIN, f64::MIN);
             let mut last_control = false;
+            let mut last_raw = (f64::NAN, f64::NAN, false, false, 0.0, 0.0, 0.0, 0.0, u8::MAX);
             let mut ticks: u32 = 0;
             while gate.is_active() {
                 std::thread::sleep(Duration::from_millis(16));
@@ -360,11 +361,8 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                     }
                 }
 
-                let Some(win) = window(&app) else { continue };
-                let Ok(origin) = win.outer_position() else {
-                    continue;
-                };
-                let scale = win.scale_factor().unwrap_or(1.0);
+                // Cheap reads first: a still mouse with unchanged buttons costs
+                // three Win32 calls per tick and nothing else.
                 let Some((cx, cy)) = cursor_physical() else {
                     continue;
                 };
@@ -372,6 +370,19 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 let control = unsafe {
                     ::windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(0x11)
                 } < 0;
+                // The island shape and state count too: it can resize under a still cursor.
+                let shape = *gate.rect.lock().unwrap();
+                let state = *gate.visibility.lock().unwrap();
+                let raw = (cx, cy, down, control, shape.x, shape.y, shape.w, shape.h, state as u8);
+                if raw == last_raw {
+                    continue;
+                }
+                last_raw = raw;
+                let Some(win) = window(&app) else { continue };
+                let Ok(origin) = win.outer_position() else {
+                    continue;
+                };
+                let scale = win.scale_factor().unwrap_or(1.0);
                 crate::grab::track_drag(
                     &app,
                     cx,
@@ -434,8 +445,10 @@ pub fn spawn_cursor_poll(app: AppHandle, gate: Arc<PollGate>) {
                 // this thread parks, because no further cursor tick would reopen it.
                 let current = gate.visibility.lock().unwrap();
                 if *current == IslandVisibility::Peek {
-                    gate.ignoring.store(false, Ordering::Relaxed);
-                    set_ignore_cursor(&app, false);
+                    // Only on change: the poll keeps running in the lip now.
+                    if gate.ignoring.swap(false, Ordering::Relaxed) {
+                        set_ignore_cursor(&app, false);
+                    }
                 } else if gate.ignoring.load(Ordering::Relaxed) == accept {
                     gate.ignoring.store(!accept, Ordering::Relaxed);
                     set_ignore_cursor(&app, !accept);
