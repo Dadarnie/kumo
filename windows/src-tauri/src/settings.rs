@@ -76,6 +76,11 @@ pub struct Settings {
     pub last_visibility: IslandVisibility,
     #[serde(default)]
     pub modules: ModulePreferences,
+    /// Run Raphael (local voice assistant) from `raphael_dir` as Kumo's assistant.
+    #[serde(default)]
+    pub raphael_enabled: bool,
+    #[serde(default)]
+    pub raphael_dir: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -383,6 +388,8 @@ impl Default for Settings {
             grab_enabled: true,
             hover_behavior_version: 1,
             modules: ModulePreferences::default(),
+            raphael_enabled: false,
+            raphael_dir: String::new(),
         }
     }
 }

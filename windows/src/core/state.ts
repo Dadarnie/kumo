@@ -191,6 +191,9 @@ export interface Settings {
   hoverBehaviorVersion: number;
   lastVisibility: IslandVisibility;
   modules: ModulePreferences;
+  /** Run Raphael (local voice assistant) from raphaelDir as Kumo's assistant. */
+  raphaelEnabled: boolean;
+  raphaelDir: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -229,6 +232,8 @@ export const DEFAULT_SETTINGS: Settings = {
   grabEnabled: true,
   hoverBehaviorVersion: 1,
   modules: { ...DEFAULT_MODULES },
+  raphaelEnabled: false,
+  raphaelDir: "",
 };
 
 /** Older settings keep their existing integration selection and gain module defaults. */
@@ -255,6 +260,8 @@ export function normalizeSettings(settings: Partial<Settings> = {}): Settings {
     peekEnabled: false,
     workingModeEnabled: settings.workingModeEnabled !== false,
     grabEnabled: settings.grabEnabled !== false,
+    raphaelEnabled: settings.raphaelEnabled === true,
+    raphaelDir: typeof settings.raphaelDir === "string" ? settings.raphaelDir : "",
     appearance: normalizeAppearance(settings.appearance),
     codingAssistant: isCodingProvider(settings.codingAssistant) ? settings.codingAssistant : "claude",
     codingHooksInstalled: Object.fromEntries(CODING_PROVIDERS.map(({ id }) =>

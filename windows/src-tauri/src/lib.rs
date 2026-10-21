@@ -26,6 +26,7 @@ mod media_runtime;
 mod migration;
 mod openai;
 mod pipe;
+mod raphael;
 mod secrets;
 mod settings;
 mod tools;
@@ -127,6 +128,12 @@ fn boot(app: AppHandle, shared: State<Shared>) -> BootInfo {
     }
 }
 
+/// One command from the island to Raphael (answer, typed text, mute, stop).
+#[tauri::command]
+fn raphael_send(raphael: State<raphael::Raphael>, msg: serde_json::Value) -> Result<(), String> {
+    raphael.send(&msg)
+}
+
 #[tauri::command]
 fn save_settings(
     app: AppHandle,
@@ -217,6 +224,7 @@ fn save_settings(
         app.state::<claude_usage::UsageCache>().clear();
     }
     workflow_native::refresh_voice(&app);
+    app.state::<raphael::Raphael>().sync(&app, &settings);
     // Keep the other window in step (island ⇄ settings window).
     let _ = app.emit("settings-changed", settings);
 }
@@ -1124,6 +1132,7 @@ pub fn run() {
             gate: gate.clone(),
         })
         .manage(Pending::default())
+        .manage(raphael::Raphael::default())
         .manage(grab::Grab::default())
         .manage(Chat::default())
         .manage(chat_requests::ChatRequests::default())
@@ -1133,6 +1142,7 @@ pub fn run() {
         .manage(codex_usage::UsageCache::default())
         .manage(claude_usage::UsageCache::default())
         .invoke_handler(tauri::generate_handler![
+            raphael_send,
             codex_usage,
             claude_usage,
             set_audio_meter_active,
@@ -1254,6 +1264,7 @@ pub fn run() {
             }
             pipe::start(handle.clone());
             integrations::start(handle.clone());
+            handle.state::<raphael::Raphael>().sync(&handle, &loaded);
             Ok(())
         })
         .build(tauri::generate_context!())
