@@ -93,7 +93,7 @@ def _speech_worker():
         try:
             if not interrupted.is_set():
                 _speaking.set()
-                if config.BARGE_IN and not any(t.name == "barge-in" for t in threading.enumerate()):
+                if config.BARGE_IN and not muted.is_set() and not any(t.name == "barge-in" for t in threading.enumerate()):
                     threading.Thread(target=_barge_in_monitor, name="barge-in", daemon=True).start()
                 speak(text)
         finally:
@@ -108,7 +108,7 @@ def _barge_in_monitor():
     n, loud, echo, t0 = int(RATE * 0.05), 0, [], time.time()
     try:
         with sd.InputStream(samplerate=RATE, channels=1, dtype="float32", blocksize=n, device=config.INPUT_DEVICE) as s:
-            while _speaking.is_set() and not interrupted.is_set():
+            while _speaking.is_set() and not interrupted.is_set() and not muted.is_set():  # muted = mic stays closed
                 level = _rms(s.read(n)[0][:, 0])
                 if time.time() - t0 < 0.4:  # first 0.4 s: learn the echo level of Raphael's own voice
                     echo.append(level)

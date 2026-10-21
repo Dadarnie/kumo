@@ -1,16 +1,21 @@
 # All Raphael settings live here.
+import os
 from pathlib import Path
 
 
-# LM Studio local server (Developer tab -> Start Server)
-BASE_URL = "http://localhost:1235/v1"
-API_KEY = "lm-studio"  # placeholder, LM Studio ignores it
+# Local model server, OpenAI-compatible. Ollama (shared with Kumo, so only one copy of the model is in VRAM).
+# Kumo can override these with RAPHAEL_BASE_URL / RAPHAEL_MODEL / RAPHAEL_SMART_MODEL / RAPHAEL_VISION_MODEL.
+# LM Studio still works: BASE_URL = "http://localhost:1235/v1", MODEL = "google/gemma-4-e4b".
+BASE_URL = os.environ.get("RAPHAEL_BASE_URL", "http://localhost:11434/v1")
+API_KEY = "local"  # placeholder, local servers ignore it
 
-# Must match the model id LM Studio shows. Run `python chat.py --models` to list ids.
-MODEL = "google/gemma-4-e4b"
+# Must match the server's model id. Run `python chat.py --models` to list ids.
+MODEL = os.environ.get("RAPHAEL_MODEL", "gemma4-e4b:latest")
 # "Think harder" / "use your big brain" switches to this one (sticky until "back to fast mode").
-# Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Must be downloaded in LM Studio.
-SMART_MODEL = "google/gemma-4-12b-qat"
+# Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Empty = not installed: Raphael says so.
+SMART_MODEL = os.environ.get("RAPHAEL_SMART_MODEL", "")
+# Model for look_at_screen; must accept images. Empty = use MODEL.
+VISION_MODEL = os.environ.get("RAPHAEL_VISION_MODEL", "")
 
 # Gemma "thinks" before answering, which adds 15+ s. "none" turns that off (faster, a bit less careful).
 # Set to None to use the model's default.

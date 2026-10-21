@@ -587,7 +587,7 @@ def press_keys(window, keys):
     return f"Pressed {keys} in '{title}'."
 
 
-# ---------- seeing the screen (local vision: the image only goes to the local model in LM Studio) ----------
+# ---------- seeing the screen (local vision: the image only goes to the local model server) ----------
 
 def _screenshot(rect=None):
     """PNG bytes of a screen area (x, y, w, h) or the whole primary screen, scaled to at most 1600 px wide."""
@@ -641,7 +641,7 @@ def _vision(question, rect=None, max_tokens=400):
         return None
     client = OpenAI(base_url=config.BASE_URL, api_key=config.API_KEY)
     extra = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
-    r = client.chat.completions.create(model=config.MODEL, max_tokens=max_tokens, **extra, messages=[
+    r = client.chat.completions.create(model=config.VISION_MODEL or config.MODEL, max_tokens=max_tokens, **extra, messages=[
         {"role": "system", "content": "You look at a screenshot for the user. Answer their question precisely and briefly. "
                                       "Quote error messages and code exactly. If something is unreadable, say so."},
         {"role": "user", "content": [{"type": "text", "text": question},

@@ -253,3 +253,13 @@ While the window is open, Raphael's icon sits in the system tray (bottom right; 
 - Any Enter typed into a chat or mail window (Messenger, Facebook, WhatsApp, Gmail, Discord, ...) also asks first, even when `type_text` is "allow".
 - Raphael can't click buttons on web pages; links like `messenger.com/t/...` avoid the need.
 - Memory is reloaded on every request, so facts you just told Raphael work right away.
+
+## Kumo mode (headless, Kumo is the window)
+
+`chat.py --kumo` runs Raphael with no window, tray or global hotkeys; Kumo starts it and shows everything in its island. Events go out as JSON lines on stdout and Kumo's commands come in on stdin (`kumo_bridge.py` documents the protocol; `print()` output goes to stderr). Mute, Stop and Allow/Deny come from Kumo. Closing stdin quits Raphael after the daily session summary.
+
+Model server: Ollama by default (`http://localhost:11434/v1`, `gemma4-e4b:latest`), shared with Kumo so only one copy of the model is loaded. Override with `RAPHAEL_BASE_URL`, `RAPHAEL_MODEL`, `RAPHAEL_SMART_MODEL` and `RAPHAEL_VISION_MODEL` (or edit `config.py`; LM Studio still works with its URL and model id). "Think harder" needs `SMART_MODEL` and `look_at_screen` needs a model that accepts images: the current Ollama Gemma import has no vision.
+
+Turn off Raphael's own autostart (`autostart.py off`) when Kumo starts it, so two copies never listen at once.
+
+Self-check: `.\.venv\Scripts\python.exe kumo_bridge.py` prints `kumo_bridge OK`.

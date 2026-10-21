@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import re
 import sys
 import time
@@ -38,7 +39,7 @@ def system_prompt():
 EXTRA = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
 
 
-# Two brains: fast E4B by default, bigger 12B on request. Sticky, because swapping models in LM Studio takes
+# Two brains: fast E4B by default, bigger 12B on request. Sticky, because swapping models takes
 # up to a minute to the big one and ~30 s back (only one fits in 8 GB of VRAM at a time).
 BRAIN = {"model": config.MODEL}
 BIG_BRAIN = re.compile(r"\b(think (harder|carefully|deeper|deeply)|(big|bigger|smart|smarter) (brain|model)|deep mode)\b", re.I)
@@ -46,6 +47,12 @@ FAST_BRAIN = re.compile(r"\b(fast (mode|brain|model)|back to (normal|fast)|(smal
 
 
 def _pick_brain(text, on_sentence):
+    if BIG_BRAIN.search(text) and not config.SMART_MODEL:
+        note = "My bigger brain isn't installed, so I'll use my fast one."
+        print(f"[{note}]")
+        if on_sentence:
+            on_sentence(note)
+        return BRAIN["model"]
     want = config.SMART_MODEL if BIG_BRAIN.search(text) else config.MODEL if FAST_BRAIN.search(text) else BRAIN["model"]
     if want != BRAIN["model"]:
         big = want == config.SMART_MODEL
@@ -75,7 +82,7 @@ def text_tool_call(content):
 
 
 def wait_for_llm(app=None, minutes=5):
-    """At login Raphael may start before LM Studio's server: keep trying for a few minutes instead of quitting."""
+    """At login Raphael may start before the model server: keep trying for a few minutes instead of quitting."""
     deadline, told = time.time() + minutes * 60, False
     while True:
         try:
@@ -85,14 +92,14 @@ def wait_for_llm(app=None, minutes=5):
                 raise
             if not told:
                 told = True
-                print("Waiting for LM Studio's server (start it, or turn on 'start server on login')...")
+                print(f"Waiting for the model server at {config.BASE_URL}...")
                 if app:
-                    app.note("Waiting for LM Studio's server to start…")
+                    app.note("Waiting for the model server to start…")
             time.sleep(5)
 
 
 def warm_llm():
-    """One tiny request: loads the model if LM Studio unloaded it, and primes the prompt."""
+    """One tiny request: loads the model if the server unloaded it, and primes the prompt."""
     messages = [{"role": "system", "content": system_prompt()}, {"role": "user", "content": "hi"}]
     client.chat.completions.create(model=config.MODEL, messages=messages, tools=tools.TOOLS, max_tokens=1, **EXTRA)
 
@@ -177,14 +184,20 @@ def main():
     if "--models" in sys.argv:
         print("\n".join(m.id for m in client.models.list()))
         return
-    use_ui = "--ui" in sys.argv
+    use_kumo = "--kumo" in sys.argv  # headless: Kumo is the window (kumo_bridge.py)
+    use_ui = use_kumo or "--ui" in sys.argv
     voice_mode = use_ui or "--voice" in sys.argv
     if voice_mode:
         import voice
     if use_ui:
         import threading
-        import ui
-        app = ui.App()
+        if use_kumo:
+            import kumo_bridge
+            app = kumo_bridge.KumoApp()
+            app.is_muted = voice.muted.is_set
+        else:
+            import ui
+            app = ui.App()
         voice.on_state = app.set_state
         tools.approver = app.ask_approval  # Allow/Deny buttons in the window
         voice.on_heard = lambda text, woke: None if woke else app.note(f"ignored: {text}  (start with '{config.WAKE_PHRASE}')")
@@ -198,9 +211,13 @@ def main():
             app.note("I'm listening. Just talk." if config.ALWAYS_LISTEN else
                      f"Say '{config.WAKE_PHRASE}' and then your request.")
         threading.Thread(target=converse, args=(voice_mode, app), daemon=True).start()
-        print(f"{config.ASSISTANT_NAME} window open. Confirmations (y/n) are asked in this terminal.")
+        if not use_kumo:
+            print(f"{config.ASSISTANT_NAME} window open. Confirmations (y/n) are asked in this terminal.")
         app.mainloop()
         save_session()  # window closed: write today's session summary to Obsidian
+        if use_kumo:  # skip native audio/Whisper teardown, which can crash at interpreter exit
+            sys.stderr.flush()
+            os._exit(0)
     else:
         converse(voice_mode)
 
@@ -243,7 +260,7 @@ def start_reminders(voice_module=None, app=None):
     reminders.start()
 
 
-LLM_DOWN = f"Cannot reach LM Studio at {config.BASE_URL}.\nStart the server in LM Studio and load the model."
+LLM_DOWN = f"Cannot reach the model server at {config.BASE_URL}.\nStart Ollama (or set BASE_URL in config.py) and check MODEL."
 
 
 def converse(voice_mode, app=None):
@@ -252,11 +269,12 @@ def converse(voice_mode, app=None):
     if voice_mode:
         import voice
         tools.announce = voice.speak_async
-        try:
-            import keyboard
-            keyboard.add_hotkey(config.MUTE_HOTKEY, voice.toggle_mute)
-        except Exception as e:
-            print(f"(mute hotkey {config.MUTE_HOTKEY} not set: {e})")
+        if not getattr(app, "owns_hotkeys", False):  # in Kumo mode Kumo owns mute
+            try:
+                import keyboard
+                keyboard.add_hotkey(config.MUTE_HOTKEY, voice.toggle_mute)
+            except Exception as e:
+                print(f"(mute hotkey {config.MUTE_HOTKEY} not set: {e})")
         print(f"{name} voice mode ({config.MODEL}). Hold '{config.HOTKEY}' to talk, say 'exit' or Ctrl+C to quit.")
     else:
         print(f"{name} ({config.MODEL}). Type 'exit' to quit.")
@@ -269,6 +287,8 @@ def converse(voice_mode, app=None):
         if voice_mode:
             voice.preload()
         print(f"Ready ({time.time() - t:.1f}s).")
+        if getattr(app, "owns_hotkeys", False):
+            app._send(t="ready")
         start_reminders(voice if voice_mode else None, app)
         while True:
             if app:
