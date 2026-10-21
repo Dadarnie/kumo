@@ -61,8 +61,7 @@ import { h } from "../views/dom";
 import { mediaStore } from "../core/media-store";
 import { ActivityStrip } from "./activity-strip";
 import { ACTIVITY_SETTLE_MS, Visibility } from "../core/visibility";
-import { Activity } from "../core/activity";
-import type { VoiceChat } from "../views/voice-chat";
+import { Raphael } from "./raphael";
 import { IslandWindowBounds } from "./window-bounds";
 import { buildHome, buildMediaPage } from "../views/sections";
 import { safeSectionView, ownsContent } from "../core/sections";
@@ -111,68 +110,6 @@ export class Island {
   private companionColorHex: string | null = null;
   private companionColor: RGB | null = null;
   private grabDetached = false;
-  private desktopVoice?: VoiceChat;
-  private voiceOrigin: { view: IslandViewName; visibility: IslandVisibility } | null = null;
-  private voiceOpening = false;
-
-  async toggleDesktopVoice(): Promise<void> {
-    if (this.disposed || this.voiceOpening) return;
-    if (!Activity.voice.active) this.voiceOrigin = { view: State.view, visibility: State.visibility };
-    if (State.pendingApproval) {
-      Activity.setVoice(true, "paused");
-      this.desktopVoice?.cancel();
-      void Bridge.setVoiceActive(false);
-      this.expand("approval");
-      return;
-    }
-    this.voiceOpening = true;
-    const openVoicePanel = () => {
-      // Visibility already supplies this cue when the compact island expands.
-      if (State.visibility === "expanded" && State.view !== "voice") Sound.play("open");
-      this.expand("voice");
-    };
-    try {
-      if (this.grabDetached) {
-        await Bridge.grabAction("dock");
-        if (this.disposed) return;
-        this.setGrabDetached(false);
-      }
-      Activity.setVoice(true);
-      this.setGrabModifier(false);
-      const prompt = this.views.get("prompt")!;
-      prompt.setVisible?.(true);
-      this.desktopVoice = prompt.voice;
-      prompt.setVisible?.(false);
-      if (!this.desktopVoice) throw new Error("Voice control could not open. Try again.");
-      if (!this.desktopVoice.busy) await this.desktopVoice.prepareDesktop();
-      if (this.disposed || !Activity.voice.active) return;
-      State.chatError = "";
-      State.fileDragOver = false;this.fileDragOrigin = null;this.engine.animateMorph(0);
-      openVoicePanel();
-      void Bridge.setVoiceActive(true);
-      this.desktopVoice.toggle();
-    } catch (error) {
-      if (!this.disposed) {
-        Activity.setVoice(true, "error", String(error).replace(/^Error:\s*/, ""));
-        openVoicePanel();
-        Sound.play("error");
-      }
-    } finally { this.voiceOpening = false; }
-  }
-
-  closeDesktopVoice(): void {
-    if (!Activity.voice.active) return;
-    Activity.setVoice(false);
-    this.desktopVoice?.cancel();
-    void Bridge.setVoiceActive(false, true);
-    const origin = this.voiceOrigin;
-    this.voiceOrigin = null;
-    // Returning to an expanded panel does not trigger Visibility's close cue.
-    if (State.visibility === "expanded" && (State.pendingApproval || origin?.visibility === "expanded")) Sound.play("close");
-    const view = State.pendingApproval ? "approval" : origin && UPLOAD_VIEWS.has(origin.view) ? "prompt" : origin?.view === "approval" || origin?.view === "voice" ? State.defaultView() : origin?.view ?? State.defaultView();
-    this.setView(view);
-    if (!State.pendingApproval && origin?.visibility !== "expanded") Visibility.island();
-  }
   private grabModifier = false;
   private grabReturnHover = false;
   private grabReturning = false;
@@ -218,7 +155,7 @@ export class Island {
     }).catch(()=>{}).finally(()=>{this.grabGeometryPending=false;});
   }
   setGrabModifier(value:boolean):void {
-    value=value&&State.settings.grabEnabled&&!Activity.voice.active;
+    value=value&&State.settings.grabEnabled;
     if(this.disposed||this.grabModifier===value)return;
     this.grabModifier=value;
     Visibility.setGrabReady(value||!!this.grabDrag?.dragged);
@@ -359,9 +296,6 @@ export class Island {
     clearTimeout(this.grabReturnTimer);
     this.quickMenu?.destroy();
     this.engine.destroy();
-    Activity.setVoice(false);
-    this.desktopVoice?.cancel();
-    void Bridge.setVoiceActive(false);
     this.greeting.interrupt();
     this.greeting.onComplete = null;
     UploadSeq.deactivate();
@@ -436,9 +370,6 @@ export class Island {
         State.notify();
       },
       openSettingsWindow: page => void Bridge.openSettingsWindow(page),
-      toggleVoice: () => void this.toggleDesktopVoice(),
-      closeVoice: () => this.closeDesktopVoice(),
-      voicePeak: () => this.desktopVoice?.measuredPeak,
       openTool: id => {
         State.setFocus(id);
         const task = State.focusTask;
@@ -470,7 +401,6 @@ export class Island {
     this.botCanvas = h("canvas", { id: "bot-canvas", role: "img", "aria-label": "Kumo companion" });
     this.patTarget = h("button", { id: "pat-mimo", type: "button", "aria-label": "Kumo companion",
       hidden: "", onclick: event => {
-        if (State.view === "voice") { void this.toggleDesktopVoice(); return; }
         if(this.suppressGrabClick){this.suppressGrabClick=false;return;}
         if (State.visibility === "peek") {
           if (this.media.available && !ownsContent(State.view)) this.openMedia();
@@ -489,7 +419,7 @@ export class Island {
       } });
     this.greetingCanvas = h("canvas", { id: "greeting-canvas" });
     this.patTarget.addEventListener("pointerdown",event=>{
-      if(event.button!==0||Activity.voice.active||!State.settings.grabEnabled||this.grabDetached||State.visibility!=="expanded"&&!event.ctrlKey)return;
+      if(event.button!==0||!State.settings.grabEnabled||this.grabDetached||State.visibility!=="expanded"&&!event.ctrlKey)return;
       if(event.ctrlKey)this.setGrabModifier(true);
       this.grabDrag={x:event.clientX,y:event.clientY,dragged:false,ready:null};
       this.patTarget.setPointerCapture(event.pointerId);
@@ -787,15 +717,6 @@ export class Island {
 
   expand(view: IslandViewName, hovered = false) {
     if (view !== "overview") this.homeReturnHeld = false;
-    if (Activity.voice.active && (view === "approval" || view === "question")) {
-      Activity.setVoice(true, "paused");
-      this.desktopVoice?.cancel();
-      void Bridge.setVoiceActive(false);
-    } else if (Activity.voice.active && view !== "voice") {
-      Activity.setVoice(false);
-      this.desktopVoice?.cancel();
-      void Bridge.setVoiceActive(false);
-    }
     if (!hovered) this.greetingPending = false;
     view = safeSectionView(view, State.settings.modules, State.settings.activeIntegrations.length,
       State.settings.usageEnabled, Object.values(codingConnections(State.settings, State.tasks)).some(Boolean));
@@ -819,7 +740,6 @@ export class Island {
 
   setView(view: IslandViewName) {
     if (view !== "overview") this.homeReturnHeld = false;
-    if (Activity.voice.active && !State.pendingApproval) view = "voice";
     this.greetingPending = false;
     view = safeSectionView(view, State.settings.modules, State.settings.activeIntegrations.length,
       State.settings.usageEnabled, Object.values(codingConnections(State.settings, State.tasks)).some(Boolean));
@@ -855,7 +775,6 @@ export class Island {
 
   collapse() {
     this.homeReturnHeld = false;
-    if (Activity.voice.active && !State.pendingApproval) { this.closeDesktopVoice(); return; }
     if (State.pendingApproval) {
       this.expand(State.pendingReviewView, true);
       return;
@@ -908,7 +827,6 @@ export class Island {
     }));
   }
   alert(view: IslandViewName, userInteraction = false) {
-    if (Activity.voice.active && view !== "approval" && view !== "question") { State.notify(); return; }
     // Approvals are answered in the pill (Deny / Allow); only questions need the full view.
     if (view === "approval" && State.pendingApproval && !State.pendingApproval.questions && !userInteraction && State.visibility !== "expanded") {
       Visibility.setPinned(true);
@@ -1009,7 +927,7 @@ export class Island {
 
   private updateFileApproach(): void {
     const approaching = State.fileDragActive && !this.fileDragOrigin && State.visibility !== "peek"
-      && !State.paused && !State.pendingApproval && !Activity.voice.active
+      && !State.paused && !State.pendingApproval
       && this.fileDragDistance() <= FILE_APPROACH_MARGIN;
     if (approaching && !this.fileApproaching) this.engine.triggerExpression("surprised", .6);
     this.fileApproaching = approaching;
@@ -1017,7 +935,6 @@ export class Island {
   }
 
   private showFileDrop() {
-    if (Activity.voice.active) return;
     if (State.pendingApproval || State.paused || State.view === "uploading" || State.chatAttachmentLoading) return;
     if (!this.fileDragOrigin) this.fileDragOrigin = { view: State.view, visibility: State.visibility };
     if (State.view !== "upload") {
@@ -1041,7 +958,6 @@ export class Island {
   }
 
   private onDragDrop(e: { type: string; paths?: string[] }, targeted = false) {
-    if (Activity.voice.active) return;
     if (e.type !== "over")
       void Bridge.log(`drag ${e.type} ${e.paths?.length ?? 0} file(s)`);
     if (State.paused || State.pendingApproval) return;
@@ -1394,7 +1310,6 @@ export class Island {
       pauseMiniBotAnimations(document.hidden);
       this.overview.setDocumentHidden(document.hidden);
       if (document.hidden) {
-        if (Activity.voice.active) this.closeDesktopVoice();
         for (const view of this.views.values()) view.setVisible?.(false);
         if (this.raf !== undefined) cancelAnimationFrame(this.raf);
         this.raf = undefined;
@@ -1777,21 +1692,20 @@ export class Island {
     const musicPlaying = musicPerformanceActive({ view: State.view,
       expanded: State.visibility === "expanded" && this.coreMode === null,
       enabled: State.settings.modules.media, playing: mediaStore.snapshot().state.playbackState === "playing" });
-    const voicePhase = Activity.voice.phase;
-    const voiceVisible = State.view === "voice";
-    const state = voiceVisible ? voicePhase === "error" ? "error" : ["connecting", "transcribing", "waiting"].includes(voicePhase) ? "thinking" : "idle" : companionStateForView({ view: integration && State.visibility === "island" ? "overview" : State.view, override: State.stateOverride,
+    const state = companionStateForView({ view: integration && State.visibility === "island" ? "overview" : State.view, override: State.stateOverride,
       integrationState: integration?.activity?.phase === "failed" ? "error" : integration?.state,
       integrationCompleted: !!integration?.activity?.completed && !integration.activity.stopped,
       pendingApproval: State.view === "approval" || State.pendingApprovals.some(request => request.taskId === integration?.id && !request.questions), mediaError: mediaStore.snapshot().state.providerStatus === "error" });
     this.engine.tile = false;
     this.engine.backdrop = State.view !== "media";
-    this.engine.voiceMode = voiceVisible && voicePhase !== "error" ? voicePhase === "recording" ? "listening" : voicePhase === "speaking" ? "speaking" : voicePhase === "idle" || voicePhase === "paused" ? "ready" : "waiting" : null;
+    // Raphael talking animates the mascot's mouth.
+    this.engine.voiceMode = State.settings.raphaelEnabled && Raphael.speaking ? "speaking" : null;
     this.engine.showBadge = State.visibility !== "peek" && !(State.visibility === "island" && this.engine.status === "loading");
     this.engine.badgeMode = "contextual";
     this.engine.setIntegration(integration?.id ?? null);
     this.engine.allowWorkPokes = true;
     const spotifyPlaying = musicPlaying && /spotify/i.test(mediaStore.snapshot().state.sourceAppId ?? "");
-    const colorHex = voiceVisible ? null : State.view === "media" ? spotifyPlaying ? MIMO_PALETTE.connected : null
+    const colorHex = State.view === "media" ? spotifyPlaying ? MIMO_PALETTE.connected : null
       : State.stateOverride === "dizzy" ? this.companionColorHex
       : integration && !codingProvider(integration)
         ? MIMO_PICKER_COLORS[integration.id] ?? MIMO_APPS[integration.id]?.color ?? integration.color : null;
@@ -1868,7 +1782,6 @@ export class Island {
   private syncDom() {
     this.uploadCanvas.syncIntegrations();
     this.uploadCanvas.setVisible(this.uploadActive);
-    if (Activity.voice.active) this.views.get("prompt")?.sync();
     this.activity.sync(this.compactControlsHeld);
     this.activity.el.hidden=this.grabModifier||this.grabDetached;
     this.media.place(this.contentEl, State.view);
@@ -1927,7 +1840,7 @@ export class Island {
     // Hover can reveal the full tool without taking focus from the user's app.
     // A click, keyboard activation or explicit navigation enables Media focus.
     const keyboardActive = appExpanded && !this.hoverExpanded && !this.autoOpened &&
-      (this.homeReturnHeld || this.workShortcutActive || State.view === "voice" || State.view === "prompt" || State.view === "media" || State.view === "usage" || State.view === "grab" ||
+      (this.homeReturnHeld || this.workShortcutActive || State.view === "prompt" || State.view === "media" || State.view === "usage" || State.view === "grab" ||
         State.view === "overview" && this.overview.el.dataset.preview === "true" ||
         ["approval", "approvals"].includes(State.view));
     if (keyboardActive !== this.keyboardActive) {

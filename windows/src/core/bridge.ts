@@ -170,17 +170,12 @@ export const Bridge = {
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */
-  chatSend: (query: string, context: ChatContext | null, voiceControl = false) =>
-    callOrThrow<{ text: string }>("chat_send", { query, context, voiceControl }),
+  chatSend: (query: string, context: ChatContext | null) =>
+    callOrThrow<{ text: string }>("chat_send", { query, context }),
   chatReset: () => call<void>("chat_reset"),
   chatCancel: () => call<void>("chat_cancel"),
-  voiceReady: () => callOrThrow<import("./voice-providers").VoiceConnection>("voice_ready"),
   voiceShortcutStatus: () => call<{shortcut:string;registered:boolean;error:string|null}>("voice_shortcut_status"),
   configureVoiceShortcut: (shortcut:string) => callOrThrow<{shortcut:string;registered:boolean;error:string|null}>("configure_voice_shortcut",{shortcut}),
-  setVoiceActive: (active:boolean,restoreFocus=false) => call<void>("set_voice_active",{active,restoreFocus}),
-  voiceTranscribe: (audio: string, mime: string, provider: import("./voice-providers").SpeechProvider) => callOrThrow<string>("voice_transcribe", { audio, mime, provider }),
-  voiceSpeak: (text: string, provider: import("./voice-providers").SpeechProvider) => callOrThrow<{ audio: string; mime: string }>("voice_speak", { text, provider }),
-  voiceCancel: () => call<void>("voice_cancel"),
   chatConnections: () => call<Partial<Record<ChatProvider, boolean>>>("chat_connections"),
   chatSelect: (provider: ChatProvider, model: string) =>
     callOrThrow<Settings>("chat_select", { provider, model }),

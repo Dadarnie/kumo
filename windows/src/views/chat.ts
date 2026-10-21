@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Mimo's conversation, file attachments and voice controls.
+// Kumo's conversation and file attachments. With Raphael on, typed requests go to
+// Raphael and the log shows its spoken and typed turns (island/raphael.ts).
 
 import { h, clear } from "./dom";
 import { ICONS, icon } from "./icons";
@@ -12,8 +13,7 @@ import { ChatPicker } from "./chat-picker";
 import "./chat.css";
 import { Activity } from "../core/activity";
 import { renderMarkdown } from "./markdown";
-import { VoiceChat } from "./voice-chat";
-import { voiceCommand } from "../core/voice-commands";
+import { Raphael } from "../island/raphael";
 
 let nextId = 1;
 
@@ -56,7 +56,7 @@ function contextChip(label: string, loading: boolean, index?: number): HTMLEleme
   );
 }
 
-export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): ViewHost {
+export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions): ViewHost {
   const chipRow = h("div", { class: "chip-row", role: "status" });
   const log = h("div", { class: "chat-log", role: "log", "aria-label": "Conversation", "aria-live": "polite" });
   const input = h("input", {
@@ -70,38 +70,7 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
   input.value = State.chatDraft;
   const picker = new ChatPicker(() => { State.chatDraft = input.value; });
   const send = h("button", { type: "button", class: "send-btn", title: "Send", "aria-label": "Send message" }, icon(ICONS.arrowUp, 14));
-  const voice = new VoiceChat(async transcript => {
-    const command = voiceCommand(transcript);
-    if (command && actions) {
-      voice.cancel();
-      if (Activity.voice.active) actions.closeVoice();
-      if (command === "stop") return;
-      if (command === "settings") actions.openSettingsWindow("chat");
-      else if (command === "home") actions.setView("overview");
-      else if (command === "limits") actions.setView("usage");
-      return;
-    }
-    return submit(true, transcript.trim());
-  }, () => {
-    if (Activity.voice.active && voice.voiceConnection)
-      Activity.describeVoice(voice.voiceConnection.name, voice.voiceConnection.chatName ?? chatAssistantName(State.settings));
-    if (Activity.voice.active && Activity.voice.phase !== "paused")
-      Activity.setVoice(true, voice.currentPhase === "idle" && State.chatError ? "error" : voice.currentPhase, State.chatError || null);
-    State.notify(); onHeightChange();
-  }, message => {
-    State.chatError = message;
-    if (Activity.voice.active) Activity.setVoice(true, "error", message);
-    Sound.play("error");
-    State.notify(); onHeightChange();
-  }, async () => {
-    if (!sending || (!spokenTurn && !Activity.voice.active)) return;
-    cancelledTurn = true;
-    ++turnRevision;sending = false;spokenTurn = false;
-    State.stateOverride = null;
-    Activity.chat.busy = false;
-    await Bridge.chatCancel();
-  });
-  const bar = h("div", { class: "chat-bar" }, input, voice.button, send);
+  const bar = h("div", { class: "chat-bar" }, input, send);
   const errorText = h("span");
   const error = h("div", { class: "chat-error", role: "alert", hidden: true }, errorText,
     h("button", { type: "button", title: "Dismiss error", "aria-label": "Dismiss error",
@@ -111,22 +80,34 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
   const el = h(
     "div",
     { class: "view" },
-    h("div", { class: "card wash chat-card" }, h("div", { class: "chat-body" }, log, chipRow, error, picker.el, voice.status, bar, dropHint)),
+    h("div", { class: "card wash chat-card" }, h("div", { class: "chat-body" }, log, chipRow, error, picker.el, bar, dropHint)),
   );
   (el.querySelector(".card") as HTMLElement).style.setProperty("--wash", "rgba(99,102,241,0.5)");
 
   let sending = false;
   let turnRevision = 0;
-  let spokenTurn = false;
   let cancelledTurn = false;
-  let voicePreferences = `${State.settings.voiceProvider}|${State.settings.voiceRepliesEnabled}|${State.chatConnectionsVersion}`;
   let generation = State.chatEpoch;
   let disposed = false;
   let renderedCount = -1;
 
-  async function submit(spoken = false, transcript?: string): Promise<string | undefined> {
-    const query = (transcript ?? input.value).trim();
-    if (!query || sending || disposed || State.chatAttachmentLoading || picker.busy || (!spoken && voice.busy)) return;
+  /** Raphael answers by voice and events; the reply arrives in the log on its own. */
+  function askRaphael(query: string): void {
+    if (State.droppedFiles.length) State.chatError = "Raphael can't read attached files yet. Remove them first.";
+    else if (!Raphael.ready) State.chatError = "Raphael is starting. Try again in a moment.";
+    else if (query.length > 4000) State.chatError = "Enter a message shorter than 4,000 characters.";
+    else {
+      input.value = ""; State.chatDraft = ""; State.chatError = "";
+      Sound.play("send");
+      void Bridge.raphaelSend({ t: "text", v: query });
+    }
+    State.notify();
+  }
+
+  async function submit(): Promise<string | undefined> {
+    const query = input.value.trim();
+    if (!query || sending || disposed || State.chatAttachmentLoading || picker.busy) return;
+    if (State.settings.raphaelEnabled) { askRaphael(query); return; }
     if (new TextEncoder().encode(query).length > 32_000) {
       State.chatError = "Enter a message shorter than 32 KB.";
       State.notify();
@@ -138,16 +119,15 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
       ? files.length === 1 ? { kind: "file", ...files[0] } : { kind: "files", files }
       : State.promptContext?.kind === "window" ? State.promptContext : null;
     picker.close();
-    if (!spoken) { input.value = ""; State.chatDraft = ""; }
+    input.value = ""; State.chatDraft = "";
     State.chatError = "";
     sending = true;
-    spokenTurn = spoken;
     cancelledTurn = false;
     Activity.chatStarted();
     const activityChat = Activity.chat;
     const epoch = State.chatEpoch;
     const revision = ++turnRevision;
-    if (!spoken || !Activity.voice.active) Sound.play("send");
+    Sound.play("send");
 
     State.chatHistory.push({ id: nextId++, role: "user", content: query, ...(files.length ? { attachments: files.map(file => file.name) } : {}) });
     State.stateOverride = "thinking";
@@ -155,7 +135,7 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
     onHeightChange();
 
     try {
-      const reply = await Bridge.chatSend(query, context, Activity.voice.active);
+      const reply = await Bridge.chatSend(query, context);
       if (disposed || epoch !== State.chatEpoch || revision !== turnRevision || cancelledTurn) return;
       State.chatHistory.push({ id: nextId++, role: "assistant", content: reply.text });
       Activity.chatFinished();
@@ -175,7 +155,6 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
       if(Activity.chat===activityChat)Activity.chat.busy=false;
       if (disposed || epoch !== State.chatEpoch || revision !== turnRevision) return;
       sending = false;
-      spokenTurn = false;
       State.notify();
       onHeightChange();
       if (State.view === "prompt") input.focus({ preventScroll: true });
@@ -194,16 +173,12 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
 
   return {
     el,
-    voice,
     tick() { picker.place(); },
     sync() {
-      const preferences = `${State.settings.voiceProvider}|${State.settings.voiceRepliesEnabled}|${State.chatConnectionsVersion}`;
-      if (preferences !== voicePreferences) { voicePreferences = preferences; voice.cancel(); }
       if (generation !== State.chatEpoch) {
         generation = State.chatEpoch;
         sending = false;
         renderedCount = -1;
-        voice.cancel();
         input.value = State.chatDraft;
       }
       const files = State.droppedFiles;
@@ -220,7 +195,8 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
       dropHint.hidden = !State.fileDragOver;
       el.querySelector(".chat-card")!.classList.toggle("is-drag-over", State.fileDragOver);
 
-      const thinking = State.stateOverride === "thinking";
+      const raphael = State.settings.raphaelEnabled;
+      const thinking = State.stateOverride === "thinking" || (raphael && Raphael.busy);
       const count = State.chatHistory.length + (thinking ? 0.5 : 0);
       if (count !== renderedCount) {
         renderedCount = count;
@@ -233,23 +209,21 @@ export function buildPrompt(onHeightChange: () => void, actions?: ViewActions): 
       // Place the open picker after conversation and attachment layout changes,
       // so focusing a provider cannot move it between pointerdown and click.
       picker.sync();
-      picker.el.inert = voice.busy;
+      picker.el.hidden = raphael;
 
-      const assistant = chatAssistantName(State.settings);
+      const assistant = raphael ? "Raphael" : chatAssistantName(State.settings);
       input.placeholder = State.chatHistory.length === 0 ? "Ask " + assistant + "…" : "Continue…";
       input.setAttribute("aria-label", "Ask " + assistant);
       el.setAttribute("aria-label", assistant + " chat");
       send.title = "Ask " + assistant;
       send.setAttribute("aria-label", send.title);
-      input.disabled = sending || picker.busy || voice.busy;
-      send.disabled = sending || picker.busy || !!loading || voice.busy;
-      voice.button.disabled = !voice.busy && (sending || picker.busy || !!loading);
+      input.disabled = sending || picker.busy;
+      send.disabled = sending || picker.busy || !!loading;
     },
     focus() {
       input.focus({ preventScroll: true });
       input.select();
     },
-    setVisible(visible) { if (!visible && !Activity.voice.active) voice.cancel(); },
-    destroy() { disposed = true; voice.cancel(); picker.destroy(); input.value = ""; },
+    destroy() { disposed = true; picker.destroy(); input.value = ""; },
   };
 }

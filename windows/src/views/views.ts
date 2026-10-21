@@ -29,8 +29,6 @@ import { buildApprovalInbox } from "./approval-inbox";
 import { approvalRisk } from "../core/approval-risk";
 import type { ReturnTarget } from "../core/coding-session";
 import { lazyView } from "./lazy-view";
-import type { VoiceChat } from "./voice-chat";
-import { buildDesktopVoice } from "./desktop-voice";
 import { buildAgentQuestion } from "./agent-question";
 
 export interface ViewActions {
@@ -51,9 +49,6 @@ export interface ViewActions {
   openSettingsWindow(page?: string): void;
   openTool(id: string): void;
   blip(): void;
-  toggleVoice(): void;
-  closeVoice(): void;
-  voicePeak(): number | undefined;
 }
 
 export interface ViewHost {
@@ -66,7 +61,6 @@ export interface ViewHost {
   layout?(): ViewLayout;
   setVisible?(visible: boolean): void;
   destroy?(): void;
-  readonly voice?: VoiceChat;
 }
 
 // ── Shared pieces ─────────────────────────────────────────────────────────────
@@ -612,7 +606,6 @@ export function buildViews(
   map.set("error", lazyView(() => buildError(actions)));
   map.set("finished", lazyView(() => buildFinished(actions)));
   map.set("confused", lazyView(buildConfused));
-  map.set("voice", lazyView(() => buildDesktopVoice(actions), VIEW_LAYOUTS.voice));
   map.set("note", lazyView(buildNote));
   map.set("prompt", lazyView(() => buildPrompt(onChatHeightChange, actions)));
   map.set("upload", lazyView(buildUpload));

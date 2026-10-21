@@ -86,8 +86,7 @@ async function main() {
   lifetime.own(await onEvent<null>("workflow-shortcut",()=>island.openNextWork()));
   lifetime.own(await registerRaphaelHandlers(island));
   // With Raphael on, the voice shortcut turns its microphone on and off.
-  lifetime.own(await onEvent<null>("voice-shortcut",()=>{if(!toggleRaphaelMute())void island.toggleDesktopVoice();}));
-  lifetime.own(await onEvent<null>("voice-cancel",()=>island.closeDesktopVoice()));
+  lifetime.own(await onEvent<null>("voice-shortcut",()=>{toggleRaphaelMute();}));
   let grabObserved = false;
   lifetime.own(await onEvent<boolean>("grab-detached",value=>{
     grabObserved = true;
@@ -118,7 +117,6 @@ async function main() {
   const setPaused = (on: boolean) => {
     if (State.paused === on) return;
     State.paused = on;
-    if (on) island.closeDesktopVoice();
     void Bridge.setPaused(on);
   };
 

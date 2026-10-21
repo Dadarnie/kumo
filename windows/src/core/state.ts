@@ -180,9 +180,8 @@ export interface Settings {
   codingHooksInstalled: Partial<Record<CodingProvider, boolean>>;
   chatProvider: ChatProvider;
   chatModels: ChatModels;
-  voiceProvider: import("./voice-providers").VoiceProvider;
+  /** Turns Raphael's microphone on and off. */
   voiceShortcut: string;
-  voiceRepliesEnabled: boolean;
   codexHooksInstalled: boolean;
   codexModel: string;
   usageEnabled: boolean;
@@ -222,9 +221,7 @@ export const DEFAULT_SETTINGS: Settings = {
   codingHooksInstalled: {},
   chatProvider: "anthropic",
   chatModels: { ...DEFAULT_CHAT_MODELS },
-  voiceProvider: "auto",
   voiceShortcut: "Ctrl+Alt+V",
-  voiceRepliesEnabled: true,
   codexHooksInstalled: false,
   codexModel: "gpt-6.1-sol",
   usageEnabled: true,
@@ -275,9 +272,7 @@ export function normalizeSettings(settings: Partial<Settings> = {}): Settings {
     chatProvider: isChatProvider(settings.chatProvider) ? settings.chatProvider
       : settings.codingAssistant === "codex" ? "openai" : "anthropic",
     chatModels,
-    voiceProvider: ["auto", "openai", "gemini", "xai", "groq"].includes(settings.voiceProvider ?? "") ? settings.voiceProvider! : "auto",
     voiceShortcut: typeof settings.voiceShortcut === "string" ? settings.voiceShortcut : "Ctrl+Alt+V",
-    voiceRepliesEnabled: settings.voiceRepliesEnabled !== false,
     autoCollapseEnabled: true,
     rememberCompactState: true,
     hoverBehaviorVersion: 1,

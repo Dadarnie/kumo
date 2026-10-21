@@ -41,12 +41,9 @@ pub struct Settings {
     pub chat_provider: ChatProvider,
     #[serde(default = "default_chat_models")]
     pub chat_models: BTreeMap<ChatProvider, String>,
-    #[serde(default)]
-    pub voice_provider: VoiceProvider,
+    /// Turns Raphael's microphone on and off.
     #[serde(default = "default_voice_shortcut")]
     pub voice_shortcut: String,
-    #[serde(default = "enabled")]
-    pub voice_replies_enabled: bool,
     #[serde(default)]
     pub codex_hooks_installed: bool,
     #[serde(default = "default_codex_model")]
@@ -259,29 +256,6 @@ fn default_codex_model() -> String {
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum VoiceProvider {
-    #[default]
-    Auto,
-    Openai,
-    Gemini,
-    Xai,
-    Groq,
-}
-impl VoiceProvider {
-    pub const SERVICES: [Self; 4] = [Self::Openai, Self::Gemini, Self::Xai, Self::Groq];
-    pub fn chat(self) -> Option<ChatProvider> {
-        match self {
-            Self::Auto => None,
-            Self::Openai => Some(ChatProvider::Openai),
-            Self::Gemini => Some(ChatProvider::Gemini),
-            Self::Xai => Some(ChatProvider::Xai),
-            Self::Groq => Some(ChatProvider::Groq),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
 pub enum Appearance {
     #[default]
     #[serde(other)]
@@ -373,8 +347,6 @@ impl Default for Settings {
             coding_hooks_installed: BTreeMap::new(),
             chat_provider: ChatProvider::Anthropic,
             chat_models: default_chat_models(),
-            voice_provider: VoiceProvider::Auto,
-            voice_replies_enabled: true,
             codex_hooks_installed: false,
             codex_model: default_codex_model(),
             usage_enabled: true,

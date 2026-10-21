@@ -2,7 +2,7 @@
 //! Explicit keyboard access and verified editor window returns. No polling.
 use serde::{Deserialize, Serialize};
 use std::sync::{
-    atomic::{AtomicBool, AtomicIsize, AtomicU32, AtomicU8, Ordering},
+    atomic::{AtomicBool, AtomicIsize, AtomicU8, Ordering},
     Mutex, OnceLock,
 };
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
@@ -18,7 +18,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 };
 use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, EnumWindows, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, IsWindow,
+    CallNextHookEx, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindow,
     IsWindowVisible, PostMessageW, SetForegroundWindow, SetWindowsHookExW, ShowWindow,
     UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT, SW_RESTORE, WH_KEYBOARD_LL, WM_APP, WM_HOTKEY,
     WM_KEYDOWN, WM_KEYUP, WM_NCDESTROY, WM_SYSKEYDOWN, WM_SYSKEYUP,
@@ -29,41 +29,9 @@ const HOTKEY: i32 = 0x4d49;
 const VOICE_HOTKEY: i32 = 0x4d4b;
 const GRAB_CONTROL: u32 = WM_APP + 0x44;
 const GRAB_CANCEL: u32 = WM_APP + 0x45;
-const VOICE_CANCEL: u32 = WM_APP + 0x46;
 static CAPTURE_ACTIVE: AtomicBool = AtomicBool::new(false);
-static VOICE_ACTIVE: AtomicBool = AtomicBool::new(false);
-static VOICE_RETURN: AtomicIsize = AtomicIsize::new(0);
-static VOICE_RETURN_PID: AtomicU32 = AtomicU32::new(0);
 pub(crate) fn capture_active(active: bool) {
     CAPTURE_ACTIVE.store(active, Ordering::SeqCst);
-}
-pub(crate) fn voice_active(active: bool) {
-    VOICE_ACTIVE.store(active, Ordering::SeqCst);
-}
-pub(crate) fn restore_voice_focus(app: &AppHandle) {
-    let handle = app.clone();
-    let _ = app.run_on_main_thread(move || {
-        let target = HWND(VOICE_RETURN.swap(0, Ordering::SeqCst) as *mut _);
-        let pid = VOICE_RETURN_PID.swap(0, Ordering::SeqCst);
-        let Some(win) = crate::island::window(&handle) else {
-            return;
-        };
-        let Ok(raw) = win.hwnd() else {
-            return;
-        };
-        unsafe {
-            let mut current_pid = 0;
-            GetWindowThreadProcessId(target, Some(&mut current_pid));
-            if GetForegroundWindow() == HWND(raw.0)
-                && pid != 0
-                && current_pid == pid
-                && IsWindow(Some(target)).as_bool()
-                && IsWindowVisible(target).as_bool()
-            {
-                let _ = SetForegroundWindow(target);
-            }
-        }
-    });
 }
 static CONTROL_TARGET: AtomicIsize = AtomicIsize::new(0);
 static CONTROL_MASK: AtomicU8 = AtomicU8::new(0);
@@ -104,7 +72,7 @@ pub(crate) fn configure_voice(win: &WebviewWindow, value: &str) -> ShortcutStatu
         .lock()
         .unwrap()
         .clone();
-    let connected = crate::voice_chat::connection(&preferences).is_ok();
+    let connected = preferences.raphael_enabled;
     let mut status = configure_slot(
         win,
         if connected { value } else { "" },
@@ -114,7 +82,7 @@ pub(crate) fn configure_voice(win: &WebviewWindow, value: &str) -> ShortcutStatu
     if !connected {
         status.shortcut = value.into();
         status.error =
-            Some("Connect an AI voice API key in Settings to enable this shortcut.".into());
+            Some("Turn on Raphael in Settings to use this shortcut.".into());
     }
     *VOICE_STATUS.get_or_init(Default::default).lock().unwrap() = status.clone();
     status
@@ -276,19 +244,6 @@ unsafe extern "system" fn control_proc(code: i32, wparam: WPARAM, lparam: LPARAM
                 };
             }
         }
-        if key.vkCode == 0x1b && down && VOICE_ACTIVE.load(Ordering::SeqCst) {
-            let target = CONTROL_TARGET.load(Ordering::SeqCst);
-            if target != 0 {
-                let _ = unsafe {
-                    PostMessageW(
-                        Some(HWND(target as *mut _)),
-                        VOICE_CANCEL,
-                        WPARAM(0),
-                        LPARAM(0),
-                    )
-                };
-            }
-        }
         if bit != 0 && (down || up) {
             let old = if down {
                 CONTROL_MASK.fetch_or(bit, Ordering::SeqCst)
@@ -323,7 +278,6 @@ unsafe extern "system" fn shortcut_proc(
     if message == WM_NCDESTROY {
         let _ = unsafe { UnregisterHotKey(Some(hwnd), HOTKEY) };
         let _ = unsafe { UnregisterHotKey(Some(hwnd), VOICE_HOTKEY) };
-        VOICE_ACTIVE.store(false, Ordering::SeqCst);
         CONTROL_TARGET.store(0, Ordering::SeqCst);
         CONTROL_MASK.store(0, Ordering::SeqCst);
         CAPTURE_ACTIVE.store(false, Ordering::SeqCst);
@@ -333,28 +287,9 @@ unsafe extern "system" fn shortcut_proc(
         }
         let _ = unsafe { RemoveWindowSubclass(hwnd, Some(shortcut_proc), id) };
         drop(unsafe { Box::from_raw(data as *mut Shortcuts) });
-    } else if message == VOICE_CANCEL {
-        let context = unsafe { &*(data as *const Shortcuts) };
-        let _ = context
-            .app
-            .emit_to(crate::island::WINDOW_LABEL, "voice-cancel", ());
     } else if message == WM_HOTKEY && wparam.0 == VOICE_HOTKEY as usize {
+        // Raphael's mic toggle: never take focus from the app the user is in.
         let context = unsafe { &*(data as *const Shortcuts) };
-        if !VOICE_ACTIVE.load(Ordering::SeqCst) {
-            let previous = unsafe { GetForegroundWindow() };
-            if previous != hwnd {
-                let mut pid = 0;
-                unsafe {
-                    GetWindowThreadProcessId(previous, Some(&mut pid));
-                }
-                VOICE_RETURN.store(previous.0 as isize, Ordering::SeqCst);
-                VOICE_RETURN_PID.store(pid, Ordering::SeqCst);
-            }
-        }
-        if let Some(win) = crate::island::window(&context.app) {
-            crate::windows::set_activating(&win, true);
-        }
-        let _ = unsafe { SetForegroundWindow(hwnd) };
         let _ = context
             .app
             .emit_to(crate::island::WINDOW_LABEL, "voice-shortcut", ());

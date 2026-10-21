@@ -17,7 +17,6 @@ export function mediaPresentation(
 export function ownsContent(view: IslandViewName): boolean {
   return [
     "prompt",
-    "voice",
     "grab",
     "upload",
     "uploading",
@@ -61,7 +60,7 @@ export function sectionForView(view: IslandViewName): IslandSection | null {
   if (view === "settings" || view === "greeting") return null;
   return view === "media" ? "media" : view === "grab" ? "grab" : view === "usage" ? "usage"
     : view === "integrations" ? "integrations"
-    : view === "prompt" || view === "voice" ? "prompt" : "overview";
+    : view === "prompt" ? "prompt" : "overview";
 }
 
 export function safeSectionView(

@@ -27,7 +27,6 @@ export type IslandViewName =
   | "choose"
   | "mail"
   | "prompt"
-  | "voice"
   | "searching"
   | "result"
   | "note"
@@ -80,7 +79,7 @@ export const WIDE_W = 1000;
 /** Left rail holding the section tabs; the panel widens by it so views keep their size. */
 export const RAIL_W = 56;
 export function railFor(view: IslandViewName): number {
-  return view === "greeting" || view === "voice" ? 0 : RAIL_W;
+  return view === "greeting" ? 0 : RAIL_W;
 }
 
 export const ROUNDED_CORNER = 16;
@@ -113,7 +112,6 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   choose: { height: 176, botX: 60, botY: 101, botDiameter: 52, agentMode: "column" },
   mail: { height: 240, botX: 56, botY: null, botDiameter: 46, agentMode: "column" },
   prompt: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
-  voice: { height: 148, botX: 120, botY: 44, botDiameter: 38, agentMode: "none" },
   searching: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   result: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   note: { height: 160, botX: 60, botY: null, botDiameter: 50, agentMode: "column" },
@@ -141,7 +139,6 @@ export function islandSize(
     case "island":
       return { w: COMPACT_W, h: COMPACT_H };
     case "expanded": {
-      if (view === "voice") return { w: 240, h: VIEW_LAYOUTS.voice.height };
       const h = view === "prompt" ? chatPromptHeight(chatCount) : VIEW_LAYOUTS[view].height;
       return { w: EXPANDED_W + railFor(view), h };
     }

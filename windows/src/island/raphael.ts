@@ -29,7 +29,7 @@ type RaphaelEvent =
   | { t: "exit"; code: number | null };
 
 /** What the header's mic button and the voice shortcut need to know. */
-export const Raphael = { ready: false, muted: false, busy: false };
+export const Raphael = { ready: false, muted: false, busy: false, speaking: false };
 
 function task(): AgentTask {
   State.upsertExternalAgent(RAPHAEL_TASK, "Raphael", "#f67e7d");
@@ -42,10 +42,19 @@ function show(state: AgentTask["state"], status: string | null) {
   t.statusText = status;
   t.lastEventAt = Date.now();
   Raphael.busy = state !== "idle";
+  Raphael.speaking = status === "Speaking";
   State.notify();
 }
 
 let reminderTimer: number | undefined;
+let chatId = 1_000_000_000;
+
+/** Raphael's turns, spoken or typed, are the Chat tab's conversation. */
+function chatLine(role: "user" | "assistant", content: string) {
+  if (!content.trim()) return;
+  State.chatHistory.push({ id: chatId++, role, content });
+  if (State.chatHistory.length > 100) State.chatHistory.splice(0, State.chatHistory.length - 100);
+}
 
 export function handleRaphael(island: Island, event: RaphaelEvent) {
   switch (event.t) {
@@ -60,10 +69,12 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
       else if (task().pillBadge !== "finished") show("idle", null);
       break;
     case "you":
+      chatLine("user", event.v);
       State.appendStep(RAPHAEL_TASK, `“${event.v.slice(0, 80)}”`);
       show("thinking", "Thinking…");
       break;
     case "reply":
+      chatLine("assistant", event.v);
       State.appendStep(RAPHAEL_TASK, event.v.slice(0, 120));
       break;
     case "activity":

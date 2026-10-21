@@ -3,7 +3,6 @@ import { CODING_PROVIDERS, type CodingProvider } from "./coding";
 import type { CodexUsage, UsageWindow } from "./codex-usage";
 
 export interface ActivityDay { date: string; tokens: number; agents: Partial<Record<CodingProvider, number>> }
-export type VoiceActivityPhase = "idle" | "connecting" | "recording" | "transcribing" | "waiting" | "speaking" | "paused" | "error";
 interface UsageReading extends CodexUsage { tokens?: number | null }
 interface Saved { days: ActivityDay[]; readings: Partial<Record<CodingProvider, UsageReading[]>> }
 const KEY = "mimo.activity.v1";
@@ -18,12 +17,6 @@ class ActivityStore {
   private tokens = new Map<string, number>();
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
   chat = { busy: false, tokens: 0 };
-  voice: { active: boolean; phase: VoiceActivityPhase; error: string | null; service: string | null; assistant: string | null } = { active: false, phase: "idle", error: null, service: null, assistant: null };
-  setVoice(active: boolean, phase: VoiceActivityPhase = "idle", error: string | null = null) {
-    this.voice = { active, phase, error, service: active ? this.voice.service : null, assistant: active ? this.voice.assistant : null };
-    this.publish();
-  }
-  describeVoice(service:string,assistant:string) { this.voice={...this.voice,service,assistant};this.publish(); }
   constructor() {
     try {
       const data = JSON.parse(localStorage.getItem(KEY) ?? "null");

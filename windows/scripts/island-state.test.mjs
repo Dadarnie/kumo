@@ -59,7 +59,6 @@ test("Home, Chat, and Mimo Shelf own their useful detail routes", () => {
   assert.deepEqual(SECTIONS.map(s => s.id), ["overview", "prompt", "integrations", "grab"]);
   assert.equal(sectionForView("grab"), "grab", "The shelf retains its own tab");
   assert.equal(sectionForView("usage"), "usage", "Limits owns the selected header control");
-  assert.equal(sectionForView("voice"), "prompt");
   assert.equal(sectionForView("media"), "media", "The media header icon owns its selected state");
   for (const view of ["approvals", "error", "finished", "upload"])
     assert.equal(sectionForView(view), "overview", view);

@@ -31,7 +31,6 @@ mod secrets;
 mod settings;
 mod tools;
 mod tray;
-mod voice_chat;
 mod webview_memory;
 mod windows;
 mod workflow_native;
@@ -142,7 +141,6 @@ fn save_settings(
     openai_chat: State<openai::OpenAiChat>,
     api_chat: State<chat_api::ApiChat>,
     requests: State<chat_requests::ChatRequests>,
-    voice: State<voice_chat::VoiceChat>,
     mut settings: Settings,
 ) {
     settings.upgrade_hover_behavior();
@@ -159,12 +157,6 @@ fn save_settings(
         let appearance_changed = current.appearance != settings.appearance;
         let autostart_changed = current.autostart != settings.autostart;
         let assistant_changed = current.chat_changed(&settings);
-        if assistant_changed
-            || current.voice_provider != settings.voice_provider
-            || current.voice_replies_enabled != settings.voice_replies_enabled
-        {
-            voice.cancel();
-        }
         let monitoring_changed = current.modules.developer_integrations
             != settings.modules.developer_integrations
             || current.active_integrations != settings.active_integrations;
@@ -642,7 +634,6 @@ fn chat_select(
     openai_chat: State<openai::OpenAiChat>,
     api_chat: State<chat_api::ApiChat>,
     requests: State<chat_requests::ChatRequests>,
-    voice: State<voice_chat::VoiceChat>,
     provider: ChatProvider,
     model: String,
 ) -> Result<Settings, String> {
@@ -665,7 +656,6 @@ fn chat_select(
         }
         settings::save(&updated).map_err(|_| "Could not save this chat model. Try again.")?;
         if current.chat_changed(&updated) {
-            voice.cancel();
             requests.cancel();
             chat.reset();
             openai_chat.reset();
@@ -688,13 +678,9 @@ async fn chat_send(
     requests: State<'_, chat_requests::ChatRequests>,
     query: String,
     context: Option<ChatContext>,
-    voice_control: Option<bool>,
 ) -> Result<ChatReply, String> {
     let ticket = requests.ticket();
-    let mut preferences = shared.settings.lock().unwrap().clone();
-    if voice_control == Some(true) {
-        preferences.chat_provider = voice_chat::desktop_chat_provider(&preferences)?;
-    }
+    let preferences = shared.settings.lock().unwrap().clone();
     if query.trim().is_empty() || query.len() > 32_000 {
         return Err("Enter a message shorter than 32 KB.".into());
     }
@@ -783,7 +769,6 @@ fn secret_set(
     openai_chat: State<openai::OpenAiChat>,
     api_chat: State<chat_api::ApiChat>,
     requests: State<chat_requests::ChatRequests>,
-    voice: State<voice_chat::VoiceChat>,
     key: String,
     value: String,
 ) -> Result<(), String> {
@@ -796,16 +781,6 @@ fn secret_set(
         api_chat.reset();
     }
     secrets::set(&key, &value)?;
-    if [
-        "openai-api-key",
-        "gemini-api-key",
-        "xai-api-key",
-        "groq-api-key",
-    ]
-    .contains(&key.as_str())
-    {
-        voice.cancel();
-    }
     drop(preferences);
     workflow_native::refresh_voice(&app);
     integrations::preferences_changed();
@@ -826,7 +801,6 @@ fn secret_clear(
     openai_chat: State<openai::OpenAiChat>,
     api_chat: State<chat_api::ApiChat>,
     requests: State<chat_requests::ChatRequests>,
-    voice: State<voice_chat::VoiceChat>,
 ) -> Result<(), String> {
     settings_only(&window)?;
     let preferences = shared.settings.lock().unwrap();
@@ -837,16 +811,6 @@ fn secret_clear(
         api_chat.reset();
     }
     secrets::clear(&key)?;
-    if [
-        "openai-api-key",
-        "gemini-api-key",
-        "xai-api-key",
-        "groq-api-key",
-    ]
-    .contains(&key.as_str())
-    {
-        voice.cancel();
-    }
     drop(preferences);
     workflow_native::refresh_voice(&app);
     integrations::preferences_changed();
@@ -1064,13 +1028,6 @@ fn voice_shortcut_status() -> workflow_native::ShortcutStatus {
     workflow_native::voice_status()
 }
 #[tauri::command]
-fn set_voice_active(app: AppHandle, active: bool, restore_focus: Option<bool>) {
-    workflow_native::voice_active(active);
-    if !active && restore_focus == Some(true) {
-        workflow_native::restore_voice_focus(&app);
-    }
-}
-#[tauri::command]
 async fn configure_voice_shortcut(
     app: AppHandle,
     shortcut: String,
@@ -1136,7 +1093,6 @@ pub fn run() {
         .manage(grab::Grab::default())
         .manage(Chat::default())
         .manage(chat_requests::ChatRequests::default())
-        .manage(voice_chat::VoiceChat::default())
         .manage(openai::OpenAiChat::default())
         .manage(chat_api::ApiChat::default())
         .manage(codex_usage::UsageCache::default())
@@ -1190,10 +1146,6 @@ pub fn run() {
             chat_select,
             chat_reset,
             chat_cancel,
-            voice_chat::voice_ready,
-            voice_chat::voice_transcribe,
-            voice_chat::voice_speak,
-            voice_chat::voice_cancel,
             ingest_file,
             secret_present,
             secret_set,
@@ -1207,7 +1159,6 @@ pub fn run() {
             workflow_shortcut_status,
             voice_shortcut_status,
             configure_voice_shortcut,
-            set_voice_active,
             configure_workflow_shortcut,
             installed_coding_tools,
             set_paused,

@@ -10,7 +10,6 @@ export function lazyView(build: () => ViewHost, fallback?: ViewLayout): ViewHost
   let disposed = false;
   return {
     get el() { return view?.el ?? slot; },
-    get voice() { return view?.voice; },
     sync() { view?.sync(); },
     tick(now) { view?.tick?.(now); },
     focus() { view?.focus?.(); },

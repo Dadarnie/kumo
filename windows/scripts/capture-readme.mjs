@@ -101,12 +101,6 @@ try{
   await capture('agents','Production coding-session picker with all nine registered providers in local demo sessions.',{menu:true});
 
   await reset();
-  await browser.evaluate(`captureActivity.setVoice(true,'recording');captureActivity.describeVoice('OpenAI','Mimo');mediaPreview.open('voice')`);
-  await browser.settle();
-  assert.equal(await browser.evaluate("document.querySelector('.desktop-voice-view').dataset.phase"),'recording');
-  await capture('voice','Production desktop voice panel in a recording-state fixture. No microphone or speech service was used.');
-
-  await reset();
   await browser.evaluate(`(()=>{
     const task=mediaPreview.state.upsertCodingTask('codex','Mimo demo','C:/work/demo','docs-terminal');
     task.state='working';task.lastEventAt=Date.now();task.activity={tool:'Bash',action:'Run',target:'npm run test:unit',phase:'running',preview:{lines:['Checking the current changes…']},files:[{target:'src/app.ts',tool:'Edit',phase:'complete',changes:{added:1,removed:1},preview:{lines:['const label = "Workspace";','const label = "Mimo Shelf";'],kinds:['removed','added'],lineNumbers:[12,12]}}]};
@@ -156,7 +150,7 @@ try{
   await browser.evaluate('document.fonts.ready');await browser.settle();
   await capture('settings','Production Settings window and General preferences in an isolated browser. No saved preferences or credentials were read.',{selector:'#settings-root',fixturePage:'windows/settings.html'});
   assert.deepEqual(browser.errors,[]);
-  const sourceFiles=['dev/media-preview.html','src/design/tokens.css','src/views/coding-card.css','src/views/github.css','src/views/activity-calendar.css','src/island/hooks.ts','src/views/agent-question.ts','src/views/coding-card.ts','src/views/coding-edits.ts','src/views/desktop-voice.ts','src/views/overview.ts','src/views/chat.ts','src/views/grab.ts','src/island/media.ts','src/views/integration-activity.ts','src/settings/main.ts'];
+  const sourceFiles=['dev/media-preview.html','src/design/tokens.css','src/views/coding-card.css','src/views/github.css','src/views/activity-calendar.css','src/island/hooks.ts','src/views/agent-question.ts','src/views/coding-card.ts','src/views/coding-edits.ts','src/views/overview.ts','src/views/chat.ts','src/views/grab.ts','src/island/media.ts','src/views/integration-activity.ts','src/settings/main.ts'];
   const sources={};
   for(const path of sourceFiles){
     const source=(await readFile(new URL('../'+path,import.meta.url),'utf8')).replaceAll('\r\n','\n');

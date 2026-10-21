@@ -21,7 +21,6 @@ import { questionConnection } from "../core/question-connection";
 import { backAction } from "../core/navigation-sound";
 import { Sound } from "../core/sound";
 import { CHAT_PROVIDERS, chatDefinition, type ChatProvider } from "../core/chat-providers";
-import { VOICE_PROVIDERS, type VoiceProvider } from "../core/voice-providers";
 type CodingAssistant = Settings["codingAssistant"];
 
 let settings: Settings = normalizeSettings({});
@@ -393,28 +392,13 @@ function apiSection(hasKey: boolean, provider: ChatProvider): HTMLElement {
 }
 
 function chatSection(present: Record<string, boolean>): HTMLElement {
-  const speech = new CompactDropdown("Voice service", "settings-voice-service", value => {
-    settings.voiceProvider = value as VoiceProvider;
-    void save();
-  });
-  speech.el.classList.add("settings-picker");
-  const refreshSpeech = () => speech.update(VOICE_PROVIDERS.map(provider => ({ ...provider })), settings.voiceProvider, true);
-  refreshSpeech();
-  refreshControls.push(refreshSpeech);
   const panels = h("div", { class: "assistant-panels" });
   for (const p of CHAT_PROVIDERS) {
     const panel = h("div", { "data-chat-provider": p.id }, apiSection(p.key ? present[p.key] ?? false : false, p.id));
     panels.append(panel);
   }
   return h("div", { class: "assistant-settings" },
-    h("p", { class: "hint", text: "Save your keys here. Pick your AI in chat." }),
-    h("section", { class: "preferences" }, h("h2", { text: "Voice messages" }),
-      h("div", { class: "preference-row" }, h("label", { text: "Voice service" }), speech.el),
-      preference("Read replies aloud", () => settings.voiceRepliesEnabled,
-        value => { settings.voiceRepliesEnabled = value; }, "Kumo uses an AI generated voice."),
-      h("p", { class: "hint", text: "Tap the mic to talk. Tap again to send." }),
-      h("p", { class: "hint", text: "Automatic uses a saved voice key, preferring your chat AI. Voice uses that service's API quota." }),
-      h("p", { class: "hint", text: 'Try “Kumo, go home”, “Kumo, open settings”, or “Kumo, show limits”.' })), panels);
+    h("p", { class: "hint", text: "Save your keys here. Pick your AI in chat. With Raphael on, the Chat tab talks to Raphael." }), panels);
 }
 
 function assistantSection(statuses: Record<CodingAssistant, HookStatus>): HTMLElement {
@@ -756,18 +740,18 @@ function mediaSection(): HTMLElement {
 }
 
 function hotkeysSection(): HTMLElement {
-  const voiceValue=h("input",{class:"model-input",type:"text",value:settings.voiceShortcut,"aria-label":"Global voice shortcut"});
+  const voiceValue=h("input",{class:"model-input",type:"text",value:settings.voiceShortcut,"aria-label":"Raphael microphone shortcut"});
   const voiceStatus=h("p",{class:"hint",role:"status"});
   const voiceApply=h("button",{class:"btn secondary",type:"button",text:"Save shortcut",onclick:async()=>{
     voiceApply.disabled=true;
     try {
       const result=await Bridge.configureVoiceShortcut(voiceValue.value.trim());
-      if(result?.error&&!result.error.startsWith("Connect an AI voice")) {voiceStatus.textContent=result.error;return;}
+      if(result?.error&&!result.error.startsWith("Turn on Raphael")) {voiceStatus.textContent=result.error;return;}
       settings.voiceShortcut=voiceValue.value.trim();await save();
-      voiceStatus.textContent=result?.error ?? (settings.voiceShortcut ? "Shortcut ready. Press again to send; Esc closes voice." : "Voice shortcut off.");
+      voiceStatus.textContent=result?.error ?? (settings.voiceShortcut ? "Shortcut ready. It turns Raphael's microphone on and off." : "Microphone shortcut off.");
     } catch(error) {voiceStatus.textContent=String(error).replace(/^Error:\s*/,"");} finally {voiceApply.disabled=false;}
   }});
-  void Bridge.voiceShortcutStatus().then(result=>{voiceStatus.textContent=result?.error ?? "Available across your desktop when an AI voice key is connected.";});
+  void Bridge.voiceShortcutStatus().then(result=>{voiceStatus.textContent=result?.error ?? "Turns Raphael's microphone on and off, anywhere on your desktop.";});
   const value=h("input",{class:"model-input",type:"text",value:settings.workflowShortcut,"aria-label":"Global work shortcut"});
   const status=h("p",{class:"hint",role:"status"});
   const apply=h("button",{class:"btn secondary",type:"button",text:"Save shortcut",onclick:async()=>{
@@ -788,7 +772,7 @@ function hotkeysSection(): HTMLElement {
     h("h2",{text:"Global access"}),
     h("label",{text:"Open next work item"}),
     h("div",{class:"preference-row"},value,apply),status,
-    h("label",{text:"Talk to Kumo"}),
+    h("label",{text:"Raphael microphone on/off"}),
     h("div",{class:"preference-row"},voiceValue,voiceApply),voiceStatus,
     h("p",{class:"hint",text:"Use Ctrl, Alt or Shift with a letter or Space. Clear it to turn it off."}),
     h("h2", { text: "In the island" }),
