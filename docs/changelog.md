@@ -11,6 +11,11 @@ Kumo forks Mimo 1.0.1 under a new name and identity.
 - Live session view, music app switching, call pill, Tools tab (launcher, Docker,
   Ollama, Obsidian), VSCodium support.
 - Island loop capped at 60 fps; lighter polling.
+- Side rail for the tabs, Settings
+  with top tabs and card pages, Music page over blurred artwork.
+- Raphael, a local voice assistant, runs inside Kumo: status in the island,
+  approvals in the island, reminders, Chat talks to it, Settings → Raphael. The
+  cloud voice (OpenAI, Gemini, Grok, Groq) is removed.
 - Upgrades from Mimo: data, autostart and installed hooks move over on first launch.
 
 Entries below are Mimo's history.

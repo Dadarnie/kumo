@@ -22,7 +22,7 @@ see [downloads and verification](../docs/distribution.md).
 | --- | --- |
 | Coding agents | Open Settings → Coding connection. Install hooks through the preview and Apply flow. |
 | Chat | Open Chat and choose a provider and model. API keys are separate from coding connections. |
-| Voice | Tap the chat microphone, or use Ctrl+Alt+V for desktop voice. Esc cancels. Configure speech keys in Settings. |
+| Raphael | Settings → Raphael: point it at your Raphael folder and turn it on. Talk, or type in Chat. Ctrl+Alt+V turns its microphone on and off. |
 | Shelf | Drop files or drag Kumo out to capture a region. Ctrl+Alt+G also starts capture. |
 | Media | Open Now playing from Home. Windows reports supported playback controls and audio devices. |
 | Working mode | The island becomes a thin lip. Review and explicit opening remain available. |

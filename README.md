@@ -25,12 +25,24 @@ only asks for your attention when something actually needs you.
   call pill shows a timer and a mute button.
 - **Tools tab.** Pinned app launcher, Docker containers (start/stop/restart),
   loaded Ollama models, and quick notes to your Obsidian vault.
-- **Local chat.** Talk to a local model through Ollama.
+- **Raphael, a local voice assistant.** Kumo runs [Raphael](#raphael) for you: talk
+  (or type in Chat) and it uses tools on your PC, remembers through your Obsidian
+  vault and sets reminders. Its approvals appear in the island, and risky ones are
+  red. Everything runs on Ollama; nothing goes to a cloud speech service.
+- **Chat.** With Raphael off, chat with Ollama or a cloud provider.
 - **Limits.** Claude usage at a glance.
 
 Kumo's look is "Ember dusk": black surfaces with a plum, coral and peach gradient. The
 cloud mascot drifts while thinking, glows when work is done and rains when
 something fails. Its sounds are synthesized bell chimes.
+
+## Raphael
+
+Raphael is a separate Python project (local Whisper, Piper and an Ollama model).
+In Settings → Raphael, enter its folder (the one with `chat.py` and `.venv`) and
+turn on **Run Raphael**. Kumo starts it, restarts it if it crashes, and stops it
+when Kumo quits. **Always listening** off means each request starts with
+"hey raphael". Ctrl+Alt+V (Settings → Hotkeys) turns its microphone on and off.
 
 ## Build
 
