@@ -200,6 +200,22 @@ def news_list(category="", limit="6"):
     return "\n".join(f"- {i['title']} ({i['source']}, {_age(i['published'])})" for i in items)
 
 
+DIGEST = (("Free", "free"), ("AI", "ai"), ("Coding", "coding"), ("Security", "security"))
+
+
+def digest(per_section=6):
+    """Today's note: the newest headlines of the last day per section; each headline appears once."""
+    import vault
+    since, used, sections = time.time() - 86400, set(), []
+    with _lock:
+        items = [i for i in _load() if i["seen"] >= since or i["published"] >= since]
+    for heading, cat in DIGEST:
+        picked = [i for i in items if cat in i["categories"] and i["id"] not in used][:per_section]
+        used.update(i["id"] for i in picked)
+        sections.append((heading, [(i["title"], i["link"], i["source"]) for i in picked]))
+    return vault.save_news_digest(sections)
+
+
 def start():
     """Background refresher: first run a minute after start, then every NEWS_INTERVAL_HOURS."""
     def run():
@@ -209,6 +225,8 @@ def start():
                 new = refresh()
                 if new:
                     on_new(new)
+                if config.NEWS_DIGEST:
+                    digest()
             except Exception as e:  # never let the reader kill Raphael
                 print(f"(news refresh failed: {e})")
             time.sleep(max(0.5, config.NEWS_INTERVAL_HOURS) * 3600)

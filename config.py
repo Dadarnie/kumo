@@ -158,6 +158,8 @@ HISTORY_TURNS = 10
 
 # --- News reader (news.py): feeds only, titles + links + short summaries ---
 NEWS_INTERVAL_HOURS = 3
+NEWS_DIGEST = True        # write raphael/news/YYYY-MM-DD.md in the vault (top headlines per category)
+NEWS_DIR = "raphael/news"
 # (name, feed URL, base category). Categories: coding, ai, free, security, release (keyword tags add more).
 NEWS_SOURCES = [
     ("Hacker News", "https://hn.algolia.com/api/v1/search_by_date?tags=front_page&hitsPerPage=30", "coding"),

@@ -274,4 +274,5 @@ curl.exe http://127.0.0.1:11434/api/create -d '{"model":"gemma4-e4b-raphael","fr
 `news.py` reads feeds (RSS, Atom, the Hacker News API) every `NEWS_INTERVAL_HOURS` and keeps titles, links and short summaries in `data/news.json` for 14 days. Nothing else from the pages is copied. Each item gets its source's category plus keyword tags from its title: coding, ai, free (free tiers, credits, courses), security, release. Edit `NEWS_SOURCES` in `config.py`. A source that fails or rate-limits (Reddit answers 429 to quick bursts) is skipped until the next refresh.
 
 Ask "what's new in AI?" or "any new free dev tools?": the `news_list` tool reads the saved headlines.
+Daily digest: with `NEWS_DIGEST = True`, each refresh rebuilds `raphael/news/YYYY-MM-DD.md` in the vault (newest headlines of the last day under Free, AI, Coding and Security, each once). Creating the day's note adds one line to `log.md`.
 Self-check (sample feeds, never your data): `.\.venv\Scripts\python.exe news.py` prints `news OK`.

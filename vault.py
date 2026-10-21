@@ -190,6 +190,27 @@ def save_daily_note(bullets):
     return rel
 
 
+def save_news_digest(sections):
+    """Write today's headlines to raphael/news/YYYY-MM-DD.md (Raphael's own folder, rebuilt on each refresh).
+    sections: [(heading, [(title, link, source)])]. Logged in log.md once, when the day's note is created."""
+    sections = [(h, items) for h, items in sections if items]
+    if not sections:
+        return None
+    rel = f"{config.NEWS_DIR}/{_today()}.md"
+    p = _vault_path(rel)
+    created = not p.exists()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    clean = lambda s: s.replace("[", "(").replace("]", ")").replace("\n", " ")
+    body = "\n\n".join(f"## {h}\n" + "\n".join(f"- [{clean(t)}]({link}) · {src}" for t, link, src in items)
+                       for h, items in sections)
+    _write(p, f"---\ntitle: News {_today()}\ncreated: {_today()}\nupdated: {_today()}\ntype: summary\n"
+              f"area: projects\ntags: [reference]\n---\n\n# News {_today()}\n\n"
+              f"Headlines Raphael collected today (updated {datetime.datetime.now():%H:%M}).\n\n{body}\n")
+    if created:
+        _log("create", rel, "Raphael's daily news digest.")
+    return rel
+
+
 def last_session_summary():
     """The most recent session summary (for continuity next time), or ''."""
     try:
@@ -389,6 +410,14 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
         assert rel == rel2 and daily.startswith("---\ntitle: Raphael daily") and daily.count("\n## ") == 2, daily
         assert "- set a reminder" in daily and "Second session" in last_session_summary()
         assert "Last session" in memory_prompt() and "capstone is LPMS" in memory_prompt()
+
+        assert save_news_digest([("AI", []), ("Free", [])]) is None  # nothing to write
+        rel = save_news_digest([("Free", [("Add X [beta] free tier", "https://x.dev", "free-for.dev")]), ("AI", [])])
+        note = (tmp / rel).read_text(encoding="utf-8")
+        assert "## Free\n- [Add X (beta) free tier](https://x.dev) · free-for.dev" in note and "## AI" not in note
+        save_news_digest([("Coding", [("Y", "https://y.dev", "HN")])])  # rebuilt, not appended; logged once
+        assert "## Coding" in (tmp / rel).read_text(encoding="utf-8") and "## Free" not in (tmp / rel).read_text(encoding="utf-8")
+        assert (tmp / "log.md").read_text(encoding="utf-8").count("news digest") == 1
         print("vault OK")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
