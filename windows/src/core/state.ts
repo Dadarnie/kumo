@@ -32,6 +32,8 @@ export interface AgentTask {
   emote?: BotEmoteName | null;
   miniEye?: EyeShape | null;
   pillBadge?: PillBadge | null;
+  /** Free-form status for the compact strip (Raphael: "Thinking…", a tool, a reminder). */
+  statusText?: string | null;
   sessionCwd?: string | null;
   sessionId?: string | null;
   activity?: CodingActivity;
@@ -57,6 +59,10 @@ export interface ApprovalInfo {
   returnTarget?: ReturnTarget;
   questions?: AgentQuestion[];
   inputKey?: string;
+  /** Who asks, when it is not a coding provider (Raphael). */
+  agentName?: string;
+  /** The requester itself marks this as risky. */
+  danger?: boolean;
 }
 
 export interface MissedApproval extends ApprovalInfo {

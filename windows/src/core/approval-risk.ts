@@ -4,7 +4,8 @@ import type { ApprovalInfo } from "./state";
 export interface ApprovalRisk { level: "caution" | "danger"; label: string; detail: string }
 
 /** A local advisory. Only the agent's own permission decision authorizes work. */
-export function approvalRisk(request: Pick<ApprovalInfo, "tool" | "command" | "reason"> | null): ApprovalRisk {
+export function approvalRisk(request: Pick<ApprovalInfo, "tool" | "command" | "reason" | "danger"> | null): ApprovalRisk {
+  if (request?.danger) return { level: "danger", label: "Danger zone · flagged by the assistant", detail: "The assistant marks this as able to change, delete or send something. Read it before allowing." };
   const command = (request?.command ?? "").replace(/^[\w.-]+\s*·\s*/, "").trim();
   const tool = request?.tool ?? "";
   const description = `${tool} ${command} ${request?.reason ?? ""}`;

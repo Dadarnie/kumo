@@ -153,14 +153,20 @@ export const Bridge = {
   claudeUsage: () => callOrThrow<ClaudeUsage | null>("claude_usage"),
 
   approvalDecision: (requestId: string, decision: "allow" | "deny") =>
-    call<void>("approval_decision", { requestId, decision }),
+    requestId.startsWith("raphael:")
+      ? call<void>("raphael_send", { msg: { t: "answer", id: Number(requestId.slice(8)), allow: decision === "allow" } })
+      : call<void>("approval_decision", { requestId, decision }),
   questionAnswer: (requestId: string, answers: Record<string,string>) =>
     callOrThrow<void>("question_answer", {requestId,answers}),
   /** "The card is up" — until this lands the relay only waits a moment. */
   approvalAck: (requestId: string) => call<void>("approval_ack", { requestId }),
   /** "Nobody can act on this" — Claude Code asks in the terminal right away. */
   approvalDecline: (requestId: string) =>
-    call<void>("approval_decline", { requestId }),
+    requestId.startsWith("raphael:")
+      ? call<void>("raphael_send", { msg: { t: "answer", id: Number(requestId.slice(8)), allow: false } })
+      : call<void>("approval_decline", { requestId }),
+  /** One command to Raphael: answer, text, mute or stop (see kumo_bridge.py). */
+  raphaelSend: (msg: Record<string, unknown>) => call<void>("raphael_send", { msg }),
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */

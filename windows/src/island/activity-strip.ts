@@ -135,7 +135,7 @@ export class ActivityStrip {
         : coding
           ? compactCodingProgress(coding, State.paused).title
           : task
-          ? `${task.name} · ${task.pillBadge ?? task.state}`
+          ? `${task.name} · ${task.statusText ?? task.pillBadge ?? task.state}`
           : "";
     // One thing at a time, by priority: agent work (incl. approvals) > other
     // agent notices > music > clock. No rotation between them.

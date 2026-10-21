@@ -2236,3 +2236,9 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .tools-empty { color: var(--dim); font: 400 11px var(--font-compact); padding: 8px 0; }
 .tools-services[hidden] { display: none; }
+/* Raphael's mic: coral while listening, struck through when off. */
+.header-actions > .header-raphael-mic { color: var(--accent); }
+.header-actions > .header-raphael-mic.is-muted { color: var(--dim-2); }
+.header-raphael-mic.is-muted svg { opacity: .55; }
+.header-raphael-mic.is-muted::after { content: ""; position: absolute; width: 18px; height: 2px; border-radius: 1px; background: currentColor; transform: rotate(-45deg); }
+.header-actions > .header-raphael-mic { position: relative; }

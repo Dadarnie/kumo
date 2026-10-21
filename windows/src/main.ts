@@ -14,6 +14,7 @@ import { mediaStore } from "./core/media-store";
 import { Island } from "./island/island";
 import { expireApprovals, registerHookHandlers, resetProviderSession } from "./island/hooks";
 import { registerIntegrationHandlers, refreshConfigured } from "./island/integrations";
+import { registerRaphaelHandlers, syncRaphaelSettings, toggleRaphaelMute } from "./island/raphael";
 import { Activity } from "./core/activity";
 import type { ClaudeUsage } from "./core/codex-usage";
 
@@ -35,6 +36,7 @@ async function main() {
   const applyPreferences = () => {
     State.loadIntegrationTasks();
     island.applySettings();
+    syncRaphaelSettings(island);
     for (const [id, subscription] of Object.entries(subscriptions)) {
       void subscription
         .setEnabled(State.settings.modules[id as keyof typeof subscriptions])
@@ -82,7 +84,9 @@ async function main() {
   }
   applyPreferences();
   lifetime.own(await onEvent<null>("workflow-shortcut",()=>island.openNextWork()));
-  lifetime.own(await onEvent<null>("voice-shortcut",()=>void island.toggleDesktopVoice()));
+  lifetime.own(await registerRaphaelHandlers(island));
+  // With Raphael on, the voice shortcut turns its microphone on and off.
+  lifetime.own(await onEvent<null>("voice-shortcut",()=>{if(!toggleRaphaelMute())void island.toggleDesktopVoice();}));
   lifetime.own(await onEvent<null>("voice-cancel",()=>island.closeDesktopVoice()));
   let grabObserved = false;
   lifetime.own(await onEvent<boolean>("grab-detached",value=>{

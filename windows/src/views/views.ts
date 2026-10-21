@@ -3,6 +3,7 @@
 
 import { h, clear, dot } from "./dom";
 import { SECTIONS, sectionEnabled, sectionForView } from "../core/sections";
+import { Raphael, stopRaphael, toggleRaphaelMute } from "../island/raphael";
 import { ICONS, icon } from "./icons";
 import { integrationsFilled, usageFilled,
   soundFilled, soundOffFilled } from "../icons/filled";
@@ -215,6 +216,11 @@ export function buildHeader(actions: ViewActions): ViewHost {
     approvalLabel, approvalCount);
   const minimizeBtn = h("button", { title: "Minimize", onclick: () => actions.collapse() },
     mimoIcon(collapseGlyph, 18));
+  // Raphael: mic on/off, and Stop while it is working.
+  const raphaelMic = h("button", { class: "header-raphael-mic", type: "button", hidden: true,
+    onclick: () => toggleRaphaelMute() }, icon(ICONS.microphone, 17));
+  const raphaelStop = h("button", { class: "header-raphael-stop", type: "button", hidden: true,
+    title: "Stop Raphael", "aria-label": "Stop Raphael", onclick: () => stopRaphael() }, icon(ICONS.xmark, 16));
   let renderedSound: boolean | undefined;
   for (const button of [gearBtn, soundBtn, minimizeBtn])
     button.setAttribute("aria-label", button.title);
@@ -234,7 +240,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       { class: "tabs", "aria-label": "Island sections" },
       ...navigation.map((item) => item.button),
     ),
-    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, gearBtn, soundBtn, minimizeBtn, approvalBtn),
+    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, raphaelStop, raphaelMic, gearBtn, soundBtn, minimizeBtn, approvalBtn),
   );
 
   return {
@@ -270,6 +276,11 @@ export function buildHeader(actions: ViewActions): ViewHost {
       title.textContent = SECTIONS.find(item => item.id === sectionForView(v))?.label
         ?? (v === "media" ? "Now playing" : v === "usage" ? "Limits" : v === "approvals" ? "Approvals" : "");
       gearBtn.classList.toggle("on", v === "settings");
+      raphaelMic.hidden = !State.settings.raphaelEnabled || !Raphael.ready;
+      raphaelMic.classList.toggle("is-muted", Raphael.muted);
+      raphaelMic.title = Raphael.muted ? "Raphael's mic is off · turn on" : "Raphael is listening · turn mic off";
+      raphaelMic.setAttribute("aria-label", raphaelMic.title);
+      raphaelStop.hidden = raphaelMic.hidden || !Raphael.busy;
       if (renderedSound !== State.settings.soundEnabled) {
         renderedSound = State.settings.soundEnabled;
         clear(soundBtn);
@@ -408,7 +419,7 @@ function buildApproval(actions: ViewActions): ViewHost {
       surface.style.setProperty("--wash", washRGBA(risk === "danger" ? "red" : "amber"));
       const task = State.tasks.find(task => task.id === request?.taskId) ?? State.focusTask;
       status.textContent = "needs permission";
-      const provider = request?.provider === "claude" || !request?.provider ? "Claude" : codingDefinition(request.provider).name;
+      const provider = request?.agentName ?? (request?.provider === "claude" || !request?.provider ? "Claude" : codingDefinition(request.provider).name);
       providerName.textContent = provider;
       providerName.title = task?.sessionCwd || "";
       always.toggleAttribute('disabled', !request?.sessionId || !request.cwd || !request.inputKey);
