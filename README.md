@@ -258,8 +258,20 @@ While the window is open, Raphael's icon sits in the system tray (bottom right; 
 
 `chat.py --kumo` runs Raphael with no window, tray or global hotkeys; Kumo starts it and shows everything in its island. Events go out as JSON lines on stdout and Kumo's commands come in on stdin (`kumo_bridge.py` documents the protocol; `print()` output goes to stderr). Mute, Stop and Allow/Deny come from Kumo. Closing stdin quits Raphael after the daily session summary.
 
-Model server: Ollama by default (`http://localhost:11434/v1`, `gemma4-e4b:latest`), shared with Kumo so only one copy of the model is loaded. Override with `RAPHAEL_BASE_URL`, `RAPHAEL_MODEL`, `RAPHAEL_SMART_MODEL` and `RAPHAEL_VISION_MODEL` (or edit `config.py`; LM Studio still works with its URL and model id). "Think harder" needs `SMART_MODEL` and `look_at_screen` needs a model that accepts images: the current Ollama Gemma import has no vision.
+Model server: Ollama by default (`http://localhost:11434/v1`, `gemma4-e4b-raphael`), shared with Kumo so only one copy of the model is loaded. Override with `RAPHAEL_BASE_URL`, `RAPHAEL_MODEL`, `RAPHAEL_SMART_MODEL` and `RAPHAEL_VISION_MODEL` (or edit `config.py`; LM Studio still works with its URL and model id). "Think harder" needs `SMART_MODEL` and `look_at_screen` needs a model that accepts images: the current Ollama Gemma import has no vision.
 
 Turn off Raphael's own autostart (`autostart.py off`) when Kumo starts it, so two copies never listen at once.
 
 Self-check: `.\.venv\Scripts\python.exe kumo_bridge.py` prints `kumo_bridge OK`.
+
+The default model `gemma4-e4b-raphael` is `gemma4-e4b:latest` with a 16k context (`PARAMETER num_ctx 16384`, same weights). Ollama's default 4k context is too small: the system prompt plus tool list is about 4,100 tokens, and Ollama silently cuts the start, so replies stop making sense. Recreate it with:
+```powershell
+curl.exe http://127.0.0.1:11434/api/create -d '{"model":"gemma4-e4b-raphael","from":"gemma4-e4b:latest","parameters":{"num_ctx":16384}}'
+```
+
+## News
+
+`news.py` reads feeds (RSS, Atom, the Hacker News API) every `NEWS_INTERVAL_HOURS` and keeps titles, links and short summaries in `data/news.json` for 14 days. Nothing else from the pages is copied. Each item gets its source's category plus keyword tags from its title: coding, ai, free (free tiers, credits, courses), security, release. Edit `NEWS_SOURCES` in `config.py`. A source that fails or rate-limits (Reddit answers 429 to quick bursts) is skipped until the next refresh.
+
+Ask "what's new in AI?" or "any new free dev tools?": the `news_list` tool reads the saved headlines.
+Self-check (sample feeds, never your data): `.\.venv\Scripts\python.exe news.py` prints `news OK`.

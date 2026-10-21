@@ -8,6 +8,7 @@ import time
 from openai import OpenAI, OpenAIError
 
 import config
+import news
 import reminders
 import tools
 import vault
@@ -290,6 +291,7 @@ def converse(voice_mode, app=None):
         if getattr(app, "owns_hotkeys", False):
             app._send(t="ready")
         start_reminders(voice if voice_mode else None, app)
+        news.start()  # headlines refresh in the background (news.py)
         while True:
             if app:
                 app.set_state("idle")

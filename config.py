@@ -10,7 +10,7 @@ BASE_URL = os.environ.get("RAPHAEL_BASE_URL", "http://localhost:11434/v1")
 API_KEY = "local"  # placeholder, local servers ignore it
 
 # Must match the server's model id. Run `python chat.py --models` to list ids.
-MODEL = os.environ.get("RAPHAEL_MODEL", "gemma4-e4b:latest")
+MODEL = os.environ.get("RAPHAEL_MODEL", "gemma4-e4b-raphael")
 # "Think harder" / "use your big brain" switches to this one (sticky until "back to fast mode").
 # Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Empty = not installed: Raphael says so.
 SMART_MODEL = os.environ.get("RAPHAEL_SMART_MODEL", "")
@@ -50,6 +50,8 @@ SYSTEM_PROMPT = (
     "about themselves, or corrects you, call remember with one short third-person sentence. For questions about the "
     "user's notes, projects or things they told you before, call vault_search and vault_read before answering. When "
     "the user says note this, save this idea or similar, call capture_note. "
+    "For news (coding, AI, what's free, security, releases) call news_list with a category, then name the two or three "
+    "most relevant headlines briefly. "
     "The user's capstone (LPMS) tasks are on a Kanban board: use kanban_list, kanban_add, kanban_move; never move a "
     "card to Done, the user does that. "
     "The user is a programmer. For coding chores use project_info (call it before running tests, it gives the exact "
@@ -109,7 +111,7 @@ PERMISSIONS = {
     "send_message": "allow",  # it ALWAYS asks before sending, whatever this says
     "look_at_screen": "allow",  # screenshot goes only to the local model
     "set_reminder": "allow", "list_reminders": "allow", "cancel_reminder": "allow",
-    "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask",
+    "kanban_list": "allow", "kanban_add": "ask", "kanban_move": "ask", "news_list": "allow",
     "remember": "allow", "vault_search": "allow", "vault_read": "allow", "capture_note": "allow", "forget": "ask",
     "git_status": "allow", "project_info": "allow", "read_clipboard": "allow", "copy_to_clipboard": "allow",
     "type_text": "allow", "press_keys": "allow", "open_app": "allow", "open_url": "allow", "play_music": "allow",
@@ -153,3 +155,23 @@ MAX_RECORD_SECONDS = 15
 
 # Number of past user/assistant exchanges kept for follow-up questions.
 HISTORY_TURNS = 10
+
+# --- News reader (news.py): feeds only, titles + links + short summaries ---
+NEWS_INTERVAL_HOURS = 3
+# (name, feed URL, base category). Categories: coding, ai, free, security, release (keyword tags add more).
+NEWS_SOURCES = [
+    ("Hacker News", "https://hn.algolia.com/api/v1/search_by_date?tags=front_page&hitsPerPage=30", "coding"),
+    ("dev.to", "https://dev.to/feed", "coding"),
+    ("r/programming", "https://www.reddit.com/r/programming/.rss", "coding"),
+    ("GitHub Blog", "https://github.blog/feed/", "coding"),
+    ("freeCodeCamp", "https://www.freecodecamp.org/news/rss/", "coding"),
+    ("Hugging Face", "https://huggingface.co/blog/feed.xml", "ai"),
+    ("r/LocalLLaMA", "https://www.reddit.com/r/LocalLLaMA/.rss", "ai"),
+    ("Simon Willison", "https://simonwillison.net/atom/everything/", "ai"),
+    ("OpenAI", "https://openai.com/news/rss.xml", "ai"),
+    ("Google AI", "https://blog.google/innovation-and-ai/technology/ai/rss/", "ai"),
+    ("free-for.dev", "https://github.com/ripienaar/free-for-dev/commits/master.atom", "free"),
+    ("Class Central", "https://www.classcentral.com/report/feed/", "free"),
+    ("The Hacker News", "https://feeds.feedburner.com/TheHackersNews", "security"),
+    ("BleepingComputer", "https://www.bleepingcomputer.com/feed/", "security"),
+]

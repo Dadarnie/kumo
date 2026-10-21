@@ -17,6 +17,7 @@ import keyboard
 
 import config
 from reminders import cancel_reminder, list_reminders, set_reminder  # reminders and timers
+from news import news_list  # headlines from feeds (news.py)
 from vault import (capture_note, describe_forget, describe_kanban_add, describe_kanban_move, forget,  # Obsidian tools
                    kanban_add, kanban_list, kanban_move, remember, vault_read, vault_search)
 
@@ -827,6 +828,9 @@ TOOLS = [
         {"text": "What to remind about (for a timer: 'Timer')", "in_minutes": "Minutes from now",
          "at": "Clock time or date and time"}, optional=("in_minutes", "at")),
     _fn("list_reminders", "List upcoming reminders and timers."),
+    _fn("news_list", "Newest saved headlines from coding, AI, free-offer and security feeds (refreshed every few hours).",
+        {"category": "coding, ai, free, security or release; empty for all", "limit": "How many, default 6"},
+        optional=("category", "limit")),
     _fn("cancel_reminder", "Cancel a reminder.", {"text": "Words from the reminder"}),
     _fn("kanban_list", "Show the user's capstone task board (Obsidian Kanban): cards in To Do, Doing, Review, Blocked, Done. "
         "'What's next' = the first card under To Do."),
