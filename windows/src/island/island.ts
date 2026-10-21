@@ -13,6 +13,7 @@ import "./companion.css";
 import {
   EXPANDED_CORNER,
   EXPANDED_W,
+  railFor,
   MEDIA_HOVER_W,
   MEDIA_HOVER_H,
   NOTCH_W,
@@ -1194,7 +1195,7 @@ export class Island {
     );
     const layout = this.views.get(State.view)?.layout?.();
     const h = size.h;
-    const w = State.visibility === "expanded" && layout?.width ? layout.width : size.w;
+    const w = State.visibility === "expanded" && layout?.width ? layout.width + railFor(State.view) : size.w;
     const r =
       State.visibility === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER;
     const bodyHeight =
@@ -1273,7 +1274,8 @@ export class Island {
       // These follow the island as it resizes, so they belong here rather than in
       // the state-driven DOM sync.
       this.greetingCanvas.style.left = `${(w - EXPANDED_W) / 2}px`;
-      this.uploadCanvas.el.style.left = `${(w - EXPANDED_W) / 2}px`;
+      const rail = railFor(State.view);
+      this.uploadCanvas.el.style.left = `${rail + (w - rail - EXPANDED_W) / 2}px`;
     }
 
     let rect = this.islandRect();
@@ -1712,7 +1714,7 @@ export class Island {
     const layout = this.views.get(State.view)?.layout?.();
     if (State.visibility === "expanded" && layout) {
       p = {
-        cx: layout.botX,
+        cx: railFor(State.view) + layout.botX,
         cy: layout.botY ?? p.cy,
         diameter: layout.botDiameter,
         opacity: layout.botDiameter > 0 ? 1 : 0,
@@ -1884,6 +1886,7 @@ export class Island {
     this.contentEl.inert = !appExpanded || greetingActive;
     this.islandEl.dataset.visibility = State.visibility;
     this.islandEl.dataset.view = State.view;
+    this.islandEl.dataset.rail = String(railFor(State.view) > 0);
     this.islandEl.dataset.workingMode = String(State.settings.workingModeEnabled);
     this.islandEl.dataset.minimized = String(State.visibility === "peek");
     this.islandEl.dataset.mascot =

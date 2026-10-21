@@ -77,6 +77,11 @@ export const MEDIA_HOVER_H = 48;
 export const EXPANDED_W = 640;
 /** The big live-session panel while an agent works. */
 export const WIDE_W = 1000;
+/** Left rail holding the section tabs; the panel widens by it so views keep their size. */
+export const RAIL_W = 56;
+export function railFor(view: IslandViewName): number {
+  return view === "greeting" || view === "voice" ? 0 : RAIL_W;
+}
 
 export const ROUNDED_CORNER = 16;
 // Parallel lower corners: the 16px card radius plus its 10px shell inset.
@@ -138,7 +143,7 @@ export function islandSize(
     case "expanded": {
       if (view === "voice") return { w: 240, h: VIEW_LAYOUTS.voice.height };
       const h = view === "prompt" ? chatPromptHeight(chatCount) : VIEW_LAYOUTS[view].height;
-      return { w: EXPANDED_W, h };
+      return { w: EXPANDED_W + railFor(view), h };
     }
   }
 }
@@ -168,20 +173,20 @@ export function botPosition(
       const layout = VIEW_LAYOUTS[view];
       if (view === "uploading") {
         return {
-          cx: 36 + uploadProgress * 526,
+          cx: railFor(view) + 36 + uploadProgress * 526,
           cy: layout.botY ?? 103,
           diameter: layout.botDiameter,
           opacity: 1,
         };
       }
       if (layout.botY != null) {
-        return { cx: layout.botX, cy: layout.botY, diameter: layout.botDiameter, opacity: 1 };
+        return { cx: railFor(view) + layout.botX, cy: layout.botY, diameter: layout.botDiameter, opacity: 1 };
       }
       // Centre of the fixed 84 pt card (8 pt top inset + 34 pt header → content at y = 42)
       const headerBottom = 42;
       const cardH = 84;
       const cy = headerBottom + (islandH - headerBottom - cardH) / 2 + cardH / 2;
-      return { cx: layout.botX, cy, diameter: layout.botDiameter, opacity: 1 };
+      return { cx: railFor(view) + layout.botX, cy, diameter: layout.botDiameter, opacity: 1 };
     }
   }
 }

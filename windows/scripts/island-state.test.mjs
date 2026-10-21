@@ -686,7 +686,7 @@ test("Editor results resolve only matching missed approvals and retain their rev
 
 test("frontend bounds match each state and rapid transitions cancel stale native resizing", async () => {
   assert.deepEqual(islandSize("expanded", "overview", 0, false, false), {
-    w: 640,
+    w: 696,
     h: 160,
   });
   assert.deepEqual(islandSize("island", "overview", 0, false, false), {

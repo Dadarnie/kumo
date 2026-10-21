@@ -224,9 +224,11 @@ export function buildHeader(actions: ViewActions): ViewHost {
     actions.setView(v);
   }
 
+  const title = h("span", { class: "header-title" });
   const el = h(
     "div",
     { id: "header" },
+    title,
     h(
       "nav",
       { class: "tabs", "aria-label": "Island sections" },
@@ -265,6 +267,8 @@ export function buildHeader(actions: ViewActions): ViewHost {
         if (selected) item.button.setAttribute("aria-current", "page");
         else item.button.removeAttribute("aria-current");
       }
+      title.textContent = SECTIONS.find(item => item.id === sectionForView(v))?.label
+        ?? (v === "media" ? "Now playing" : v === "usage" ? "Limits" : v === "approvals" ? "Approvals" : "");
       gearBtn.classList.toggle("on", v === "settings");
       if (renderedSound !== State.settings.soundEnabled) {
         renderedSound = State.settings.soundEnabled;
