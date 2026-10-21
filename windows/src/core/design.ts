@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 /** Logical layout measures shared by the adaptive registry and media presenter. */
 export const MEDIA_CARD_HEIGHT = 168;
-export const MEDIA_VIEW_CARD_HEIGHT = 376;
-export const MEDIA_VIEW_COLLAPSED_HEIGHT = 212;
+export const MEDIA_VIEW_CARD_HEIGHT = 416;
+export const MEDIA_VIEW_COLLAPSED_HEIGHT = 252;
 export const MEDIA_EMPTY_CARD_HEIGHT = 308;
 export const MEDIA_EMPTY_COLLAPSED_HEIGHT = 172;
 export const ACTIVITY_CARD_HEIGHT = 124;

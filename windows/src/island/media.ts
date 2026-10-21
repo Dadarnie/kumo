@@ -102,6 +102,13 @@ export class IslandMedia {
     decoding: "async",
     draggable: "false",
   });
+  // Blurred copy of the artwork that fills the dedicated Music page.
+  private backdrop = h("img", {
+    class: "media-backdrop",
+    alt: "",
+    decoding: "async",
+    draggable: "false",
+  });
   private art = h(
     "div",
     { class: "media-artwork", "aria-hidden": "true" },
@@ -210,6 +217,7 @@ export class IslandMedia {
   readonly rowEl = h(
     "section",
     { class: "media-row", "aria-label": "Media", "aria-hidden": "true" },
+    this.backdrop,
     this.art,
     h(
       "div",
@@ -832,8 +840,10 @@ export class IslandMedia {
       if (art) {
         this.image.src = art;
         this.ambientImage.src = art;
+        this.backdrop.src = art;
       } else {
         this.image.removeAttribute("src");
+        this.backdrop.removeAttribute("src");
         this.ambientImage.removeAttribute("src");
       }
     }
