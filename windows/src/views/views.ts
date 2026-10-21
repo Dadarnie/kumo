@@ -134,7 +134,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const gearBtn = h(
     "button",
     { title: "Settings", onclick: () => actions.openSettingsWindow() },
-    mimoIcon(notchSettings, 18),
+    mimoIcon(notchSettings, 18), h("span", { text: "Settings" }),
   );
   const capacity = h("span", { class: "header-capacity", hidden: true });
   const limitsLabel = h("span", { text: "Limits" });
@@ -145,7 +145,8 @@ export function buildHeader(actions: ViewActions): ViewHost {
     "aria-label": "Limits", "data-section": "usage", title: "Limits", onclick: () => go("usage") },
     limitsProvider, limitsLabel, capacity);
   const mediaBtn = h("button", { class: "header-media", type: "button", title: "Now Playing",
-    "aria-label": "Now Playing", "data-home-media": "", onclick: () => go("media") }, mimoIcon(notchMedia, 18));
+    "aria-label": "Now Playing", "data-home-media": "", onclick: () => go("media") }, mimoIcon(notchMedia, 18),
+    h("span", { text: "Now playing" }));
   const account = new CompactDropdown("Limits account", "header-agent-select", id => {
     Sound.play("tick"); State.usageProvider = id as CodingProvider; State.notify();
   });
@@ -201,7 +202,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const soundBtn = h(
     "button",
     { title: "Mute", onclick: () => actions.toggleSound() },
-    mimoIcon(soundFilled, 18),
+    mimoIcon(soundFilled, 18), h("span", { text: "Sounds" }),
   );
   const approvalCount = h("span", { class: "approval-count", "aria-hidden": "true" });
   const approvalLabel = h("span", { text: "Approval" });
@@ -210,11 +211,27 @@ export function buildHeader(actions: ViewActions): ViewHost {
     approvalLabel, approvalCount);
   const minimizeBtn = h("button", { title: "Minimize", onclick: () => actions.collapse() },
     mimoIcon(collapseGlyph, 18));
-  // Raphael: mic on/off, and Stop while it is working.
+  // Raphael: mic on/off; while it works the same button stops it.
   const raphaelMic = h("button", { class: "header-raphael-mic", type: "button", hidden: true,
-    onclick: () => toggleRaphaelMute() }, icon(ICONS.microphone, 17));
-  const raphaelStop = h("button", { class: "header-raphael-stop", type: "button", hidden: true,
-    title: "Stop Raphael", "aria-label": "Stop Raphael", onclick: () => stopRaphael() }, icon(ICONS.xmark, 16));
+    onclick: () => { if (Raphael.busy) stopRaphael(); else toggleRaphaelMute(); } },
+    icon(ICONS.microphone, 17), h("span", { class: "raphael-stop-square", "aria-hidden": "true" }));
+  // Less-used controls live in one menu so the bar stays calm.
+  const menu = h("div", { class: "header-menu", role: "menu", hidden: true }, mediaBtn, gearBtn, soundBtn);
+  for (const item of [mediaBtn, gearBtn, soundBtn]) {
+    item.setAttribute("role", "menuitem");
+    item.addEventListener("click", () => { menu.hidden = true; });
+  }
+  const moreBtn = h("button", { class: "header-more-button", type: "button", title: "More", "aria-label": "More",
+    "aria-haspopup": "menu", onclick: () => { menu.hidden = !menu.hidden; moreBtn.setAttribute("aria-expanded", String(!menu.hidden)); } },
+    icon(ICONS.ellipsis, 18));
+  const more = h("div", { class: "header-more" }, moreBtn, menu);
+  const closeMenu = (event: Event) => {
+    if (!menu.hidden && !(event instanceof KeyboardEvent && event.key !== "Escape") && !more.contains(event.target as Node)) {
+      menu.hidden = true; moreBtn.setAttribute("aria-expanded", "false");
+    }
+  };
+  document.addEventListener("pointerdown", closeMenu);
+  document.addEventListener("keydown", closeMenu);
   let renderedSound: boolean | undefined;
   for (const button of [gearBtn, soundBtn, minimizeBtn])
     button.setAttribute("aria-label", button.title);
@@ -234,7 +251,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       { class: "tabs", "aria-label": "Island sections" },
       ...navigation.map((item) => item.button),
     ),
-    h("div", { class: "header-actions" }, account.el, limitsBtn, mediaBtn, raphaelStop, raphaelMic, gearBtn, soundBtn, minimizeBtn, approvalBtn),
+    h("div", { class: "header-actions" }, account.el, limitsBtn, raphaelMic, more, minimizeBtn, approvalBtn),
   );
 
   return {
@@ -271,19 +288,25 @@ export function buildHeader(actions: ViewActions): ViewHost {
         ?? (v === "media" ? "Now playing" : v === "usage" ? "Limits" : v === "approvals" ? "Approvals" : "");
       gearBtn.classList.toggle("on", v === "settings");
       raphaelMic.hidden = !State.settings.raphaelEnabled || !Raphael.ready;
-      raphaelMic.classList.toggle("is-muted", Raphael.muted);
-      raphaelMic.title = Raphael.muted ? "Raphael's mic is off · turn on" : "Raphael is listening · turn mic off";
+      raphaelMic.classList.toggle("is-muted", Raphael.muted && !Raphael.busy);
+      raphaelMic.classList.toggle("is-busy", Raphael.busy);
+      raphaelMic.title = Raphael.busy ? "Stop Raphael" : Raphael.muted ? "Raphael's mic is off · turn on" : "Raphael is listening · turn mic off";
       raphaelMic.setAttribute("aria-label", raphaelMic.title);
-      raphaelStop.hidden = raphaelMic.hidden || !Raphael.busy;
+      if (State.visibility !== "expanded") menu.hidden = true;
       if (renderedSound !== State.settings.soundEnabled) {
         renderedSound = State.settings.soundEnabled;
         clear(soundBtn);
-        soundBtn.append(mimoIcon(renderedSound ? soundFilled : soundOffFilled, 18));
+        soundBtn.append(mimoIcon(renderedSound ? soundFilled : soundOffFilled, 18),
+          h("span", { text: renderedSound ? "Sounds on" : "Sounds off" }));
         soundBtn.title = renderedSound ? "Mute" : "Unmute";
         soundBtn.setAttribute("aria-label", soundBtn.title);
       }
     },
-    destroy() { active = false; stopCapacity(); account.close(); },
+    destroy() {
+      active = false; stopCapacity(); account.close();
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeMenu);
+    },
   };
 }
 
