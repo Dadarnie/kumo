@@ -4,7 +4,7 @@
 
 Kumo forks Mimo 1.0.1 under a new name and identity.
 
-- New cloud spirit mascot, Night lantern theme, cloud app icon and synthesized
+- New cloud spirit mascot, Ember dusk theme, cloud app icon and synthesized
   lantern sound pack; Mimo's branding, artwork and recordings removed.
 - Quieter island: one thing at a time, status line with a progress ring, approvals
   answered in the pill, typing never interrupted; bigger peeking lip with a clock.

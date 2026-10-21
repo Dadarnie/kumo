@@ -276,8 +276,8 @@ html:root {
 }
 
 .tab.on {
-  background: var(--tab-on);
-  color: var(--ink);
+  background: var(--accent-gradient);
+  color: #fff;
 }
 
 .header-actions {

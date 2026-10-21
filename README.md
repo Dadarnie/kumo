@@ -28,7 +28,7 @@ only asks for your attention when something actually needs you.
 - **Local chat.** Talk to a local model through Ollama.
 - **Limits.** Claude usage at a glance.
 
-Kumo's look is "Night lantern": deep ink, warm cream and a soft amber glow. The
+Kumo's look is "Ember dusk": black surfaces with a plum, coral and peach gradient. The
 cloud mascot drifts while thinking, glows when work is done and rains when
 something fails. Its sounds are synthesized bell chimes.
 

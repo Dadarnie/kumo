@@ -8,20 +8,21 @@
   --code-string: color-mix(in srgb, var(--mini-amber) 55%, var(--ink));
   --code-function: color-mix(in srgb, var(--mini-amber) 35%, var(--ink));
   --code-type: color-mix(in srgb, var(--mini-mint) 55%, var(--ink));
-  /* Kumo · Night lantern: warm cream text on deep ink, lantern-amber accent. */
-  --ink: #f7eedf;
-  --ink-2: #e6d9c4;
-  --dim: #b3a48c;
-  --dim-2: #9a8b74;
+  /* Kumo · Ember dusk: black surfaces, plum → coral → peach gradient accent. */
+  --ink: #f4f1f2;
+  --ink-2: #dcd6d9;
+  --dim: #a39aa0;
+  --dim-2: #877e84;
   --dim-3: var(--dim-2);
   --dim-4: var(--dim-2);
   --dim-5: var(--dim-2);
-  --bg: #0d0b12;
-  --card: #16131d;
-  --card-flat: #131019;
-  --tab-on: #2a2230;
-  --hairline: rgba(255, 214, 150, 0.06);
-  --accent: #f2a84b;
+  --bg: #09090b;
+  --card: #141316;
+  --card-flat: #111013;
+  --tab-on: #2a1a24;
+  --hairline: rgba(255, 255, 255, 0.06);
+  --accent: #f67e7d;
+  --accent-gradient: linear-gradient(135deg, #843b62, #f67e7d 55%, #ffb997);
   /* Local Home identity colors sampled from the supplied video at 8 seconds. */
   --mini-work-blue: #2da4f9;
   --mini-mint: #4fb29e;
@@ -57,12 +58,12 @@
   --motion-enter: 180ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --surface-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.004), transparent 55%);
-  --terminal-fill: #100d16;
+  --terminal-fill: #0d0c0f;
   --terminal-glow: radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 65%);
-  /* Soft lantern glow under the notch. */
-  --shadow-shell: 0 10px 30px rgba(242, 168, 75, 0.12), 0 8px 24px rgba(0, 0, 0, 0.4);
+  /* Soft ember glow under the notch. */
+  --shadow-shell: 0 10px 30px rgba(246, 126, 125, 0.10), 0 8px 24px rgba(0, 0, 0, 0.4);
   --shell-fill: var(--bg);
-  --shell-border: rgba(242, 168, 75, 0.14);
+  --shell-border: rgba(246, 126, 125, 0.14);
   --shell-blur: 0px;
   --shell-saturation: 1;
   --shell-highlight: transparent;

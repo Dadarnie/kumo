@@ -6,24 +6,25 @@
 /* Settings shares the island's barely separated black card surfaces. */
 html:root {
   color-scheme: dark;
-  /* Kumo · Night lantern; matches design/tokens.css. */
-  --bg: #0d0b12;
-  --card: #16131d;
-  --card-flat: #131019;
-  --ink: #f7eedf;
-  --ink-2: #e6d9c4;
-  --dim: #b3a48c;
-  --dim-2: #9a8b74;
-  --accent: #f2a84b;
-  --accent-surface: #2a2230;
-  --hairline: rgba(255, 214, 150, .09);
-  --control-fill: #2a2230;
-  --control-hover: #362c3e;
-  --field-fill: #120f18;
-  --progress-rail: #3a3044;
-  --focus-border: #f2a84b;
-  --selection-fill: #4a3a2a;
-  --scroll-thumb: #4a3d52;
+  /* Kumo · Ember dusk; matches design/tokens.css. */
+  --bg: #09090b;
+  --card: #141316;
+  --card-flat: #111013;
+  --ink: #f4f1f2;
+  --ink-2: #dcd6d9;
+  --dim: #a39aa0;
+  --dim-2: #877e84;
+  --accent: #f67e7d;
+  --accent-gradient: linear-gradient(135deg, #843b62, #f67e7d 55%, #ffb997);
+  --accent-surface: #2a1a24;
+  --hairline: rgba(255, 255, 255, .08);
+  --control-fill: #1e1c20;
+  --control-hover: #2a272d;
+  --field-fill: #0f0e11;
+  --progress-rail: #2e2b31;
+  --focus-border: #f67e7d;
+  --selection-fill: #4a2a38;
+  --scroll-thumb: #3d3a40;
   background: var(--bg);
 }
 
@@ -44,7 +45,7 @@ body.settings-window {
 .settings-sidebar { padding: 10px 10px 16px; display: flex; flex-direction: column; gap: 4px; }
 .settings-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 38px; padding: 9px 11px; border-radius: 10px; font-size: 12px; color: var(--dim); background: transparent; text-align: left; }
 .settings-nav-item svg { flex: 0 0 auto; width: 16px; height: 16px; }
-.settings-nav-item.selected, .settings-nav-item.selected:hover { background: var(--accent-surface); color: var(--ink); }
+.settings-nav-item.selected, .settings-nav-item.selected:hover { background: var(--accent-gradient); color: #fff; }
 .settings-content { min-width: 0; overflow-y: auto; padding: 9px 20px 24px 10px; }
 .settings-page { display: flex; flex-direction: column; gap: 12px; }
 .settings-page[hidden], [hidden] { display: none !important; }
