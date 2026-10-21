@@ -140,7 +140,8 @@ WAKE_WORD_ENABLED = True  # True: say the wake phrase instead of holding the hot
 # Wake phrase, spotted by Whisper (CPU, every utterance is transcribed locally). You can say the command
 # in the same breath: "hey raphael, what time is it". Set to None to use the openWakeWord model below instead.
 WAKE_PHRASE = "hey raphael"
-ALWAYS_LISTEN = True        # True: every phrase it hears is a request, no "hey raphael" needed.
+ALWAYS_LISTEN = os.environ.get("RAPHAEL_ALWAYS_LISTEN", "1") != "0"  # Kumo sets this from its Settings.
+                            # True: every phrase it hears is a request, no "hey raphael" needed.
                             # Music or video playing on SPEAKERS can then be heard as requests: use headphones,
                             # or set False to require the wake phrase again.
 WAKE_FOLLOWUP_SECONDS = 20  # after a reply, keep listening this long without needing "hey raphael" (0 = always need it)
