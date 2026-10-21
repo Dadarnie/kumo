@@ -167,6 +167,7 @@ export const Bridge = {
       : call<void>("approval_decline", { requestId }),
   /** One command to Raphael: answer, text, mute or stop (see kumo_bridge.py). */
   raphaelSend: (msg: Record<string, unknown>) => call<void>("raphael_send", { msg }),
+  raphaelCheck: (dir: string) => call<boolean>("raphael_check", { dir }),
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */

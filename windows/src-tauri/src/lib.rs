@@ -127,6 +127,12 @@ fn boot(app: AppHandle, shared: State<Shared>) -> BootInfo {
     }
 }
 
+/// Whether a folder holds Raphael (chat.py and its .venv); for the Settings page.
+#[tauri::command]
+fn raphael_check(dir: String) -> bool {
+    raphael::valid_dir(std::path::Path::new(dir.trim()))
+}
+
 /// One command from the island to Raphael (answer, typed text, mute, stop).
 #[tauri::command]
 fn raphael_send(raphael: State<raphael::Raphael>, msg: serde_json::Value) -> Result<(), String> {
@@ -1099,6 +1105,7 @@ pub fn run() {
         .manage(claude_usage::UsageCache::default())
         .invoke_handler(tauri::generate_handler![
             raphael_send,
+            raphael_check,
             codex_usage,
             claude_usage,
             set_audio_meter_active,

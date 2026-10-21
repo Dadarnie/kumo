@@ -90,6 +90,45 @@ function preference(
   );
 }
 
+/** Raphael, the local voice assistant Kumo runs (see src-tauri/src/raphael.rs). */
+function raphaelSection(): HTMLElement {
+  const folder = h("input", { class: "model-input", type: "text", value: settings.raphaelDir,
+    placeholder: "C:\\Users\\you\\projects\\raphael", "aria-label": "Raphael folder", spellcheck: "false" }) as HTMLInputElement;
+  const folderStatus = h("p", { class: "hint", role: "status" });
+  const model = h("input", { class: "model-input", type: "text", value: settings.raphaelModel,
+    placeholder: "gemma4-e4b:latest", "aria-label": "Raphael model", spellcheck: "false" }) as HTMLInputElement;
+  const check = async () => {
+    const dir = folder.value.trim();
+    const ok = !!dir && await Bridge.raphaelCheck(dir);
+    folderStatus.textContent = !dir ? "Enter the folder that holds chat.py and its .venv."
+      : ok ? "Found Raphael." : "No chat.py and .venv in this folder.";
+    return ok;
+  };
+  const apply = h("button", { class: "btn secondary", type: "button", text: "Save", onclick: async () => {
+    apply.disabled = true;
+    try {
+      if (!await check()) return;
+      settings.raphaelDir = folder.value.trim();
+      settings.raphaelModel = model.value.trim();
+      await save();
+      folderStatus.textContent = settings.raphaelEnabled ? "Saved. Raphael restarts with these settings." : "Saved.";
+    } finally { apply.disabled = false; }
+  } });
+  void check();
+  return h("section", { class: "preferences" },
+    h("h2", { text: "Raphael" }),
+    preference("Run Raphael", () => settings.raphaelEnabled, value => { settings.raphaelEnabled = value; },
+      "Local voice assistant: talks, uses tools on this PC and remembers through your vault. Approvals appear in the island."),
+    preference("Always listening", () => settings.raphaelAlwaysListen, value => { settings.raphaelAlwaysListen = value; },
+      "Off: start each request with \u201chey raphael\u201d. On: speakers playing nearby can be heard as requests."),
+    h("label", { text: "Folder" }),
+    h("div", { class: "preference-row" }, folder),
+    h("label", { text: "Model (Ollama)" }),
+    h("div", { class: "preference-row" }, model, apply),
+    folderStatus,
+    h("p", { class: "hint", text: "Leave the model empty for Raphael's default. The microphone shortcut is under Hotkeys." }));
+}
+
 function modulesSection(): HTMLElement {
   return h(
     "section",
@@ -886,6 +925,12 @@ async function main() {
       label: "General",
       glyph: appearance,
       sections: [generalSection()],
+    },
+    {
+      id: "raphael",
+      label: "Raphael",
+      glyph: ICONS.microphone,
+      sections: [raphaelSection()],
     },
     {
       id: "media",

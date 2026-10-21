@@ -78,6 +78,12 @@ pub struct Settings {
     pub raphael_enabled: bool,
     #[serde(default)]
     pub raphael_dir: String,
+    /// Off: Raphael waits for "hey raphael".
+    #[serde(default = "enabled")]
+    pub raphael_always_listen: bool,
+    /// Ollama model id; empty = Raphael's own default.
+    #[serde(default)]
+    pub raphael_model: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -362,6 +368,8 @@ impl Default for Settings {
             modules: ModulePreferences::default(),
             raphael_enabled: false,
             raphael_dir: String::new(),
+            raphael_always_listen: true,
+            raphael_model: String::new(),
         }
     }
 }

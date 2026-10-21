@@ -31,8 +31,16 @@ const BACKOFF: [u64; 4] = [2, 5, 15, 30];
 #[derive(Default)]
 pub struct Raphael(Mutex<Option<Running>>);
 
-struct Running {
+/// Everything Raphael is started with; a change restarts it.
+#[derive(Clone, PartialEq)]
+struct Launch {
     dir: PathBuf,
+    always_listen: bool,
+    model: String,
+}
+
+struct Running {
+    launch: Launch,
     stdin: Arc<Mutex<Option<ChildStdin>>>,
     stop: Arc<AtomicBool>,
 }
@@ -89,30 +97,34 @@ fn command_line(msg: &Value) -> Option<String> {
 impl Raphael {
     /// Start, restart or stop Raphael to match the settings.
     pub fn sync(&self, app: &AppHandle, settings: &Settings) {
-        let want = settings.raphael_enabled.then(|| PathBuf::from(&settings.raphael_dir));
+        let want = settings.raphael_enabled.then(|| Launch {
+            dir: PathBuf::from(settings.raphael_dir.trim()),
+            always_listen: settings.raphael_always_listen,
+            model: settings.raphael_model.trim().to_string(),
+        });
         let mut slot = self.0.lock().unwrap();
-        if slot.as_ref().map(|r| &r.dir) == want.as_ref() {
+        if slot.as_ref().map(|r| &r.launch) == want.as_ref() {
             return;
         }
         if let Some(old) = slot.take() {
             old.stop.store(true, Ordering::SeqCst);
             old.stdin.lock().unwrap().take(); // EOF: Raphael saves its session and exits
         }
-        let Some(dir) = want else { return };
-        if !valid_dir(&dir) {
-            log::line(&format!("raphael: not started, no chat.py or .venv in {}", dir.display()));
+        let Some(launch) = want else { return };
+        if !valid_dir(&launch.dir) {
+            log::line(&format!("raphael: not started, no chat.py or .venv in {}", launch.dir.display()));
             let _ = app.emit("raphael", serde_json::json!({"t": "unavailable"}));
             return;
         }
         let running = Running {
-            dir: dir.clone(),
+            launch: launch.clone(),
             stdin: Arc::default(),
             stop: Arc::default(),
         };
         let (stdin, stop, app) = (running.stdin.clone(), running.stop.clone(), app.clone());
         std::thread::Builder::new()
             .name("raphael".into())
-            .spawn(move || supervise(app, dir, stdin, stop))
+            .spawn(move || supervise(app, launch, stdin, stop))
             .ok();
         *slot = Some(running);
     }
@@ -127,11 +139,12 @@ impl Raphael {
     }
 }
 
-fn supervise(app: AppHandle, dir: PathBuf, stdin: Arc<Mutex<Option<ChildStdin>>>, stop: Arc<AtomicBool>) {
+fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>>>, stop: Arc<AtomicBool>) {
+    let dir = &launch.dir;
     let mut failures = 0usize;
     while !stop.load(Ordering::SeqCst) {
         let started = Instant::now();
-        match spawn(&dir) {
+        match spawn(&launch) {
             Ok(mut child) => {
                 *stdin.lock().unwrap() = child.stdin.take();
                 *MIC_ENTRY.lock().unwrap() = Some(mic_user(&dir).to_string_lossy().replace('\\', "#"));
@@ -158,11 +171,16 @@ fn supervise(app: AppHandle, dir: PathBuf, stdin: Arc<Mutex<Option<ChildStdin>>>
     }
 }
 
-fn spawn(dir: &Path) -> std::io::Result<Child> {
+fn spawn(launch: &Launch) -> std::io::Result<Child> {
     let log = std::fs::File::create(crate::settings::local_dir().join("raphael.log"))?;
-    Command::new(python(dir))
+    let mut command = Command::new(python(&launch.dir));
+    if !launch.model.is_empty() {
+        command.env("RAPHAEL_MODEL", &launch.model);
+    }
+    command
         .args(["chat.py", "--kumo"])
-        .current_dir(dir)
+        .current_dir(&launch.dir)
+        .env("RAPHAEL_ALWAYS_LISTEN", if launch.always_listen { "1" } else { "0" })
         .env("PYTHONIOENCODING", "utf-8")
         .env("PYTHONUNBUFFERED", "1")
         .stdin(Stdio::piped())

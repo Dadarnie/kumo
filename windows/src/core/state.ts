@@ -199,6 +199,10 @@ export interface Settings {
   /** Run Raphael (local voice assistant) from raphaelDir as Kumo's assistant. */
   raphaelEnabled: boolean;
   raphaelDir: string;
+  /** Off: Raphael waits for "hey raphael". */
+  raphaelAlwaysListen: boolean;
+  /** Ollama model id; empty = Raphael's own default. */
+  raphaelModel: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -237,6 +241,8 @@ export const DEFAULT_SETTINGS: Settings = {
   modules: { ...DEFAULT_MODULES },
   raphaelEnabled: false,
   raphaelDir: "",
+  raphaelAlwaysListen: true,
+  raphaelModel: "",
 };
 
 /** Older settings keep their existing integration selection and gain module defaults. */
@@ -265,6 +271,8 @@ export function normalizeSettings(settings: Partial<Settings> = {}): Settings {
     grabEnabled: settings.grabEnabled !== false,
     raphaelEnabled: settings.raphaelEnabled === true,
     raphaelDir: typeof settings.raphaelDir === "string" ? settings.raphaelDir : "",
+    raphaelAlwaysListen: settings.raphaelAlwaysListen !== false,
+    raphaelModel: typeof settings.raphaelModel === "string" ? settings.raphaelModel : "",
     appearance: normalizeAppearance(settings.appearance),
     codingAssistant: isCodingProvider(settings.codingAssistant) ? settings.codingAssistant : "claude",
     codingHooksInstalled: Object.fromEntries(CODING_PROVIDERS.map(({ id }) =>
