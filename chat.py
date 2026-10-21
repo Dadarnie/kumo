@@ -196,6 +196,8 @@ def main():
             import kumo_bridge
             app = kumo_bridge.KumoApp()
             app.is_muted = voice.muted.is_set
+            app.on_news_refresh = news.refresh_now
+            news.on_new = lambda items: app._send(t="news_updated", count=len(items))
         else:
             import ui
             app = ui.App()

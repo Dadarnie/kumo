@@ -13,9 +13,10 @@ Raphael -> Kumo (stdout):
   {"t":"approve","id":n,"name":tool,"detail":text,"danger":bool,"timeout":s}
   {"t":"approve_close","id":n}                     timed out or stopped
   {"t":"notify","title":t,"v":text}                reminders
+  {"t":"news_updated","count":n}                   a news refresh finished (n new); Kumo re-reads data/news.json
 Kumo -> Raphael (stdin):
   {"t":"answer","id":n,"allow":bool}  {"t":"text","v":text}  {"t":"mute","v":bool}
-  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)
+  {"t":"news_refresh"}  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)
 """
 import itertools
 import json
@@ -42,6 +43,7 @@ class KumoApp:
         self.closed = threading.Event()
         self.on_text = lambda text: None
         self.on_toggle_mute = lambda: None
+        self.on_news_refresh = lambda: None
         self.is_muted = lambda: False
         self._last_level = 0.0
 
@@ -135,6 +137,8 @@ class KumoApp:
         elif t == "mute":
             if bool(msg.get("v")) != self.is_muted():
                 self.on_toggle_mute()
+        elif t == "news_refresh":
+            self.on_news_refresh()
         elif t == "stop":
             tools.cancel.set()
             for q in list(self.pending.values()):

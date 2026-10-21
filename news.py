@@ -216,20 +216,30 @@ def digest(per_section=6):
     return vault.save_news_digest(sections)
 
 
+_wake = threading.Event()
+
+
+def refresh_now():
+    """Ask the background refresher to run now (Kumo's Refresh button)."""
+    _wake.set()
+
+
 def start():
-    """Background refresher: first run a minute after start, then every NEWS_INTERVAL_HOURS."""
+    """Background refresher: first run a minute after start (sooner if asked), then every NEWS_INTERVAL_HOURS.
+    on_new(new_items) is called after every run, also with [], so Kumo knows a refresh finished."""
     def run():
-        time.sleep(60)
+        _wake.wait(60)
         while True:
+            _wake.clear()
+            new = []
             try:
                 new = refresh()
-                if new:
-                    on_new(new)
                 if config.NEWS_DIGEST:
                     digest()
             except Exception as e:  # never let the reader kill Raphael
                 print(f"(news refresh failed: {e})")
-            time.sleep(max(0.5, config.NEWS_INTERVAL_HOURS) * 3600)
+            on_new(new)
+            _wake.wait(max(0.5, config.NEWS_INTERVAL_HOURS) * 3600)
     threading.Thread(target=run, daemon=True, name="news").start()
 
 
