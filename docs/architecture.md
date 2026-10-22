@@ -40,6 +40,13 @@ task; its approvals use `raphael:<id>` request ids that the bridge answers throu
 `raphael_send`, never the coding-agent pipe. Its interpreter is excluded from the
 call pill. Both Raphael and Ollama chat use the local Ollama server.
 
+News is Raphael's (`news.py`). Kumo reads `data/news.json` from the configured
+Raphael folder (`raphael_news`), never a path from the page, and writes
+`data/news_settings.json` only from the Settings window after rebuilding every
+field from a checked list (`raphael_news_settings_save`). `news_refresh` asks
+Raphael to fetch now; `news_updated` reports the end of each refresh with the
+titles of new free finds.
+
 Chat providers are separate from coding connections. Windows media sessions and
 master/app audio have separate native owners. Unknown capability and activity
 readings remain explicit.

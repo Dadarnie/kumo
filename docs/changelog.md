@@ -16,6 +16,9 @@ Kumo forks Mimo 1.0.1 under a new name and identity.
 - Raphael, a local voice assistant, runs inside Kumo: status in the island,
   approvals in the island, reminders, Chat talks to it, Settings → Raphael. The
   cloud voice (OpenAI, Gemini, Grok, Groq) is removed.
+- News: Raphael reads coding, AI, security and free-offer feeds; Tools › News with
+  category chips, island notices for new free finds, a daily vault digest, and
+  sources and interval in Settings → Raphael.
 - Upgrades from Mimo: data, autostart and installed hooks move over on first launch.
 
 Entries below are Mimo's history.

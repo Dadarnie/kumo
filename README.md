@@ -23,8 +23,11 @@ only asks for your attention when something actually needs you.
   volume when expanded. Pick which app the island follows when several play.
 - **Calls.** When an app is using your microphone (Meet, Discord, Zoom, Teams), a
   call pill shows a timer and a mute button.
-- **Tools tab.** Pinned app launcher, Docker containers (start/stop/restart),
+- **Tools tab.** Pinned app launcher, news, Docker containers (start/stop/restart),
   loaded Ollama models, and quick notes to your Obsidian vault.
+- **News.** Raphael reads coding, AI, security and "what's free" feeds (free tiers,
+  credits, courses) every few hours. Tools › News sorts them by category, the island
+  mentions new free finds, and a daily digest lands in your vault.
 - **Raphael, a local voice assistant.** Kumo runs [Raphael](#raphael) for you: talk
   (or type in Chat) and it uses tools on your PC, remembers through your Obsidian
   vault and sets reminders. Its approvals appear in the island, and risky ones are
@@ -43,6 +46,15 @@ In Settings → Raphael, enter its folder (the one with `chat.py` and `.venv`) a
 turn on **Run Raphael**. Kumo starts it, restarts it if it crashes, and stops it
 when Kumo quits. **Always listening** off means each request starts with
 "hey raphael". Ctrl+Alt+V (Settings → Hotkeys) turns its microphone on and off.
+
+Raphael's default model is `gemma4-e4b-raphael`, Gemma with a 16k context (its
+prompt and tools don't fit Ollama's 4k default); see Raphael's README to create it.
+
+News uses feeds only (RSS, Atom, the Hacker News API): titles, links and short
+summaries, never whole pages. Edit the sources, refresh interval, digest and free
+notices in Settings → Raphael → News. They are saved in Raphael's
+`data/news_settings.json`, so changes apply without restarting it. Ask Raphael
+"what's new in AI?" or "any free dev tools today?" as well.
 
 ## Build
 
