@@ -438,7 +438,21 @@ fn relay_matches(src: &Path, dest: &Path) -> std::io::Result<bool> {
     }
 }
 
+/// Relays moved aside while they were running; gone once nothing runs them.
+fn remove_old_relays(dest: &Path) {
+    let (Some(dir), Some(stem)) = (dest.parent(), dest.file_stem().and_then(|s| s.to_str())) else {
+        return;
+    };
+    let prefix = format!("{stem}.old-");
+    for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+        if entry.file_name().to_str().is_some_and(|n| n.starts_with(&prefix) && n.ends_with(".exe")) {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
 fn install_relay(src: &Path, dest: &Path) -> bool {
+    remove_old_relays(dest);
     if relay_matches(src, dest).unwrap_or(false) {
         return true;
     }
@@ -460,7 +474,18 @@ fn install_relay(src: &Path, dest: &Path) -> bool {
         if !relay_matches(src, &staged)? {
             return Ok(false);
         }
-        std::fs::rename(&staged, dest)?;
+        std::fs::rename(&staged, dest).or_else(|err| {
+            if !dest.exists() {
+                return Err(err);
+            }
+            // Claude Code may be running the relay right now: Windows refuses to replace a
+            // running .exe but lets it be renamed, so move it aside and put the new one in place.
+            let aside = dest.with_extension(format!("old-{nonce}.exe"));
+            std::fs::rename(dest, &aside)?;
+            std::fs::rename(&staged, dest).inspect_err(|_| {
+                let _ = std::fs::rename(&aside, dest);
+            })
+        })?;
         relay_matches(src, dest)
     })();
     if created && staged.exists() {
@@ -478,6 +503,31 @@ fn install_relay(src: &Path, dest: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_running_relay_is_still_replaced() {
+        let dir = std::env::temp_dir().join(format!("kumo-relay-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let dest = dir.join("relay.exe");
+        let system = Path::new(r"C:\Windows\System32");
+        std::fs::copy(system.join("PING.EXE"), &dest).unwrap();
+        let mut running = std::process::Command::new(&dest)
+            .args(["-n", "20", "127.0.0.1"])
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        let new = system.join("where.exe");
+        assert!(std::fs::copy(&new, &dest).is_err(), "a running exe can't be overwritten");
+        assert!(install_relay(&new, &dest));
+        assert!(relay_matches(&new, &dest).unwrap());
+        let _ = running.kill();
+        let _ = running.wait();
+        install_relay(&new, &dest); // a later start removes the copy that was moved aside
+        let left: Vec<_> = std::fs::read_dir(&dir).unwrap().flatten().map(|e| e.file_name()).collect();
+        assert_eq!(left, vec![std::ffi::OsString::from("relay.exe")]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn relay_readiness_requires_current_bytes_and_a_successful_upgrade() {

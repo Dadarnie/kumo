@@ -182,7 +182,7 @@ impl Assistant {
         }
         let Some(launch) = want else { return };
         if !valid_dir(&launch.dir) {
-            log::line(&format!("assistant: not started, no chat.py or .venv in {}", launch.dir.display()));
+            log::line(format!("assistant: not started, no chat.py or .venv in {}", launch.dir.display()));
             let _ = app.emit("assistant", serde_json::json!({"t": "unavailable"}));
             return;
         }
@@ -217,7 +217,7 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
         match spawn(&launch) {
             Ok(mut child) => {
                 *stdin.lock().unwrap() = child.stdin.take();
-                *MIC_ENTRY.lock().unwrap() = Some(mic_user(&dir).to_string_lossy().replace('\\', "#"));
+                *MIC_ENTRY.lock().unwrap() = Some(mic_user(dir).to_string_lossy().replace('\\', "#"));
                 if let Some(out) = child.stdout.take() {
                     relay(&app, out);
                 }
@@ -225,10 +225,10 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
                 stdin.lock().unwrap().take();
                 let code = finish(&mut child);
                 *MIC_ENTRY.lock().unwrap() = None;
-                log::line(&format!("assistant: exited ({code:?})"));
+                log::line(format!("assistant: exited ({code:?})"));
                 let _ = app.emit("assistant", serde_json::json!({"t": "exit", "code": code}));
             }
-            Err(err) => log::line(&format!("assistant: could not start: {err}")),
+            Err(err) => log::line(format!("assistant: could not start: {err}")),
         }
         if stop.load(Ordering::SeqCst) {
             break;

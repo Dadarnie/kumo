@@ -364,7 +364,7 @@ pub fn recent_notes(vault_id: &str) -> Result<Vec<Note>, String> {
             Some(Note { path: format!("{INBOX_DIR}/{name}"), title, modified })
         })
         .collect();
-    notes.sort_by(|a, b| b.modified.cmp(&a.modified));
+    notes.sort_by_key(|n| std::cmp::Reverse(n.modified));
     notes.truncate(12);
     Ok(notes)
 }
@@ -418,6 +418,23 @@ mod tests {
         assert!(!container_id_ok("abc"));
         assert!(!container_id_ok("0123456789ab; rm"));
         assert!(docker_action("0123456789ab", "rm").is_err());
+    }
+
+    #[test]
+    fn the_vault_log_keeps_its_line_endings() {
+        let dir = std::env::temp_dir().join(format!("kumo-log-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (crlf, lf, new) = (dir.join("crlf.md"), dir.join("lf.md"), dir.join("new.md"));
+        std::fs::write(&crlf, "# Log\r\n- a").unwrap();
+        std::fs::write(&lf, "# Log\n").unwrap();
+        for p in [&crlf, &lf, &new] {
+            append_keeping_endings(p, "\n## [2026-10-22] create | inbox/x.md\n- note\n").unwrap();
+        }
+        assert_eq!(std::fs::read_to_string(&crlf).unwrap(),
+            "# Log\r\n- a\r\n\r\n## [2026-10-22] create | inbox/x.md\r\n- note\r\n");
+        assert_eq!(std::fs::read_to_string(&lf).unwrap(), "# Log\n\n## [2026-10-22] create | inbox/x.md\n- note\n");
+        assert!(std::fs::read_to_string(&new).unwrap().starts_with("\n## [2026-10-22]"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
