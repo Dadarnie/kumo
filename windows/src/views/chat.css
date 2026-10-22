@@ -352,3 +352,9 @@
 .chat-listening[hidden] { display: none; }
 .chat-level { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
 .chat-level i { width: 3px; height: 4px; border-radius: 2px; background: var(--accent); transition: height 90ms linear; }
+
+/* Assistant model picker sits above the input; send turns into stop while Kumo works. */
+.chat-assistant-models { justify-content: flex-end; }
+.chat-card .send-btn.is-stop { background: var(--control-hover); color: var(--ink); }
+.chat-card .send-btn.is-stop svg { display: none; }
+.chat-card .send-btn.is-stop::after { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }

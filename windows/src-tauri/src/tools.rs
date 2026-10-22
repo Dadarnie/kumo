@@ -189,6 +189,58 @@ pub async fn ollama_state() -> OllamaState {
     }
 }
 
+/// Installed chat models that can run the assistant: no embedding models and none of the
+/// assistant's own 16k-context copies (those are made by `assistant_variant`).
+pub async fn ollama_models() -> Vec<String> {
+    #[derive(Deserialize)]
+    struct Tags {
+        #[serde(default)]
+        models: Vec<OllamaModel>,
+    }
+    let Ok(response) = http().get(format!("{OLLAMA}/api/tags")).send().await else {
+        return vec![];
+    };
+    let mut names: Vec<String> = response
+        .json::<Tags>()
+        .await
+        .map(|tags| tags.models.into_iter().map(|m| m.name).collect())
+        .unwrap_or_default();
+    names.retain(|n| !n.contains("embed") && !is_variant(n));
+    names.sort();
+    names
+}
+
+fn is_variant(name: &str) -> bool {
+    let base = name.trim_end_matches(":latest");
+    base.ends_with("-kumo") || base.ends_with("-raphael")
+}
+
+/// `qwen3:8b` -> `qwen3-8b-kumo`; `gemma4-e4b:latest` -> `gemma4-e4b-kumo`.
+pub fn variant_name(base: &str) -> String {
+    format!("{}-kumo", base.trim_end_matches(":latest").replace([':', '/'], "-"))
+}
+
+/// The assistant runs a copy of `base` with a 16k context: its prompt and tool list are
+/// ~4,100 tokens, and Ollama's 4k default silently cuts the start. Made once, same weights.
+pub async fn assistant_variant(base: &str) -> Result<String, String> {
+    if !ollama_models().await.iter().any(|m| m == base) {
+        return Err("That model is not installed in Ollama".into());
+    }
+    let name = variant_name(base);
+    let installed = http().get(format!("{OLLAMA}/api/tags")).send().await
+        .map_err(|e| format!("Ollama: {e}"))?
+        .text().await.unwrap_or_default();
+    if !installed.contains(&format!("\"{name}:latest\"")) {
+        reqwest::Client::builder().timeout(Duration::from_secs(180)).build().unwrap_or_default()
+            .post(format!("{OLLAMA}/api/create"))
+            .json(&serde_json::json!({"model": name, "from": base, "parameters": {"num_ctx": 16384}, "stream": false}))
+            .send().await
+            .and_then(|r| r.error_for_status())
+            .map_err(|e| format!("Could not prepare {base}: {e}"))?;
+    }
+    Ok(name)
+}
+
 /// Unloads a loaded model (keep_alive 0). Only currently loaded names are accepted.
 pub async fn ollama_unload(name: &str) -> Result<(), String> {
     let loaded = ollama_state().await;
@@ -411,6 +463,14 @@ fn encode(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn assistant_copies_get_stable_names() {
+        assert_eq!(variant_name("gemma4-e4b:latest"), "gemma4-e4b-kumo");
+        assert_eq!(variant_name("qwen3:8b"), "qwen3-8b-kumo");
+        assert!(is_variant("gemma4-e4b-kumo:latest") && is_variant("gemma4-e4b-raphael:latest"));
+        assert!(!is_variant("gemma4-e4b:latest"));
+    }
 
     #[test]
     fn container_ids_and_actions_are_strict() {

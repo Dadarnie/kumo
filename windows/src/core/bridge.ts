@@ -172,6 +172,10 @@ export const Bridge = {
   assistantSend: (msg: Record<string, unknown>) => call<void>("assistant_send", { msg }),
   /** Kumo's saved headlines (data/news.json in its folder), newest first. */
   assistantNews: () => call<NewsItem[]>("assistant_news"),
+  /** Installed Ollama chat models the assistant can run. */
+  assistantModels: () => call<string[]>("assistant_models"),
+  /** Prepares the model's 16k copy, saves it as the assistant's model and restarts the assistant. */
+  assistantUseModel: (base: string) => callOrThrow<string>("assistant_use_model", { base }),
   assistantNewsSettings: () => call<NewsSettings | null>("assistant_news_settings"),
   saveAssistantNewsSettings: (value: NewsSettings) => callOrThrow<void>("assistant_news_settings_save", { value }),
 

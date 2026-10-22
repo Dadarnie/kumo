@@ -13,7 +13,8 @@ import { ChatPicker } from "./chat-picker";
 import "./chat.css";
 import { Activity } from "../core/activity";
 import { renderMarkdown } from "./markdown";
-import { Assistant } from "../island/assistant";
+import { Assistant, stopAssistant } from "../island/assistant";
+import { CompactDropdown } from "./device-picker";
 
 let nextId = 1;
 
@@ -77,6 +78,19 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   const listeningRow = h("div", { class: "chat-listening", role: "status", hidden: true }, bars,
     h("span", { text: "Listening… tap the mic to stop" }));
   const bar = h("div", { class: "chat-bar" }, mic, input, send);
+  // Which Ollama model the assistant runs; switching restarts it (about a minute).
+  let models: string[] = [];
+  let switching = "";
+  const modelPicker = new CompactDropdown("Assistant model", "chat-assistant-model", async base => {
+    switching = base;
+    State.chatError = "";
+    State.notify();
+    try { await Bridge.assistantUseModel(base); }
+    catch (e) { State.chatError = String(e).replace(/^Error:\s*/, ""); }
+    finally { switching = ""; State.notify(); }
+  });
+  const modelRow = h("div", { class: "chat-model-row chat-assistant-models" }, modelPicker.el);
+  const loadModels = async () => { models = (await Bridge.assistantModels().catch(() => null)) ?? []; State.notify(); };
   const suggestions = ["What's new in AI?", "Any free dev tools today?", "Remind me in 20 minutes to stretch"];
   const empty = h("div", { class: "chat-empty" },
     h("strong", { text: "Hi, I'm Kumo" }),
@@ -92,7 +106,7 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   const el = h(
     "div",
     { class: "view" },
-    h("div", { class: "card chat-card" }, h("div", { class: "chat-body" }, empty, log, chipRow, error, picker.el, listeningRow, bar, dropHint)),
+    h("div", { class: "card chat-card" }, h("div", { class: "chat-body" }, empty, log, chipRow, error, picker.el, modelRow, listeningRow, bar, dropHint)),
   );
 
   let sending = false;
@@ -203,7 +217,10 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
     }
   }
 
-  send.addEventListener("click", () => void submit());
+  send.addEventListener("click", () => {
+    if (State.settings.assistantEnabled && Assistant.busy && !input.value.trim()) { stopAssistant(); return; }
+    void submit();
+  });
   input.addEventListener("input", () => { State.chatDraft = input.value; });
   input.addEventListener("keydown", (e) => {
     if ((e as KeyboardEvent).key === "Enter") {
@@ -248,6 +265,20 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       mic.title = listening ? "Stop listening" : "Talk to Kumo";
       mic.setAttribute("aria-label", mic.title);
       listeningRow.hidden = !listening;
+      modelRow.hidden = !voiceAssistant;
+      if (voiceAssistant) {
+        if (!models.length) void loadModels();
+        const current = State.settings.assistantModel || "gemma4-e4b-kumo";
+        const variant = (name: string) => name.replace(/:latest$/, "").replace(/[:/]/g, "-") + "-kumo";
+        const selected = switching || models.find(m => variant(m) === current.replace(/:latest$/, "")) || null;
+        modelPicker.update(models.map(id => ({ id, name: id.replace(/:latest$/, ""), detail: switching === id ? "Preparing…" : undefined })),
+          selected, !switching && models.length > 0, "No Ollama models");
+      }
+      // While Kumo works and the box is empty, send becomes stop.
+      const stopping = voiceAssistant && Assistant.busy && !input.value.trim();
+      send.classList.toggle("is-stop", stopping);
+      send.title = stopping ? "Stop Kumo" : "Send";
+      send.setAttribute("aria-label", send.title);
       (empty.querySelector(".chat-empty-hint") as HTMLElement).textContent = starting
         ? "Starting Kumo's model… this takes a moment after Ollama starts."
         : voiceAssistant ? "Type, or tap the mic and talk. English or Tagalog." : "Ask anything.";
@@ -272,7 +303,7 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       send.title = "Ask " + assistant;
       send.setAttribute("aria-label", send.title);
       input.disabled = sending || picker.busy;
-      send.disabled = sending || picker.busy || !!loading;
+      send.disabled = (sending || picker.busy || !!loading) && !stopping;
     },
     focus() {
       input.focus({ preventScroll: true });

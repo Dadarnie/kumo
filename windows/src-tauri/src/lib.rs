@@ -468,6 +468,27 @@ async fn tools_ollama() -> tools::OllamaState {
 }
 
 #[tauri::command]
+async fn assistant_models() -> Vec<String> {
+    tools::ollama_models().await
+}
+
+/// Switches the assistant to an installed Ollama model (its 16k copy) and restarts it.
+#[tauri::command]
+async fn assistant_use_model(app: AppHandle, base: String) -> Result<String, String> {
+    let variant = tools::assistant_variant(&base).await?;
+    let updated = {
+        let shared = app.state::<Shared>();
+        let mut current = shared.settings.lock().unwrap();
+        current.assistant_model = variant.clone();
+        current.clone()
+    };
+    settings::save(&updated).map_err(|_| "Could not save the model choice".to_string())?;
+    app.state::<assistant::Assistant>().sync(&app, &updated);
+    let _ = app.emit("settings-changed", &updated);
+    Ok(variant)
+}
+
+#[tauri::command]
 async fn tools_ollama_unload(name: String) -> Result<(), String> {
     tools::ollama_unload(&name).await
 }
@@ -1158,6 +1179,8 @@ pub fn run() {
             tools_docker,
             tools_docker_action,
             tools_ollama,
+            assistant_models,
+            assistant_use_model,
             tools_ollama_unload,
             tools_vaults,
             tools_quick_note,
