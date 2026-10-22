@@ -80,8 +80,8 @@ fn groups(enumerator: &IMMDeviceEnumerator) -> windows::core::Result<Vec<Group>>
                         .next()
                         .unwrap_or(&path)
                         .to_ascii_lowercase();
-                    if source == "mimo.exe" {
-                        continue;
+                    if source == "kumo.exe" || source == "mimo.exe" {
+                        continue; // Kumo's own sounds are not an app to mix
                     }
                     if flow == eCapture {
                         capture.insert(path.to_ascii_lowercase(), source);
@@ -98,6 +98,12 @@ fn groups(enumerator: &IMMDeviceEnumerator) -> windows::core::Result<Vec<Group>>
                         .unwrap_or_else(|| {
                             (source.trim_end_matches(".exe").to_string(), "audio-only")
                         });
+                    // The voice assistant runs as a plain python.exe; name it.
+                    let name = if crate::assistant::is_own_mic_entry(&path.replace('\\', "#")) {
+                        "Kumo assistant".to_string()
+                    } else {
+                        name
+                    };
                     let group = grouped
                         .entry((output.clone(), path.to_ascii_lowercase()))
                         .or_insert_with(|| Group {
