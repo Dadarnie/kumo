@@ -26,6 +26,7 @@ type RaphaelEvent =
   | { t: "approve"; id: number; name: string; detail: string; danger: boolean; timeout: number }
   | { t: "approve_close"; id: number }
   | { t: "notify"; title: string; v: string }
+  | { t: "news_updated"; count: number; free?: string[] }
   | { t: "exit"; code: number | null };
 
 /** What the header's mic button and the voice shortcut need to know. */
@@ -104,16 +105,14 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
       closeApproval(island, RAPHAEL_PREFIX + event.id);
       break;
     case "notify":
-      State.appendStep(RAPHAEL_TASK, `⏰ ${event.v}`);
-      State.setPillBadge(RAPHAEL_TASK, "finished");
-      show("idle", event.v.slice(0, 80));
-      Sound.play("approval");
-      island.reveal();
-      window.clearTimeout(reminderTimer);
-      reminderTimer = window.setTimeout(() => {
-        if (task().pillBadge === "finished") { State.setPillBadge(RAPHAEL_TASK, null); show("idle", null); }
-      }, REMINDER_MS);
+      notice(island, `⏰ ${event.v}`, event.v, "approval");
       break;
+    case "news_updated": {
+      const free = (event.free ?? []).filter(title => typeof title === "string" && title.trim());
+      if (free.length) notice(island, `🆓 ${free.join(" · ")}`,
+        free.length === 1 ? `Free: ${free[0]}` : `${free.length} new free finds · ${free[0]}`, "tick");
+      break;
+    }
     case "exit":
     case "unavailable":
       Raphael.ready = Raphael.busy = false;
@@ -123,6 +122,19 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
       else show("error", event.t === "exit" ? "Restarting…" : "Not found: check its folder in Settings");
       break;
   }
+}
+
+/** A short message in the compact strip (reminders, free finds) that clears itself. */
+function notice(island: Island, step: string, status: string, sound: Parameters<typeof Sound.play>[0]) {
+  State.appendStep(RAPHAEL_TASK, step.slice(0, 120));
+  State.setPillBadge(RAPHAEL_TASK, "finished");
+  show("idle", status.slice(0, 80));
+  Sound.play(sound);
+  island.reveal();
+  window.clearTimeout(reminderTimer);
+  reminderTimer = window.setTimeout(() => {
+    if (task().pillBadge === "finished") { State.setPillBadge(RAPHAEL_TASK, null); show("idle", null); }
+  }, REMINDER_MS);
 }
 
 /** Raphael timed out or stopped: the card goes, nothing is sent back. */

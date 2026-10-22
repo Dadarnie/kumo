@@ -170,6 +170,8 @@ export const Bridge = {
   raphaelCheck: (dir: string) => call<boolean>("raphael_check", { dir }),
   /** Raphael's saved headlines (data/news.json in its folder), newest first. */
   raphaelNews: () => call<NewsItem[]>("raphael_news"),
+  raphaelNewsSettings: () => call<NewsSettings | null>("raphael_news_settings"),
+  saveRaphaelNewsSettings: (value: NewsSettings) => callOrThrow<void>("raphael_news_settings_save", { value }),
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */
@@ -270,6 +272,12 @@ export interface DragDropPayload {
 export async function onDragDrop(handler: (e: DragDropPayload) => void) {
   if (!IS_TAURI) return () => {};
   return listen<DragDropPayload>("mimo-file-drop", event => handler(event.payload));
+}
+
+/** Raphael's news settings (data/news_settings.json), edited in Settings › Raphael. */
+export interface NewsSettings {
+  interval_hours: number; digest: boolean; free_notice: boolean;
+  sources: { name: string; url: string; category: string }[];
 }
 
 /** One headline from Raphael's news reader (news.py). */

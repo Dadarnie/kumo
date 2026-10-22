@@ -199,3 +199,13 @@ code, .path { font: 400 11px/1.5 var(--mono); color: var(--dim); overflow-wrap: 
   button { transition: background-color 80ms linear, color 80ms linear; }
   .switch::after { transition: none; }
 }
+
+/* Settings › Raphael › News */
+.news-settings { display: flex; flex-direction: column; gap: 6px; }
+.news-sources { display: flex; flex-direction: column; }
+.news-source { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--hairline); }
+.news-source > .preference-copy { flex: 1; }
+.news-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+.news-select { min-height: 32px; padding: 4px 8px; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--field-fill); color: var(--ink); font: 400 12px var(--font); }
+.news-add { justify-content: flex-start; flex-wrap: wrap; gap: 6px; min-height: 0; }
+.news-add > .model-input { flex: 1 1 120px; }

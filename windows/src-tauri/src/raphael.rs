@@ -93,6 +93,57 @@ pub fn news(dir: &Path) -> Value {
     Value::Array(items.into_iter().take(300).collect())
 }
 
+const NEWS_CATEGORIES: [&str; 5] = ["coding", "ai", "free", "security", "release"];
+
+/// Raphael's news settings (`data/news_settings.json`, created by news.py), or null before its first run.
+pub fn news_settings(dir: &Path) -> Value {
+    std::fs::read(dir.join("data").join("news_settings.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .unwrap_or(Value::Null)
+}
+
+/// Checks settings from the page and rebuilds them field by field, so nothing else reaches the file.
+fn clean_news_settings(value: &Value) -> Result<Value, String> {
+    let interval = value["interval_hours"].as_f64().filter(|h| (0.5..=24.0).contains(h))
+        .ok_or("Choose a refresh interval between 30 minutes and 24 hours.")?;
+    let sources = value["sources"].as_array().ok_or("Sources are missing.")?;
+    if sources.len() > 50 {
+        return Err("Keep it to 50 sources or fewer.".into());
+    }
+    let mut clean = Vec::new();
+    for source in sources {
+        let name = source["name"].as_str().map(str::trim).unwrap_or_default();
+        let url = source["url"].as_str().map(str::trim).unwrap_or_default();
+        let category = source["category"].as_str().unwrap_or_default();
+        if name.is_empty() || name.len() > 60 {
+            return Err("Give each source a name up to 60 characters.".into());
+        }
+        if !(url.starts_with("https://") || url.starts_with("http://")) || url.len() > 500 || url.contains(char::is_whitespace) {
+            return Err(format!("{name}: the feed address must start with https://"));
+        }
+        if !NEWS_CATEGORIES.contains(&category) {
+            return Err(format!("{name}: pick a category."));
+        }
+        clean.push(serde_json::json!({"name": name, "url": url, "category": category}));
+    }
+    Ok(serde_json::json!({
+        "interval_hours": interval,
+        "digest": value["digest"].as_bool().unwrap_or(true),
+        "free_notice": value["free_notice"].as_bool().unwrap_or(true),
+        "sources": clean,
+    }))
+}
+
+pub fn save_news_settings(dir: &Path, value: &Value) -> Result<(), String> {
+    let clean = clean_news_settings(value)?;
+    let data = dir.join("data");
+    std::fs::create_dir_all(&data).map_err(|e| e.to_string())?;
+    let tmp = data.join("news_settings.json.tmp");
+    std::fs::write(&tmp, serde_json::to_vec_pretty(&clean).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, data.join("news_settings.json")).map_err(|e| e.to_string())
+}
+
 /// Only the commands kumo_bridge.py understands, with the fields it reads.
 fn command_line(msg: &Value) -> Option<String> {
     let ok = match msg.get("t")?.as_str()? {
@@ -249,6 +300,24 @@ mod tests {
         assert!(command_line(&json!({"t": "quit"})).is_none());
         assert!(command_line(&json!({"t": "eval", "v": "x"})).is_none());
         assert!(command_line(&json!("stop")).is_none());
+    }
+
+    #[test]
+    fn news_settings_are_rebuilt_from_checked_fields() {
+        let ok = json!({"interval_hours": 3.0, "digest": false, "evil": 1,
+            "sources": [{"name": " HN ", "url": "https://hn.dev/feed", "category": "coding", "x": 2}]});
+        let clean = clean_news_settings(&ok).unwrap();
+        assert_eq!(clean, json!({"interval_hours": 3.0, "digest": false, "free_notice": true,
+            "sources": [{"name": "HN", "url": "https://hn.dev/feed", "category": "coding"}]}));
+        for bad in [
+            json!({"interval_hours": 0.1, "sources": []}),
+            json!({"interval_hours": 3.0, "sources": [{"name": "A", "url": "file:///c:/x", "category": "ai"}]}),
+            json!({"interval_hours": 3.0, "sources": [{"name": "A", "url": "https://a.dev", "category": "weather"}]}),
+            json!({"interval_hours": 3.0, "sources": [{"name": "", "url": "https://a.dev", "category": "ai"}]}),
+            json!({"interval_hours": 3.0}),
+        ] {
+            assert!(clean_news_settings(&bad).is_err(), "{bad}");
+        }
     }
 
     #[test]

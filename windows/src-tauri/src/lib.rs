@@ -143,6 +143,31 @@ fn raphael_news(shared: State<Shared>) -> serde_json::Value {
     raphael::news(std::path::Path::new(&dir))
 }
 
+fn raphael_dir(shared: &Shared) -> Result<std::path::PathBuf, String> {
+    let dir = shared.settings.lock().unwrap().raphael_dir.trim().to_string();
+    let dir = std::path::PathBuf::from(dir);
+    if raphael::valid_dir(&dir) { Ok(dir) } else { Err("Set Raphael's folder first.".into()) }
+}
+
+#[tauri::command]
+fn raphael_news_settings(shared: State<Shared>) -> serde_json::Value {
+    raphael_dir(&shared).map(|dir| raphael::news_settings(&dir)).unwrap_or(serde_json::Value::Null)
+}
+
+/// Saves the News settings into Raphael's folder, then asks Raphael to refresh with them.
+#[tauri::command]
+fn raphael_news_settings_save(
+    window: tauri::WebviewWindow,
+    shared: State<Shared>,
+    raphael: State<raphael::Raphael>,
+    value: serde_json::Value,
+) -> Result<(), String> {
+    settings_only(&window)?;
+    raphael::save_news_settings(&raphael_dir(&shared)?, &value)?;
+    let _ = raphael.send(&serde_json::json!({"t": "news_refresh"}));
+    Ok(())
+}
+
 /// One command from the island to Raphael (answer, typed text, mute, stop).
 #[tauri::command]
 fn raphael_send(raphael: State<raphael::Raphael>, msg: serde_json::Value) -> Result<(), String> {
@@ -1117,6 +1142,8 @@ pub fn run() {
             raphael_send,
             raphael_check,
             raphael_news,
+            raphael_news_settings,
+            raphael_news_settings_save,
             codex_usage,
             claude_usage,
             set_audio_meter_active,
