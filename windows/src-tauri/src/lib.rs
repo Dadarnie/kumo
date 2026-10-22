@@ -483,13 +483,18 @@ fn tools_vaults() -> Vec<tools::Vault> {
 }
 
 #[tauri::command]
-fn tools_quick_note(vault: String, text: String) -> Result<(), String> {
+fn tools_quick_note(vault: String, text: String) -> Result<String, String> {
     tools::quick_note(&vault, &text)
 }
 
 #[tauri::command]
-fn tools_open_inbox(vault: String) -> Result<(), String> {
-    tools::open_inbox(&vault)
+fn tools_recent_notes(vault: String) -> Result<Vec<tools::Note>, String> {
+    tools::recent_notes(&vault)
+}
+
+#[tauri::command]
+fn tools_open_note(vault: String, path: String) -> Result<(), String> {
+    tools::open_note(&vault, &path)
 }
 
 #[tauri::command]
@@ -1162,7 +1167,8 @@ pub fn run() {
             tools_ollama_unload,
             tools_vaults,
             tools_quick_note,
-            tools_open_inbox,
+            tools_recent_notes,
+            tools_open_note,
             open_in_vscode,
             quit_app,
             hooks_status,

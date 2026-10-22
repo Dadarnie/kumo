@@ -12,6 +12,8 @@ export type IslandViewName =
   | "grab"
   | "media"
   | "integrations"
+  | "notes"
+  | "news"
   | "utilities"
   | "usage"
   | "activity"
@@ -78,6 +80,8 @@ export const EXPANDED_W = 640;
 export const WIDE_W = 1000;
 /** Left rail holding the section tabs; the panel widens by it so views keep their size. */
 export const RAIL_W = 56;
+/** Expanded panels are at least this tall while the rail shows, so all six tabs fit. */
+export const RAIL_MIN_H = 228;
 export function railFor(view: IslandViewName): number {
   return view === "greeting" ? 0 : RAIL_W;
 }
@@ -95,6 +99,8 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   grab: { height: 304, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   media: { height: 264, botX: EXPANDED_W - 56, botY: 98, botDiameter: 44, agentMode: "none" },
   integrations: { height: 176, botX: 68, botY: 96, botDiameter: 52, agentMode: "pills" },
+  notes: { height: 300, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
+  news: { height: 360, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   utilities: { height: 300, botX: 68, botY: 96, botDiameter: 58, agentMode: "none" },
   usage: { height: 238, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },
   activity: { height: 200, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" },

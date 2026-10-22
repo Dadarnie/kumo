@@ -77,6 +77,8 @@ export interface DockerState { readonly installed: boolean; readonly running: bo
 export interface OllamaModel { readonly name: string; readonly sizeVram: number; readonly size: number; }
 export interface OllamaState { readonly running: boolean; readonly models: readonly OllamaModel[]; }
 export interface ObsidianVault { readonly id: string; readonly name: string; }
+/** A note in the vault's inbox/ (title from its frontmatter). */
+export interface VaultNote { readonly path: string; readonly title: string; readonly modified: number; }
 
 export const Bridge = {
   grabRead: () => callOrThrow<import("./grab").GrabSnapshot>("grab_read"),
@@ -123,8 +125,10 @@ export const Bridge = {
   toolsOllama: () => call<OllamaState>("tools_ollama"),
   toolsOllamaUnload: (name: string) => call<void>("tools_ollama_unload", { name }),
   toolsVaults: () => call<ObsidianVault[]>("tools_vaults"),
-  toolsQuickNote: (vault: string, text: string) => call<void>("tools_quick_note", { vault, text }),
-  toolsOpenInbox: (vault: string) => call<void>("tools_open_inbox", { vault }),
+  /** Saves inbox/<slug>.md; resolves to that path. */
+  toolsQuickNote: (vault: string, text: string) => callOrThrow<string>("tools_quick_note", { vault, text }),
+  toolsRecentNotes: (vault: string) => call<VaultNote[]>("tools_recent_notes", { vault }),
+  toolsOpenNote: (vault: string, path: string) => callOrThrow<void>("tools_open_note", { vault, path }),
 
   /** "Open terminal" → opens the folder in VS Code when `code` is on PATH. */
   openInVSCode: (path: string | null) =>

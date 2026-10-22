@@ -407,7 +407,12 @@ export function handleHook(island: Island, payload: HookPayload) {
     case "Notification": {
       const message = payload.message ?? "";
       const lower = message.toLowerCase();
-      if (lower.includes("rate limit") || lower.includes("limite d")) {
+      if (payload.notification_type === "app_question") {
+        // The Claude desktop app shows this question itself; point at it, don't offer a second answer.
+        State.updateTask(agentId, "question");
+        State.appendStep(agentId, `Asks in the Claude app: ${message}`.slice(0, 120));
+        if (notify()) { Sound.play("approval"); island.reveal(); }
+      } else if (lower.includes("rate limit") || lower.includes("limite d")) {
         State.updateTask(agentId, "ratelimit");
         if(notify())Sound.play("rate");
       } else if (["idle_prompt","permission_prompt"].includes(payload.notification_type ?? "") || message.endsWith("?")) {

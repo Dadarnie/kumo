@@ -113,6 +113,8 @@ export function buildHeader(actions: ViewActions): ViewHost {
     prompt: icon(ICONS.bubble, 18),
     grab: icon(ICONS.shelf, 18),
     integrations: mimoIcon(integrationsFilled, 18),
+    notes: icon(ICONS.edit, 18),
+    news: icon(ICONS.globe, 18),
     utilities: icon(ICONS.bubble, 18),
     usage: mimoIcon(usageFilled, 18),
   };

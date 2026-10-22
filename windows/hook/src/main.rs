@@ -205,7 +205,38 @@ fn read_event() -> Option<(String, String)> {
     {
         return None;
     }
-    prepare_event(raw, std::env::args().skip(1))
+    let prepared = prepare_event(raw, std::env::args().skip(1))?;
+    // The Claude desktop app (an Agent SDK host) answers AskUserQuestion in its own UI.
+    if std::env::var_os("CLAUDE_AGENT_SDK_VERSION").is_some() {
+        return for_host_app(prepared);
+    }
+    Some(prepared)
+}
+
+/// In the Claude desktop app, an answer from Kumo never reaches the question: the app shows
+/// its own picker anyway, so it had to be answered twice. There, Kumo only points at the
+/// question (a Notification) and leaves the follow-up AskUserQuestion permission to the app.
+fn for_host_app((line, event): (String, String)) -> Option<(String, String)> {
+    let mut payload: serde_json::Value = serde_json::from_str(&line).ok()?;
+    if payload["mimo_provider"] != "claude" || payload["tool_name"] != "AskUserQuestion" {
+        return Some((line, event));
+    }
+    if event == "PermissionRequest" {
+        return None;
+    }
+    let Some(questions) = payload.get("mimo_questions").cloned() else {
+        return Some((line, event));
+    };
+    let asked = questions
+        .pointer("/0/question")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Claude is asking you a question.");
+    let map = payload.as_object_mut()?;
+    map.remove("mimo_questions");
+    map.insert("hook_event_name".into(), "Notification".into());
+    map.insert("notification_type".into(), "app_question".into());
+    map.insert("message".into(), asked.into());
+    Some((payload.to_string(), "Notification".into()))
 }
 
 /// Numeric token metadata only; whole model responses never enter the pipe.
@@ -689,6 +720,34 @@ fn talk_cancellable(
     }
     let answer = String::from_utf8_lossy(&buf).trim().to_string();
     (!answer.is_empty()).then_some(answer)
+}
+
+#[cfg(test)]
+mod host_app_tests {
+    use super::*;
+
+    #[test]
+    fn the_desktop_app_answers_its_own_questions() {
+        let ask = serde_json::json!({"hook_event_name":"PreToolUse","session_id":"s","tool_name":"AskUserQuestion",
+            "tool_input":{"questions":[{"question":"Which framework?","header":"Stack","multiSelect":false,
+            "options":[{"label":"React","description":"UI"},{"label":"Vue","description":"UI"}]}]}});
+        let prepared = prepare_event(ask.to_string().into_bytes(), [].into_iter()).unwrap();
+        assert!(prepared.0.contains("mimo_questions"));
+        let (line, event) = for_host_app(prepared).unwrap();
+        let out: serde_json::Value = serde_json::from_str(&line).unwrap();
+        assert_eq!(event, "Notification");
+        assert_eq!(out["notification_type"], "app_question");
+        assert_eq!(out["message"], "Which framework?");
+        assert!(out.get("mimo_questions").is_none());
+
+        let permission = serde_json::json!({"hook_event_name":"PermissionRequest","session_id":"s","tool_name":"AskUserQuestion","tool_input":{}});
+        let prepared = prepare_event(permission.to_string().into_bytes(), [].into_iter()).unwrap();
+        assert!(for_host_app(prepared).is_none());
+
+        let other = serde_json::json!({"hook_event_name":"PermissionRequest","session_id":"s","tool_name":"Bash","tool_input":{"command":"ls"}});
+        let prepared = prepare_event(other.to_string().into_bytes(), [].into_iter()).unwrap();
+        assert_eq!(for_host_app(prepared.clone()), Some(prepared));
+    }
 }
 
 #[cfg(test)]

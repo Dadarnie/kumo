@@ -23,6 +23,8 @@ export function ownsContent(view: IslandViewName): boolean {
     "choose",
     "confused",
     "integrations",
+    "notes",
+    "news",
     "usage",
     "greeting",
     "mail",
@@ -35,11 +37,13 @@ export function ownsContent(view: IslandViewName): boolean {
   ].includes(view);
 }
 
-export type IslandSection = "overview" | "prompt" | "media" | "grab" | "integrations" | "utilities" | "usage";
+export type IslandSection = "overview" | "prompt" | "media" | "grab" | "integrations" | "notes" | "news" | "utilities" | "usage";
 export const SECTIONS = [
   { id: "overview", label: "Home" },
   { id: "prompt", label: "Chat" },
   { id: "integrations", label: "Tools" },
+  { id: "notes", label: "Notes" },
+  { id: "news", label: "News" },
   { id: "grab", label: "Kumo Shelf" },
 ] as const;
 
@@ -60,6 +64,7 @@ export function sectionForView(view: IslandViewName): IslandSection | null {
   if (view === "settings" || view === "greeting") return null;
   return view === "media" ? "media" : view === "grab" ? "grab" : view === "usage" ? "usage"
     : view === "integrations" ? "integrations"
+    : view === "notes" ? "notes" : view === "news" ? "news"
     : view === "prompt" ? "prompt" : "overview";
 }
 

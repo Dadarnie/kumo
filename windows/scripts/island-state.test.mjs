@@ -56,7 +56,9 @@ test("sections respect parent modules, current integration choices, and existing
 });
 
 test("Home, Chat, and Mimo Shelf own their useful detail routes", () => {
-  assert.deepEqual(SECTIONS.map(s => s.id), ["overview", "prompt", "integrations", "grab"]);
+  assert.deepEqual(SECTIONS.map(s => s.id), ["overview", "prompt", "integrations", "notes", "news", "grab"]);
+  assert.equal(sectionForView("notes"), "notes");
+  assert.equal(sectionForView("news"), "news");
   assert.equal(sectionForView("grab"), "grab", "The shelf retains its own tab");
   assert.equal(sectionForView("usage"), "usage", "Limits owns the selected header control");
   assert.equal(sectionForView("media"), "media", "The media header icon owns its selected state");

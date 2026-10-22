@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Tools tab: pinned app launcher, Kumo's news, Docker containers, Ollama models
-// and an Obsidian quick note. Docker and Ollama are polled only while the tab shows.
+// Tools tab: pinned app launcher, Docker containers and Ollama models (Notes and News
+// have their own tabs). Docker and Ollama are polled only while the tab shows.
 import { h } from "./dom";
 import { ICONS, icon } from "./icons";
-import { Bridge, onEvent, type DockerState, type NewsItem, type ObsidianVault, type OllamaState, type StartApp } from "../core/bridge";
-import { State } from "../core/state";
+import { Bridge, type DockerState, type OllamaState, type StartApp } from "../core/bridge";
 
 const PINS_KEY = "mimo.tools.pins";
-const NEWS_KEY = "kumo.tools.news";
-const NEWS_ROWS = 6;
-const NEWS_CATEGORIES = [["", "All"], ["coding", "Coding"], ["ai", "AI"], ["free", "Free"], ["security", "Security"]] as const;
 const POLL_MS = 5000;
 /** Your dev and notes apps, matched by Start-menu name on first run. */
 const DEFAULT_PINS = ["VSCodium", "OpenCode", "Docker Desktop", "Ollama", "Terminal", "Git Bash",
@@ -27,10 +23,6 @@ function writePins(pins: string[]): void {
 
 const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(1) + " GB";
 
-function age(seconds: number): string {
-  const mins = Math.max(0, Math.round((Date.now() / 1000 - seconds) / 60));
-  return mins < 60 ? `${mins} min` : mins < 1440 ? `${Math.round(mins / 60)} h` : `${Math.round(mins / 1440)} d`;
-}
 
 export class ToolsPanel {
   private apps: StartApp[] = [];
@@ -44,19 +36,6 @@ export class ToolsPanel {
   private pickerList = h("div", { class: "tools-picker-list" });
   private docker = h("div", { class: "tools-card-body" });
   private ollama = h("div", { class: "tools-card-body" });
-  private note = h("input", { class: "tools-note", type: "text", placeholder: "Quick note to Obsidian…", maxlength: "2000" }) as HTMLInputElement;
-  private vault: ObsidianVault | null = null;
-  private obsidian = h("div", { class: "tools-card-body" });
-  private news: NewsItem[] = [];
-  private newsCategory = (() => { try { return localStorage.getItem(NEWS_KEY) ?? ""; } catch { return ""; } })();
-  private newsChips = h("div", { class: "tools-news-chips", role: "group", "aria-label": "News category" });
-  private newsList = h("div", { class: "tools-card-body tools-news" });
-  private newsRefresh = h("button", { class: "tools-link", type: "button", text: "Refresh" });
-  private newsCard = h("section", { class: "tools-card" },
-    h("div", { class: "tools-head" }, h("span", { class: "tools-title", text: "News" }), this.newsRefresh),
-    this.newsChips, this.newsList);
-  private refreshing: ReturnType<typeof setTimeout> | undefined;
-  private stopNews: (() => void) | undefined;
   private poll: ReturnType<typeof setTimeout> | undefined;
   private visible = false;
   private appsLoaded = false;
@@ -64,10 +43,8 @@ export class ToolsPanel {
     h("div", { class: "tools-head" }, h("span", { class: "tools-title", text: "Apps" }), this.editButton),
     this.grid,
     this.picker,
-    this.newsCard,
     h("section", { class: "tools-card" }, h("span", { class: "tools-title", text: "Docker" }), this.docker),
     h("section", { class: "tools-card" }, h("span", { class: "tools-title", text: "Ollama" }), this.ollama),
-    h("section", { class: "tools-card" }, h("span", { class: "tools-title", text: "Obsidian" }), this.obsidian),
   );
 
   constructor(private resized: () => void) {
@@ -80,36 +57,6 @@ export class ToolsPanel {
       this.resized();
     });
     this.search.addEventListener("input", () => { this.filter = this.search.value.toLowerCase(); this.renderPicker(); });
-    this.note.addEventListener("keydown", event => {
-      if (event.key !== "Enter" || !this.vault || !this.note.value.trim()) return;
-      const text = this.note.value;
-      this.note.disabled = true;
-      void Bridge.toolsQuickNote(this.vault.id, text).then(() => {
-        this.note.value = "";
-        this.note.placeholder = "Saved to Kumo Inbox ✓";
-      }).catch(() => { this.note.placeholder = "Could not save the note"; })
-        .finally(() => { this.note.disabled = false; });
-    });
-    for (const [id, label] of NEWS_CATEGORIES)
-      this.newsChips.append(h("button", { class: "tools-pick", type: "button", text: label, "data-category": id,
-        onclick: () => {
-          this.newsCategory = id;
-          try { localStorage.setItem(NEWS_KEY, id); } catch { /* storage may be unavailable */ }
-          this.renderNews();
-        } }));
-    this.newsRefresh.addEventListener("click", () => {
-      void Bridge.assistantSend({ t: "news_refresh" });
-      this.newsRefresh.textContent = "Refreshing…";
-      clearTimeout(this.refreshing);
-      this.refreshing = setTimeout(() => { this.newsRefresh.textContent = "Refresh"; }, 180_000);
-    });
-    void onEvent<{ t: string }>("assistant", event => {
-      if (event.t !== "news_updated") return;
-      clearTimeout(this.refreshing);
-      this.newsRefresh.textContent = "Refresh";
-      if (this.visible) void this.loadNews();
-    }).then(stop => { this.stopNews = stop; });
-    void Bridge.toolsVaults().then(vaults => { this.vault = vaults?.[0] ?? null; this.renderObsidian(); }).catch(() => this.renderObsidian());
   }
 
   private async loadApps(refresh: boolean): Promise<void> {
@@ -184,34 +131,6 @@ export class ToolsPanel {
         onclick: () => { void Bridge.toolsOllamaUnload(model.name).catch(() => {}).finally(() => void this.refresh()); } }))));
   }
 
-  private renderObsidian(): void {
-    if (!this.vault) { this.obsidian.replaceChildren(h("span", { class: "tools-dim", text: "No Obsidian vault found." })); return; }
-    const vault = this.vault;
-    this.obsidian.replaceChildren(this.note,
-      h("button", { class: "tools-action", type: "button", text: "Open inbox", title: `${vault.name} › Kumo Inbox`,
-        onclick: () => { void Bridge.toolsOpenInbox(vault.id).catch(() => {}); } }));
-  }
-
-  private async loadNews(): Promise<void> {
-    this.news = (await Bridge.assistantNews().catch(() => null)) ?? [];
-    this.renderNews();
-  }
-
-  private renderNews(): void {
-    const on = State.settings.assistantEnabled;
-    this.newsCard.hidden = !on && this.news.length === 0;
-    this.newsRefresh.hidden = !on;
-    for (const chip of this.newsChips.children)
-      chip.setAttribute("aria-pressed", String((chip as HTMLElement).dataset.category === this.newsCategory));
-    const items = this.news.filter(item => !this.newsCategory || item.categories.includes(this.newsCategory)).slice(0, NEWS_ROWS);
-    this.newsList.replaceChildren(...(items.length ? items.map(item =>
-      h("button", { class: "tools-news-row", type: "button", title: `${item.title}\n${item.link}`,
-        onclick: () => void Bridge.openUrl(item.link) },
-        h("span", { class: "tools-row-name", text: item.title }),
-        h("span", { class: "tools-dim", text: `${item.source} · ${age(item.published)}` })))
-      : [h("span", { class: "tools-dim", text: this.news.length ? "Nothing in this category yet." : "No headlines yet. Kumo fetches them a minute after it starts." })]));
-    this.resized();
-  }
 
   private async refresh(): Promise<void> {
     clearTimeout(this.poll);
@@ -232,8 +151,8 @@ export class ToolsPanel {
     clearTimeout(this.poll);
     // The Start-menu list costs a PowerShell run: load it the first time the tab opens.
     if (visible && !this.appsLoaded) { this.appsLoaded = true; void this.loadApps(false); }
-    if (visible) { void this.refresh(); void this.loadNews(); }
+    if (visible) void this.refresh();
   }
 
-  destroy(): void { this.visible = false; clearTimeout(this.poll); clearTimeout(this.refreshing); this.stopNews?.(); }
+  destroy(): void { this.visible = false; clearTimeout(this.poll); }
 }

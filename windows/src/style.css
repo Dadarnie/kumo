@@ -2266,3 +2266,13 @@ input[type="range"]::-webkit-slider-thumb {
 .tools-news-row:hover { background: var(--tab-on); color: var(--ink); }
 .tools-news-row:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
 .tools-card[hidden] { display: none; }
+/* Notes and News tabs (views/notes-news.ts) share the Tools card look. */
+.notes-view, .news-view { overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 8px; padding: 2px 0 8px; }
+.notes-input { width: 100%; resize: none; padding: 8px 10px; border: 1px solid var(--hairline); border-radius: var(--radius-control);
+  background: var(--card-flat); color: var(--ink); font: 400 12px/1.5 var(--font-compact); }
+.notes-input:focus { outline: none; border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.notes-actions { display: flex; justify-content: flex-end; }
+.notes-view .tools-head > .tools-dim, .news-view .tools-head > .tools-dim { margin-left: auto; margin-right: 8px; }
+.news-row { align-items: flex-start; padding-top: 6px; padding-bottom: 6px; }
+.news-row-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.news-row-summary { color: var(--dim); font: 400 11px/1.4 var(--font-compact); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

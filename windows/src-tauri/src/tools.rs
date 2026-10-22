@@ -213,9 +213,11 @@ pub struct Vault {
     pub name: String,
 }
 
-const INBOX: &str = "Kumo Inbox.md";
-/// Notes written before the Kumo rebrand; renamed on first use so nothing is split.
-const LEGACY_INBOX: &str = "Mimo Inbox.md";
+/// Captures go to the vault's inbox/ staging folder, one note each, like the assistant's
+/// "note this" (the vault's SCHEMA.md / AGENTS.md: frontmatter, and one line in log.md).
+const INBOX_DIR: &str = "inbox";
+/// Folders Kumo may open notes from.
+const OPENABLE: [&str; 2] = ["inbox/", "kumo/news/"];
 
 fn vault_paths() -> Vec<(String, std::path::PathBuf)> {
     let Ok(appdata) = std::env::var("APPDATA") else {
@@ -254,33 +256,144 @@ pub fn vaults() -> Vec<Vault> {
         .collect()
 }
 
-/// Appends `- HH:MM text` to the vault's Mimo Inbox note.
-pub fn quick_note(vault_id: &str, text: &str) -> Result<(), String> {
+fn vault_path(vault_id: &str) -> Result<std::path::PathBuf, String> {
+    vault_paths()
+        .into_iter()
+        .find(|(id, _)| id == vault_id)
+        .map(|(_, path)| path)
+        .ok_or_else(|| "That vault is not available".into())
+}
+
+/// `My idea: X!` -> `my-idea-x` (same rule as the assistant's vault.py).
+fn slug(text: &str) -> String {
+    let mut out = String::new();
+    for c in text.to_lowercase().chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c);
+        } else if !out.ends_with('-') {
+            out.push('-');
+        }
+    }
+    let out: String = out.trim_matches('-').chars().take(60).collect();
+    let out = out.trim_end_matches('-').to_string();
+    if out.is_empty() { "note".into() } else { out }
+}
+
+/// Appends text keeping the file's own line endings (Obsidian vaults in git care).
+fn append_keeping_endings(path: &std::path::Path, text: &str) -> std::io::Result<()> {
+    let old = std::fs::read_to_string(path).unwrap_or_default();
+    let crlf = old.contains("\r\n");
+    let mut joined = old.clone();
+    if !joined.is_empty() && !joined.ends_with('\n') {
+        joined.push('\n');
+    }
+    joined.push_str(text);
+    let joined = joined.replace("\r\n", "\n");
+    std::fs::write(path, if crlf { joined.replace('\n', "\r\n") } else { joined })
+}
+
+/// Saves a note to inbox/<slug>.md with frontmatter and logs it. Returns its vault path.
+pub fn quick_note(vault_id: &str, text: &str) -> Result<String, String> {
     let text: String = text
         .chars()
-        .filter(|c| !c.is_control())
-        .take(2000)
+        .filter(|c| !c.is_control() || *c == '\n')
+        .take(4000)
         .collect();
     let text = text.trim();
     if text.is_empty() {
         return Err("The note is empty".into());
     }
-    let (_, path) = vault_paths()
-        .into_iter()
-        .find(|(id, _)| id == vault_id)
-        .ok_or("That vault is not available")?;
-    if !path.join(INBOX).exists() && path.join(LEGACY_INBOX).exists() {
-        let _ = std::fs::rename(path.join(LEGACY_INBOX), path.join(INBOX));
+    let root = vault_path(vault_id)?;
+    let inbox = root.join(INBOX_DIR);
+    std::fs::create_dir_all(&inbox).map_err(|error| format!("Could not write the note: {error}"))?;
+    let first = text.lines().next().unwrap_or(text).trim();
+    let title: String = first.chars().take(60).collect();
+    let base = slug(&title);
+    let mut n = 1;
+    let file = loop {
+        let name = if n == 1 { format!("{base}.md") } else { format!("{base}-{n}.md") };
+        if !inbox.join(&name).exists() {
+            break name;
+        }
+        n += 1;
+    };
+    let t = windows::local_time();
+    let today = format!("{:04}-{:02}-{:02}", t.year, t.month, t.day);
+    let quoted = serde_json::to_string(&title).unwrap_or_else(|_| "\"Note\"".into());
+    std::fs::write(
+        inbox.join(&file),
+        format!("---\ntitle: {quoted}\ncreated: {today}\nupdated: {today}\nsource: kumo (quick note)\n---\n\n# {title}\n\n{text}\n"),
+    )
+    .map_err(|error| format!("Could not write the note: {error}"))?;
+    let rel = format!("{INBOX_DIR}/{file}");
+    let _ = append_keeping_endings(
+        &root.join("log.md"),
+        &format!("\n## [{today}] create | {rel}\n- Captured in Kumo; unfiled (inbox).\n"),
+    );
+    Ok(rel)
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Note {
+    pub path: String,
+    pub title: String,
+    pub modified: u64,
+}
+
+/// The newest notes in inbox/, with their frontmatter titles.
+pub fn recent_notes(vault_id: &str) -> Result<Vec<Note>, String> {
+    let inbox = vault_path(vault_id)?.join(INBOX_DIR);
+    let Ok(entries) = std::fs::read_dir(&inbox) else {
+        return Ok(vec![]);
+    };
+    let mut notes: Vec<Note> = entries
+        .flatten()
+        .filter(|e| e.path().extension().is_some_and(|x| x == "md"))
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().into_owned();
+            let modified = e.metadata().ok()?.modified().ok()?
+                .duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
+            let head: String = std::fs::read_to_string(e.path()).ok()?.chars().take(600).collect();
+            let title = head
+                .lines()
+                .find_map(|l| l.strip_prefix("title:"))
+                .map(|t| t.trim().trim_matches('"').to_string())
+                .filter(|t| !t.is_empty())
+                .unwrap_or_else(|| name.trim_end_matches(".md").to_string());
+            Some(Note { path: format!("{INBOX_DIR}/{name}"), title, modified })
+        })
+        .collect();
+    notes.sort_by(|a, b| b.modified.cmp(&a.modified));
+    notes.truncate(12);
+    Ok(notes)
+}
+
+/// Only notes Kumo wrote or lists: inbox/<file>.md and kumo/news/<file>.md.
+fn openable(rel: &str) -> bool {
+    OPENABLE.iter().any(|dir| {
+        rel.strip_prefix(dir).is_some_and(|name| {
+            name.ends_with(".md") && !name.contains(['/', '\\']) && !name.contains("..") && name.len() > 3
+        })
+    })
+}
+
+/// Opens one of those notes in Obsidian.
+pub fn open_note(vault_id: &str, rel: &str) -> Result<(), String> {
+    if !openable(rel) {
+        return Err("Kumo only opens notes from inbox/ and kumo/news/".into());
     }
-    let time = windows::local_time();
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path.join(INBOX))
-        .map_err(|error| format!("Could not write the note: {error}"))?;
-    writeln!(file, "- {:02}:{:02} {text}", time.hour, time.minute)
-        .map_err(|error| format!("Could not write the note: {error}"))
+    let root = vault_path(vault_id)?;
+    if !root.join(rel).is_file() {
+        return Err("That note is gone".into());
+    }
+    let name = root.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    windows::open_url(&format!(
+        "obsidian://open?vault={}&file={}",
+        encode(&name),
+        encode(rel.trim_end_matches(".md"))
+    ));
+    Ok(())
 }
 
 fn encode(value: &str) -> String {
@@ -295,20 +408,6 @@ fn encode(value: &str) -> String {
         .collect()
 }
 
-/// Opens the vault's Mimo Inbox in Obsidian.
-pub fn open_inbox(vault_id: &str) -> Result<(), String> {
-    let vault = vaults()
-        .into_iter()
-        .find(|vault| vault.id == vault_id)
-        .ok_or("That vault is not available")?;
-    windows::open_url(&format!(
-        "obsidian://open?vault={}&file={}",
-        encode(&vault.name),
-        encode(INBOX.trim_end_matches(".md"))
-    ));
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -319,6 +418,17 @@ mod tests {
         assert!(!container_id_ok("abc"));
         assert!(!container_id_ok("0123456789ab; rm"));
         assert!(docker_action("0123456789ab", "rm").is_err());
+    }
+
+    #[test]
+    fn notes_get_safe_names_and_only_known_folders_open() {
+        assert_eq!(slug("My idea: X!"), "my-idea-x");
+        assert_eq!(slug("!!!"), "note");
+        assert!(slug(&"a".repeat(80)).len() <= 60);
+        assert!(openable("inbox/my-idea.md") && openable("kumo/news/2026-10-22.md"));
+        for bad in ["inbox/../private/x.md", "private/x.md", "inbox/sub/x.md", "inbox/x.txt", "kumo/memory.md", "inbox/.md"] {
+            assert!(!openable(bad), "{bad}");
+        }
     }
 
     #[test]

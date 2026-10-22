@@ -2,6 +2,7 @@
 // The island: DOM shell, sizing animation, Mimo placement, mouse handling.
 // Mirrors IslandRootView.swift + IslandWindowController.swift.
 
+import { buildNotesPage, buildNewsPage } from "../views/notes-news";
 import { CallPill } from "./call-pill";
 import { Tracked, Spring, clamp } from "../core/anim";
 import { Lifetime } from "../core/lifetime";
@@ -14,6 +15,7 @@ import {
   EXPANDED_CORNER,
   EXPANDED_W,
   railFor,
+  RAIL_MIN_H,
   MEDIA_HOVER_W,
   MEDIA_HOVER_H,
   NOTCH_W,
@@ -453,6 +455,8 @@ export class Island {
       buildHome(actions, this.overview),
     );
     this.views.set("integrations", this.overview.toolsView());
+    this.views.set("notes", buildNotesPage());
+    this.views.set("news", buildNewsPage());
     this.views.set("media", buildMediaPage(this.media));
 
     this.views.set("usage", buildUsage(actions));
@@ -596,7 +600,7 @@ export class Island {
           this.greeting.interrupt();
           // Minimizing from any page shows the same notch: pages go back to Home.
           // Pending decisions and a live voice chat keep their view.
-          if (["greeting", "settings", "prompt", "grab", "integrations", "usage", "media"].includes(State.view))
+          if (["greeting", "settings", "prompt", "grab", "integrations", "notes", "news", "usage", "media"].includes(State.view))
             State.view = State.defaultView();
           this.engine.resetMorph();
           UploadSeq.deactivate();
@@ -1114,8 +1118,9 @@ export class Island {
     const w = State.visibility === "expanded" && layout?.width ? layout.width + railFor(State.view) : size.w;
     const r =
       State.visibility === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER;
-    const bodyHeight =
-      State.visibility === "expanded" ? (layout?.height ?? h) : h;
+    // While the rail shows, the panel is tall enough for all its tabs.
+    const bodyHeight = State.visibility === "expanded"
+      ? Math.max(layout?.height ?? h, railFor(State.view) ? RAIL_MIN_H : 0) : h;
     const reserve = this.views.get(State.view)?.layout
       ? 0
       : this.media.heightFor(State.visibility, State.view);
