@@ -1,4 +1,4 @@
-"""Obsidian vault as Raphael's long-term memory. Follows the vault's SCHEMA.md / AGENTS.md:
+"""Obsidian vault as Kumo's long-term memory. Follows the vault's SCHEMA.md / AGENTS.md:
 never touches private/, logs every write in log.md, new captures go to inbox/ with frontmatter."""
 import datetime
 import re
@@ -7,7 +7,7 @@ from pathlib import Path
 import config
 
 MEMORY_HEADER = """---
-title: Raphael Memory
+title: Kumo Memory
 created: {today}
 updated: {today}
 type: summary
@@ -15,10 +15,10 @@ area: projects
 tags: [reference]
 ---
 
-# Raphael Memory
+# Kumo Memory
 
-Facts and lessons Raphael has learned from talking with you. Loaded into every Raphael session.
-Edit or delete lines freely. Raphael's own file: not listed in index.md (like the Kanban board).
+Facts and lessons Kumo has learned from talking with you. Loaded into every Kumo session.
+Edit or delete lines freely. Kumo's own file: not listed in index.md (like the Kanban board).
 
 ## Facts
 """
@@ -39,7 +39,7 @@ def _vault_path(rel):
     if not p.is_relative_to(root):
         raise PermissionError(f"'{rel}' is outside the Obsidian vault.")
     if p != root and p.relative_to(root).parts[0].lower() in config.VAULT_BLOCKED:
-        raise PermissionError(f"'{rel}' is in a blocked folder ({', '.join(config.VAULT_BLOCKED)}); Raphael never opens it.")
+        raise PermissionError(f"'{rel}' is in a blocked folder ({', '.join(config.VAULT_BLOCKED)}); Kumo never opens it.")
     return p
 
 
@@ -90,14 +90,14 @@ def remember(fact):
     if not f.exists():
         f.parent.mkdir(parents=True, exist_ok=True)
         _write(f, MEMORY_HEADER.format(today=_today()))
-        _log("create", config.MEMORY_NOTE, "Raphael memory file created.")
+        _log("create", config.MEMORY_NOTE, "Kumo memory file created.")
     text = f.read_text(encoding="utf-8")
     if any(fact.lower() in l.lower() for l in _facts(text)):
         return f"Already remembered: {fact}"
     text = re.sub(r"^updated: .*$", f"updated: {_today()}", text, count=1, flags=re.M)
     text = text.rstrip("\n") + f"\n- {fact} ({_today()})\n"
     _write(f, text)
-    _log("update", "Raphael memory", f"remembered: {fact}")
+    _log("update", "Kumo memory", f"remembered: {fact}")
     size = sum(len(l) for l in _facts(text))
     warn = f" Memory is {size} characters (only the first {config.MEMORY_MAX_CHARS} load each session)." \
         if size > config.MEMORY_MAX_CHARS else ""
@@ -125,7 +125,7 @@ def forget(fact):
     f, line = _matching_facts(fact)
     text = f.read_text(encoding="utf-8").replace(line + "\n", "", 1)
     _write(f, re.sub(r"^updated: .*$", f"updated: {_today()}", text, count=1, flags=re.M))
-    _log("update", "Raphael memory", f"forgot: {line[2:]}")
+    _log("update", "Kumo memory", f"forgot: {line[2:]}")
     return f"Forgot: {line[2:]}"
 
 
@@ -166,15 +166,15 @@ def capture_note(title, text):
     while (inbox / f"{slug}{'' if n == 1 else f'-{n}'}.md").exists():
         n += 1
     p = inbox / f"{slug}{'' if n == 1 else f'-{n}'}.md"
-    _write(p, f"---\ntitle: {title.strip()}\ncreated: {_today()}\nupdated: {_today()}\nsource: raphael (voice capture)\n---\n\n"
+    _write(p, f"---\ntitle: {title.strip()}\ncreated: {_today()}\nupdated: {_today()}\nsource: kumo (voice capture)\n---\n\n"
                  f"# {title.strip()}\n\n{text.strip()}\n")
     rel = p.relative_to(_root()).as_posix()
-    _log("create", rel, "Captured by Raphael from voice; unfiled (inbox).")
+    _log("create", rel, "Captured by Kumo from voice; unfiled (inbox).")
     return f"Saved to {rel}."
 
 
 def save_daily_note(bullets):
-    """Append one session summary to raphael/daily/YYYY-MM-DD.md (Raphael's own folder, outside the wiki index)."""
+    """Append one session summary to kumo/daily/YYYY-MM-DD.md (Kumo's own folder, outside the wiki index)."""
     lines = [l.strip() for l in bullets.strip().splitlines() if l.strip()]
     if not lines:
         return None
@@ -182,16 +182,16 @@ def save_daily_note(bullets):
     p = _vault_path(rel)
     if not p.exists():
         p.parent.mkdir(parents=True, exist_ok=True)
-        _write(p, f"---\ntitle: Raphael daily {_today()}\ncreated: {_today()}\nupdated: {_today()}\ntype: summary\n"
-                     f"area: projects\ntags: [reference]\n---\n\n# Raphael sessions {_today()}\n")
+        _write(p, f"---\ntitle: Kumo daily {_today()}\ncreated: {_today()}\nupdated: {_today()}\ntype: summary\n"
+                     f"area: projects\ntags: [reference]\n---\n\n# Kumo sessions {_today()}\n")
     body = "\n".join(l if l.startswith("- ") else f"- {l.lstrip('-* ')}" for l in lines)
     _append(p, f"\n## {datetime.datetime.now():%H:%M} session\n{body}\n")
-    _log("update", rel, "Raphael session summary added.")
+    _log("update", rel, "Kumo session summary added.")
     return rel
 
 
 def save_news_digest(sections):
-    """Write today's headlines to raphael/news/YYYY-MM-DD.md (Raphael's own folder, rebuilt on each refresh).
+    """Write today's headlines to kumo/news/YYYY-MM-DD.md (Kumo's own folder, rebuilt on each refresh).
     sections: [(heading, [(title, link, source)])]. Logged in log.md once, when the day's note is created."""
     sections = [(h, items) for h, items in sections if items]
     if not sections:
@@ -205,9 +205,9 @@ def save_news_digest(sections):
                        for h, items in sections)
     _write(p, f"---\ntitle: News {_today()}\ncreated: {_today()}\nupdated: {_today()}\ntype: summary\n"
               f"area: projects\ntags: [reference]\n---\n\n# News {_today()}\n\n"
-              f"Headlines Raphael collected today (updated {datetime.datetime.now():%H:%M}).\n\n{body}\n")
+              f"Headlines Kumo collected today (updated {datetime.datetime.now():%H:%M}).\n\n{body}\n")
     if created:
-        _log("create", rel, "Raphael's daily news digest.")
+        _log("create", rel, "Kumo's daily news digest.")
     return rel
 
 
@@ -298,7 +298,7 @@ def kanban_list():
 
 def _target(column):
     if re.sub(r"[^a-z]", "", column.lower()) == "done":
-        raise ValueError("Raphael never moves cards to Done (vault rule); the user moves them in Obsidian.")
+        raise ValueError("Kumo never moves cards to Done (vault rule); the user moves them in Obsidian.")
     return column
 
 
@@ -346,7 +346,7 @@ def memory_prompt():
         return ""
     last = last_session_summary()
     recap = (f" Last session ({last.splitlines()[0]}):\n" + "\n".join(last.splitlines()[1:]) + "\n") if last else ""
-    return (recap + " Older session summaries are in raphael/daily/YYYY-MM-DD.md (use vault_read)."
+    return (recap + " Older session summaries are in kumo/daily/YYYY-MM-DD.md (use vault_read)."
             + (f" What you remember about the user (from their Obsidian vault). These preferences override the style "
              f"rules above:\n{facts}\n" if facts else
              " You have no remembered facts yet. ")
@@ -360,7 +360,7 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
     try:
         config.VAULT_DIR = str(tmp)
         (tmp / "private").mkdir()
-        (tmp / "private" / "secret.md").write_text("bank pin 1234 raphael", encoding="utf-8")
+        (tmp / "private" / "secret.md").write_text("bank pin 1234 kumo", encoding="utf-8")
         (tmp / "concepts").mkdir()
         (tmp / "concepts" / "second-brain.md").write_text("---\ntitle: Second Brain\n---\nA file based knowledge base.\n", encoding="utf-8")
         (tmp / "index.md").write_text("# Wiki Index\n- [[second-brain]] — file based\n", encoding="utf-8")
@@ -369,8 +369,8 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
         assert "Remembered" in remember("Darnie's capstone is LPMS")
         assert "Already" in remember("darnie's capstone is lpms")
         assert "Remembered" in remember("Darnie prefers lo-fi music")
-        mem = (tmp / "raphael" / "memory.md").read_text(encoding="utf-8")
-        assert mem.startswith("---\ntitle: Raphael Memory") and mem.count("\n- ") == 2
+        mem = (tmp / "kumo" / "memory.md").read_text(encoding="utf-8")
+        assert mem.startswith("---\ntitle: Kumo Memory") and mem.count("\n- ") == 2
         assert "capstone is LPMS" in memory_prompt() and "second-brain" in memory_prompt()
         assert "2 facts match" not in describe_forget("lo-fi")[0]
         try:
@@ -378,10 +378,10 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
             raise AssertionError("should be ambiguous")
         except ValueError as e:
             assert "2 facts match" in str(e)
-        assert "Forgot" in forget("lo-fi") and "lo-fi" not in (tmp / "raphael" / "memory.md").read_text(encoding="utf-8")
+        assert "Forgot" in forget("lo-fi") and "lo-fi" not in (tmp / "kumo" / "memory.md").read_text(encoding="utf-8")
 
         assert "second-brain.md" in vault_search("knowledge base")
-        assert "secret" not in vault_search("raphael") and "1234" not in vault_search("bank pin")  # private/ never searched
+        assert "secret" not in vault_search("kumo") and "1234" not in vault_search("bank pin")  # private/ never searched
         assert "file based knowledge" in vault_read("second-brain") and "file based" in vault_read("Second Brain")
         for bad in ("private/secret", "private/secret.md", "../outside", ".git/config"):
             try:
@@ -394,7 +394,7 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
         assert "inbox/startup-idea-2.md" in capture_note("Startup idea", "Another")
         assert "title: Startup idea!" in (tmp / "inbox" / "startup-idea.md").read_text(encoding="utf-8")
         log = (tmp / "log.md").read_text(encoding="utf-8")
-        assert log.count("## [") == 6 and "| Raphael memory" in log and "| inbox/startup-idea.md" in log
+        assert log.count("## [") == 6 and "| Kumo memory" in log and "| inbox/startup-idea.md" in log
         # line endings: LF files stay LF, CRLF files stay CRLF; a log without a final newline still gets a clean entry
         (tmp / "log.md").write_bytes(b"# Wiki Log\n\nlast line without newline")
         _log("update", "x", "y")
@@ -407,7 +407,7 @@ if __name__ == "__main__":  # self-check on a throwaway fake vault, never the re
         rel = save_daily_note("- Asked about LPMS\n* set a reminder")
         rel2 = save_daily_note("- Second session")
         daily = (tmp / rel).read_text(encoding="utf-8")
-        assert rel == rel2 and daily.startswith("---\ntitle: Raphael daily") and daily.count("\n## ") == 2, daily
+        assert rel == rel2 and daily.startswith("---\ntitle: Kumo daily") and daily.count("\n## ") == 2, daily
         assert "- set a reminder" in daily and "Second session" in last_session_summary()
         assert "Last session" in memory_prompt() and "capstone is LPMS" in memory_prompt()
 

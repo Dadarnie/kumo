@@ -22,11 +22,11 @@ from vault import (capture_note, describe_forget, describe_kanban_add, describe_
                    kanban_add, kanban_list, kanban_move, remember, vault_read, vault_search)
 
 cancel = threading.Event()   # set by the window's Stop button: tools stop and pending approvals are denied
-approver = None              # set by ui.py: approver(name, detail, danger) -> bool. None = ask in the terminal
+approver = None              # set in Kumo mode: approver(name, detail, danger) -> bool. None = ask in the terminal
 announce = lambda message: None  # chat.py --voice sets this to speak "I need your approval"
-on_action = lambda x, y, label: None  # ui.py sets this: show Raphael's cursor at screen x, y (None = hide)
-on_activity = lambda icon, text: None  # ui.py shows each tool step in the Activity panel
-cursor_glide = 0.0                   # seconds the cursor animation takes (ui.py sets it; 0 = no window, no wait)
+on_action = lambda x, y, label: None  # a cursor at screen x, y while typing (None = hide); unused in Kumo mode
+on_activity = lambda icon, text: None  # Kumo shows each tool step in the island
+cursor_glide = 0.0                   # seconds the cursor animation takes (0 = no animation, no wait)
 
 # Things that can destroy data or change the system. They are NOT blocked: they always ask, with a warning.
 DANGEROUS = re.compile(
@@ -329,7 +329,7 @@ def _exe(hwnd):
 
 
 def _windows():
-    """Visible top-level windows with a title: [(hwnd, title, exe)], Raphael's own window excluded."""
+    """Visible top-level windows with a title: [(hwnd, title, exe)], Kumo's own window excluded."""
     found = []
     proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(
         lambda h, _: (found.append(h) if user32.IsWindowVisible(h) and _title(h) else None) or True)
@@ -423,7 +423,7 @@ def _cursor_point(hwnd, address_bar=False):
 
 
 def _point_and_wait(hwnd, label, address_bar=False):
-    """Show Raphael's cursor gliding to where the keys will go (window only), then wait for the animation."""
+    """Show Kumo's cursor gliding to where the keys will go (window only), then wait for the animation."""
     x, y = _cursor_point(hwnd, address_bar)
     on_action(x, y, label)
     time.sleep(cursor_glide)
@@ -460,7 +460,7 @@ def _guard_send(h, exe, text, sends):
 
 
 def _contact_username(person):
-    """Messenger username of a person from Raphael's memory ("X's Messenger username is Y" or a messenger/facebook link)."""
+    """Messenger username of a person from Kumo's memory ("X's Messenger username is Y" or a messenger/facebook link)."""
     import vault
     f = vault._memory_file()
     words = [w for w in re.findall(r"\w+", person.lower()) if len(w) > 2 and w not in ("san", "the", "my")]
@@ -547,7 +547,7 @@ def type_text(window, text, before="", enter="no", _approved=False):
     if blocked:
         return blocked
     _settled_title(h, exe)  # let a just-opened page finish loading before the keys arrive
-    _bring_to_front(h)  # the approval click may have moved focus to Raphael's window
+    _bring_to_front(h)  # the approval click may have moved focus to Kumo's window
     try:
         steps = [s.strip() for s in before.split(",") if s.strip()]
         _point_and_wait(h, "typing…", address_bar="ctrl+l" in steps)
@@ -592,7 +592,7 @@ def press_keys(window, keys):
 
 def _screenshot(rect=None):
     """PNG bytes of a screen area (x, y, w, h) or the whole primary screen, scaled to at most 1600 px wide."""
-    out = Path(os.environ.get("TEMP", ".")) / f"raphael_screen_{os.getpid()}.png"
+    out = Path(os.environ.get("TEMP", ".")) / f"kumo_screen_{os.getpid()}.png"
     area = f"New-Object System.Drawing.Rectangle({rect[0]}, {rect[1]}, {rect[2]}, {rect[3]})" if rect else \
         "[System.Windows.Forms.Screen]::PrimaryScreen.Bounds"
     ps = ("Add-Type -AssemblyName System.Drawing, System.Windows.Forms;"
@@ -608,7 +608,7 @@ def _screenshot(rect=None):
 
 
 def _work_window():
-    """The window you're working in: the top-most normal window that isn't Raphael's own."""
+    """The window you're working in: the top-most normal window that isn't Kumo's own."""
     for h, title, exe in _windows():
         r = _Rect()
         user32.GetWindowRect(HWND(h), ctypes.byref(r))
@@ -912,7 +912,7 @@ if __name__ == "__main__":
         for cmd in ("npm install", "npm i lodash", "pip install x", "python -m pip install x", "git push", "git reset --hard",
                     "git clean -fd", "git commit -m x", "docker rm x", "gh pr merge 3", "Remove-Item x", "winget uninstall x"):
             assert DANGEROUS.search(cmd), cmd
-        assert _project_path("raphael").name == "raphael" and _project_path("Scam Check").name == "scamcheck"
+        assert _project_path("mimo").name == "mimo" and _project_path("Scam Check").name == "scamcheck"
         assert "Projects:" in run_tool("git_status", {"project": "nosuchproject"})
         config.PERMISSIONS["run_command"] = "allow"
         where = run_tool("run_command", {"command": "Get-Location", "folder": "docmind"})

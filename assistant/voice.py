@@ -22,7 +22,7 @@ _wake = None
 on_state = lambda state: None  # chat.py --ui replaces this to update the window
 on_heard = lambda text, woke: None  # called with every phrase heard in wake mode
 on_level = lambda rms: None         # mic loudness, ~10 times a second while the mic is open (window visualizer)
-on_speak = lambda envelope, step: None  # loudness of Raphael's speech, one value per `step` seconds
+on_speak = lambda envelope, step: None  # loudness of Kumo's speech, one value per `step` seconds
 
 
 def _rms(a):
@@ -103,14 +103,14 @@ def _speech_worker():
 
 
 def _barge_in_monitor():
-    """While Raphael talks: if you talk over it (or press the hotkey), stop speaking.
-    The threshold adapts to how loud Raphael's own voice comes back through the mic (speaker echo)."""
+    """While Kumo talks: if you talk over it (or press the hotkey), stop speaking.
+    The threshold adapts to how loud Kumo's own voice comes back through the mic (speaker echo)."""
     n, loud, echo, t0 = int(RATE * 0.05), 0, [], time.time()
     try:
         with sd.InputStream(samplerate=RATE, channels=1, dtype="float32", blocksize=n, device=config.INPUT_DEVICE) as s:
             while _speaking.is_set() and not interrupted.is_set() and not muted.is_set():  # muted = mic stays closed
                 level = _rms(s.read(n)[0][:, 0])
-                if time.time() - t0 < 0.4:  # first 0.4 s: learn the echo level of Raphael's own voice
+                if time.time() - t0 < 0.4:  # first 0.4 s: learn the echo level of Kumo's own voice
                     echo.append(level)
                     continue
                 limit = max(config.BARGE_IN_RMS, 3 * (max(echo) if echo else 0))
@@ -242,8 +242,8 @@ def record_until_silence():
     return np.concatenate(chunks)
 
 
-typed = queue.Queue()      # text typed in the HUD: handled like speech, no wake phrase needed
-muted = threading.Event()  # mic muted (hotkey or HUD button): nothing is heard or transcribed
+typed = queue.Queue()      # text typed in Kumo's Chat: handled like speech, no wake phrase needed
+muted = threading.Event()  # mic muted (Kumo's mic button or shortcut): nothing is heard or transcribed
 on_mute = lambda is_muted: None
 
 
@@ -304,14 +304,15 @@ def _utterance(blocks, max_wait=None):
 def match_wake(text):
     """If text starts with the wake name (e.g. 'Hey, Rafael what time is it'), return the command after it
     ('what time is it', or '' if none). Otherwise None. Fuzzy, because Whisper spells names differently."""
-    *lead, name = config.WAKE_PHRASE.lower().split()  # e.g. ["hey"], "raphael"
+    *lead, name = config.WAKE_PHRASE.lower().split()  # e.g. ["hey"], "kumo"
     words = text.split()
 
     def like(word, target, cutoff):
-        return difflib.SequenceMatcher(None, re.sub(r"\W", "", word.lower()), target).ratio() >= cutoff
+        word = re.sub(r"\W", "", word.lower())
+        return word in config.WAKE_ALIASES or difflib.SequenceMatcher(None, word, target).ratio() >= cutoff
 
     # Name as the 1st word, or the 2nd after ANY word: Whisper often mishears "hey" as "here", "now", "hay"...
-    # A name later in the sentence ("I told Raphael...") is ignored.
+    # A name later in the sentence ("I told Kumo...") is ignored.
     for i, w in enumerate(words[:len(lead) + 1]):
         if like(w, name, 0.75):
             return " ".join(words[i + 1:]).strip(" ,.!?")
@@ -328,7 +329,7 @@ def stay_awake():
 
 
 def listen_for_wake_phrase(blocks=None):
-    """Transcribe each utterance; return the command that follows 'hey raphael' (asks for it if not said yet)."""
+    """Transcribe each utterance; return the command that follows 'hey kumo' (asks for it if not said yet)."""
     own = blocks is None
     blocks = blocks if blocks is not None else _mic_blocks()
     always = config.ALWAYS_LISTEN
@@ -384,7 +385,7 @@ def _sure(text):
 
 
 def listen():
-    """Next request: spoken (per the configured mode) or typed in the HUD, whichever comes first."""
+    """Next request: spoken (per the configured mode) or typed in Kumo's Chat, whichever comes first."""
     global unsure
     try:
         if config.WAKE_WORD_ENABLED:

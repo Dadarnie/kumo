@@ -21,7 +21,7 @@ import config
 FILE = Path(__file__).parent / "data" / "news.json"
 # Editable from Kumo's Settings: sources, refresh interval, digest and free notices. Created from config.py.
 SETTINGS = Path(__file__).parent / "data" / "news_settings.json"
-USER_AGENT = "Raphael-news/1.0 (personal feed reader)"
+USER_AGENT = "Kumo-news/1.0 (personal feed reader)"
 MAX_BYTES = 2_000_000
 KEEP_DAYS = 14
 MAX_ITEMS = 600
@@ -265,7 +265,7 @@ def start():
                 new = refresh()
                 if s["digest"]:
                     digest()
-            except Exception as e:  # never let the reader kill Raphael
+            except Exception as e:  # never let the reader kill Kumo
                 print(f"(news refresh failed: {e})")
             on_new(new)
             _wake.wait(s["interval_hours"] * 3600)

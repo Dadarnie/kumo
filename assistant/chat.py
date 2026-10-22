@@ -83,7 +83,7 @@ def text_tool_call(content):
 
 
 def wait_for_llm(app=None, minutes=5):
-    """At login Raphael may start before the model server: keep trying for a few minutes instead of quitting."""
+    """At login Kumo may start before the model server: keep trying for a few minutes instead of quitting."""
     deadline, told = time.time() + minutes * 60, False
     while True:
         try:
@@ -185,43 +185,35 @@ def main():
     if "--models" in sys.argv:
         print("\n".join(m.id for m in client.models.list()))
         return
-    use_kumo = "--kumo" in sys.argv  # headless: Kumo is the window (kumo_bridge.py)
-    use_ui = use_kumo or "--ui" in sys.argv
-    voice_mode = use_ui or "--voice" in sys.argv
+    use_kumo = "--kumo" in sys.argv  # headless: the Kumo app is the window (kumo_bridge.py)
+    voice_mode = use_kumo or "--voice" in sys.argv
     if voice_mode:
         import voice
-    if use_ui:
+    if use_kumo:
         import threading
-        if use_kumo:
-            import kumo_bridge
-            app = kumo_bridge.KumoApp()
-            app.is_muted = voice.muted.is_set
-            app.on_news_refresh = news.refresh_now
-            news.on_new = lambda items: app._send(t="news_updated", count=len(items), free=[
-                i["title"] for i in items if "free" in i["categories"]][:3] if news.settings()["free_notice"] else [])
-        else:
-            import ui
-            app = ui.App()
+        import kumo_bridge
+        app = kumo_bridge.KumoApp()
+        app.is_muted = voice.muted.is_set
+        app.on_news_refresh = news.refresh_now
+        news.on_new = lambda items: app._send(t="news_updated", count=len(items), free=[
+            i["title"] for i in items if "free" in i["categories"]][:3] if news.settings()["free_notice"] else [])
         voice.on_state = app.set_state
         tools.approver = app.ask_approval  # Allow/Deny buttons in the window
         voice.on_heard = lambda text, woke: None if woke else app.note(f"ignored: {text}  (start with '{config.WAKE_PHRASE}')")
         voice.on_level = app.level            # Voice panel: mic bars
-        voice.on_speak = app.speak_envelope   # Voice panel: Raphael's speech bars
+        voice.on_speak = app.speak_envelope   # Voice panel: Kumo's speech bars
         tools.on_activity = app.activity      # Activity panel: every tool step
-        app.on_text = voice.typed.put         # "Type to Raphael" box
+        app.on_text = voice.typed.put         # "Type to Kumo" box
         app.on_toggle_mute = voice.toggle_mute
         voice.on_mute = app.set_muted
         if config.WAKE_WORD_ENABLED and config.WAKE_PHRASE:
             app.note("I'm listening. Just talk." if config.ALWAYS_LISTEN else
                      f"Say '{config.WAKE_PHRASE}' and then your request.")
         threading.Thread(target=converse, args=(voice_mode, app), daemon=True).start()
-        if not use_kumo:
-            print(f"{config.ASSISTANT_NAME} window open. Confirmations (y/n) are asked in this terminal.")
         app.mainloop()
-        save_session()  # window closed: write today's session summary to Obsidian
-        if use_kumo:  # skip native audio/Whisper teardown, which can crash at interpreter exit
-            sys.stderr.flush()
-            os._exit(0)
+        save_session()  # Kumo closed stdin: write today's session summary to Obsidian
+        sys.stderr.flush()  # skip native audio/Whisper teardown, which can crash at interpreter exit
+        os._exit(0)
     else:
         converse(voice_mode)
 
@@ -231,7 +223,7 @@ _saved = []
 
 
 def save_session():
-    """Summarize this run into raphael/daily/YYYY-MM-DD.md (once). Skipped if nothing was asked."""
+    """Summarize this run into kumo/daily/YYYY-MM-DD.md (once). Skipped if nothing was asked."""
     if _saved or not any(who == "you" for who, _ in TRANSCRIPT):
         return
     _saved.append(True)
@@ -239,7 +231,7 @@ def save_session():
     try:
         r = client.chat.completions.create(model=config.MODEL, max_tokens=300, **EXTRA, messages=[
             {"role": "system", "content": "You write short, factual session logs."},
-            {"role": "user", "content": "Summarize this conversation between the user and Raphael (their assistant) for "
+            {"role": "user", "content": "Summarize this conversation between the user and Kumo (their assistant) for "
                                         "the user's Obsidian daily log: 2 to 6 short bullet points starting with '- ': what "
                                         "was asked, what was done, open follow-ups. No preamble.\n\n" + convo}])
         rel = vault.save_daily_note(r.choices[0].message.content or "")
@@ -249,7 +241,7 @@ def save_session():
 
 
 def start_reminders(voice_module=None, app=None):
-    """Due reminders: spoken, shown in the HUD, and sent as a Windows notification."""
+    """Due reminders: spoken and shown in Kumo's island."""
     def fire(text, late):
         message = f"Reminder{' (missed while I was off)' if late else ''}: {text}"
         print(f"\n[{message}]")
@@ -325,7 +317,7 @@ def converse(voice_mode, app=None):
                 if voice_mode:
                     voice.interrupted.clear()
                 reply = ask(history, text, say if voice_mode else None, voice.interrupted if voice_mode else None)
-                TRANSCRIPT.extend([("you", text), ("raphael", reply)])
+                TRANSCRIPT.extend([("you", text), ("kumo", reply)])
                 if app:
                     app.show(reply=reply)
                 if voice_mode:

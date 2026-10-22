@@ -1,29 +1,28 @@
-# All Raphael settings live here.
+# All Kumo settings live here.
 import os
 from pathlib import Path
 
 
 # Local model server, OpenAI-compatible. Ollama (shared with Kumo, so only one copy of the model is in VRAM).
-# Kumo can override these with RAPHAEL_BASE_URL / RAPHAEL_MODEL / RAPHAEL_SMART_MODEL / RAPHAEL_VISION_MODEL.
+# Kumo can override these with KUMO_BASE_URL / KUMO_MODEL / KUMO_SMART_MODEL / KUMO_VISION_MODEL.
 # LM Studio still works: BASE_URL = "http://localhost:1235/v1", MODEL = "google/gemma-4-e4b".
-BASE_URL = os.environ.get("RAPHAEL_BASE_URL", "http://localhost:11434/v1")
+BASE_URL = os.environ.get("KUMO_BASE_URL", "http://localhost:11434/v1")
 API_KEY = "local"  # placeholder, local servers ignore it
 
 # Must match the server's model id. Run `python chat.py --models` to list ids.
-MODEL = os.environ.get("RAPHAEL_MODEL", "gemma4-e4b-raphael")
+MODEL = os.environ.get("KUMO_MODEL", "gemma4-e4b-kumo")
 # "Think harder" / "use your big brain" switches to this one (sticky until "back to fast mode").
-# Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Empty = not installed: Raphael says so.
-SMART_MODEL = os.environ.get("RAPHAEL_SMART_MODEL", "")
+# Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Empty = not installed: Kumo says so.
+SMART_MODEL = os.environ.get("KUMO_SMART_MODEL", "")
 # Model for look_at_screen; must accept images. Empty = use MODEL.
-VISION_MODEL = os.environ.get("RAPHAEL_VISION_MODEL", "")
+VISION_MODEL = os.environ.get("KUMO_VISION_MODEL", "")
 
 # Gemma "thinks" before answering, which adds 15+ s. "none" turns that off (faster, a bit less careful).
 # Set to None to use the model's default.
 REASONING_EFFORT = "none"
 MAX_REPLY_TOKENS = 250      # hard cap so a rambling answer can't take minutes (about 180 words)
 
-ASSISTANT_NAME = "Raphael"
-HUD_THEME = "neon"  # window look: "neon", "tensura" (Raphael gold/teal) or "cyberpunk" (yellow/cyan/magenta)
+ASSISTANT_NAME = "Kumo"
 
 SYSTEM_PROMPT = (
     f"You are {ASSISTANT_NAME}, a helpful local voice assistant with a calm, precise, analytical tone. "
@@ -76,7 +75,7 @@ APP_WHITELIST = {
     "notepad": "notepad.exe",
     "calc": "calc.exe",
     "zen": r"C:\Program Files\Zen Browser\zen.exe",
-    "chrome": "chrome.exe",   # not installed on this PC: Raphael will say so and suggest options
+    "chrome": "chrome.exe",   # not installed on this PC: Kumo will say so and suggest options
 }
 
 # list_files / read_file only work inside these folders (and their subfolders).
@@ -87,17 +86,17 @@ ALLOWED_DIRS = [
 # --- Obsidian vault = long-term memory (vault.py follows the vault's SCHEMA.md / AGENTS.md) ---
 VAULT_DIR = r"C:\Users\darnie\Documents\Obsidian Vault"
 VAULT_BLOCKED = ("private", ".obsidian", ".git")  # never read or written (vault rule: never touch private/)
-MEMORY_NOTE = "raphael/memory.md"                  # facts Raphael learns, loaded every session
-DAILY_DIR = "raphael/daily"                        # one note per day with a summary of each Raphael session
+MEMORY_NOTE = "kumo/memory.md"                  # facts Kumo learns, loaded every session
+DAILY_DIR = "kumo/daily"                        # one note per day with a summary of each Kumo session
 KANBAN_NOTE = "projects/lpms-tasks.md"            # capstone board (moves follow the vault's AGENTS.md rules)
 MEMORY_MAX_CHARS = 2000                            # how much memory goes into each session's prompt
-PROJECTS_DIR = r"C:\Users\darnie\own projects"  # each subfolder is a project Raphael can name ("scamcheck", "docmind")
+PROJECTS_DIR = r"C:\Users\darnie\own projects"  # each subfolder is a project Kumo can name ("scamcheck", "docmind")
 
 MAX_READ_BYTES = 20_000
 MAX_WRITE_BYTES = 100_000
 COMMAND_TIMEOUT = 30        # seconds before a PowerShell command is stopped
 MAX_OUTPUT_CHARS = 4000     # command output sent back to the model
-MAX_TOOL_ROUNDS = 15        # tool steps Raphael may chain for one request (Stop button cancels)
+MAX_TOOL_ROUNDS = 15        # tool steps Kumo may chain for one request (Stop button cancels)
 TYPING_DELAY = 0.035        # seconds between typed letters (0.01 = instant-looking, 0.06 = slow and visible)
 APPROVAL_TIMEOUT = 120     # seconds to click Allow/Deny before it counts as Deny
 
@@ -125,7 +124,7 @@ WHISPER_MODEL = "small"    # "tiny", "base" or "small"; runs on CPU
 WHISPER_LANGUAGE = "en"
 WHISPER_BEAM = 5           # 1 = fastest, 5 = more accurate (a little slower)
 WHISPER_HINTS = ""         # extra words you say often, e.g. "Darnie, Tensura, Downloads"
-WHISPER_MIN_LOGPROB = -0.7 # below this average confidence Raphael asks you to repeat (lower = accept more guesses)
+WHISPER_MIN_LOGPROB = -0.7 # below this average confidence Kumo asks you to repeat (lower = accept more guesses)
 # Piper voice file. Swap by downloading another voice into voices/ and changing this:
 #   .\.venv\Scripts\python.exe -m piper.download_voices <voice-name> --download-dir voices
 PIPER_VOICE = r"voices\en_GB-jenny_dioco-medium.onnx"
@@ -133,20 +132,21 @@ VOICE_SPEED = 1.1          # Piper length_scale: above 1 = slower, below 1 = fas
 VOICE_VARIATION = 0.3      # Piper noise_scale: lower = flatter, more robotic (default 0.667)
 OUTPUT_DEVICE = "Sound Mapper - Output"  # follows the live Windows default output. Or part of the speaker name, or None = Windows default. List: python voice.py --devices
 MUTE_HOTKEY = "ctrl+alt+m" # toggles the mic on/off (also the mic button in the window)
-BARGE_IN = True           # talk over Raphael (or press the hotkey) to make it stop speaking
+BARGE_IN = True           # talk over Kumo (or press the hotkey) to make it stop speaking
 BARGE_IN_RMS = 0.05        # how loud you must be to interrupt (raise if it stops by itself on speakers)
 INPUT_DEVICE = None     # None = Windows default microphone
 
 # --- Stage 4: wake word (optional) ---
 WAKE_WORD_ENABLED = True  # True: say the wake phrase instead of holding the hotkey
 # Wake phrase, spotted by Whisper (CPU, every utterance is transcribed locally). You can say the command
-# in the same breath: "hey raphael, what time is it". Set to None to use the openWakeWord model below instead.
-WAKE_PHRASE = "hey raphael"
-ALWAYS_LISTEN = os.environ.get("RAPHAEL_ALWAYS_LISTEN", "1") != "0"  # Kumo sets this from its Settings.
-                            # True: every phrase it hears is a request, no "hey raphael" needed.
+# in the same breath: "hey kumo, what time is it". Set to None to use the openWakeWord model below instead.
+WAKE_PHRASE = "hey kumo"
+WAKE_ALIASES = ("kumo", "como", "cumo", "kuma", "komo", "kumu", "coomo")  # how Whisper tends to spell "Kumo"
+ALWAYS_LISTEN = os.environ.get("KUMO_ALWAYS_LISTEN", "1") != "0"  # Kumo sets this from its Settings.
+                            # True: every phrase it hears is a request, no "hey kumo" needed.
                             # Music or video playing on SPEAKERS can then be heard as requests: use headphones,
                             # or set False to require the wake phrase again.
-WAKE_FOLLOWUP_SECONDS = 20  # after a reply, keep listening this long without needing "hey raphael" (0 = always need it)
+WAKE_FOLLOWUP_SECONDS = 20  # after a reply, keep listening this long without needing "hey kumo" (0 = always need it)
 WAKE_WORD_MODEL = "hey_jarvis"  # only used when WAKE_PHRASE is None
 WAKE_THRESHOLD = 0.5        # lower = more sensitive, more false triggers
 SILENCE_RMS = 0.006         # mic level below this counts as silence (raise if it never stops recording)
@@ -158,8 +158,8 @@ HISTORY_TURNS = 10
 
 # --- News reader (news.py): feeds only, titles + links + short summaries ---
 NEWS_INTERVAL_HOURS = 3
-NEWS_DIGEST = True        # write raphael/news/YYYY-MM-DD.md in the vault (top headlines per category)
-NEWS_DIR = "raphael/news"
+NEWS_DIGEST = True        # write kumo/news/YYYY-MM-DD.md in the vault (top headlines per category)
+NEWS_DIR = "kumo/news"
 # (name, feed URL, base category). Categories: coding, ai, free, security, release (keyword tags add more).
 NEWS_SOURCES = [
     ("Hacker News", "https://hn.algolia.com/api/v1/search_by_date?tags=front_page&hitsPerPage=30", "coding"),

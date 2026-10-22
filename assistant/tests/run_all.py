@@ -1,4 +1,4 @@
-"""Raphael's test suite (no packages needed).
+"""Kumo's test suite (no packages needed).
 
     .\\.venv\\Scripts\\python.exe tests\\run_all.py          fast checks (no LM Studio, no mic, no speakers)
     .\\.venv\\Scripts\\python.exe tests\\run_all.py --live   also the conversation loop with the real model (LM Studio on)
@@ -42,8 +42,8 @@ def fast():
     import chat
     import voice
     m = voice.match_wake
-    wake = {"Hey Raphael, what time is it?": "what time is it", "Here Raphael, play x": "play x", "Raphael.": "",
-            "What time is it?": None, "I told Raphael about it yesterday": None, "Hey Jarvis hello": None}
+    wake = {"Hey Kumo, what time is it?": "what time is it", "Here Kumo, play x": "play x", "Kumo.": "", "Como, pause": "pause",
+            "What time is it?": None, "I told Kumo about it yesterday": None, "Hey Jarvis hello": None}
     check("wake phrase matcher", all(m(t) == e for t, e in wake.items()))
     h = voice._is_hallucination
     check("noise filter", all(map(h, ["Mm.", "Dog barks.", "[Music]", "Thanks for watching!"]))

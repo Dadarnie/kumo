@@ -120,7 +120,7 @@ def _due():
 
 
 def start():
-    """Background checker: fires due reminders every second; ones missed while Raphael was off fire at once (late)."""
+    """Background checker: fires due reminders every second; ones missed while Kumo was off fire at once (late)."""
     def run():
         started = time.time()
         while True:

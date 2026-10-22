@@ -1,10 +1,10 @@
-"""Kumo mode: Raphael runs headless as a child of Kumo, which is the only window.
+"""Kumo mode: Kumo runs headless as a child of Kumo, which is the only window.
 
 Same interface as ui.App, but every event is one JSON line on stdout and Kumo's
 commands arrive as JSON lines on stdin. print() output goes to stderr (Kumo logs it),
 so nothing else can corrupt the protocol.
 
-Raphael -> Kumo (stdout):
+Kumo -> Kumo (stdout):
   {"t":"ready"}                                    loaded, listening
   {"t":"state","v":"idle|listening|thinking|speaking"}
   {"t":"you","v":text}  {"t":"reply","v":text}  {"t":"note","v":text}
@@ -14,7 +14,7 @@ Raphael -> Kumo (stdout):
   {"t":"approve_close","id":n}                     timed out or stopped
   {"t":"notify","title":t,"v":text}                reminders
   {"t":"news_updated","count":n,"free":[titles]}   a news refresh finished; Kumo re-reads data/news.json
-Kumo -> Raphael (stdin):
+Kumo -> Kumo (stdin):
   {"t":"answer","id":n,"allow":bool}  {"t":"text","v":text}  {"t":"mute","v":bool}
   {"t":"news_refresh"}  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)
 """
@@ -30,7 +30,7 @@ import tools
 
 
 class KumoApp:
-    owns_hotkeys = True  # Kumo handles mute and stop; Raphael registers no global keys
+    owns_hotkeys = True  # Kumo handles mute and stop; Kumo registers no global keys
 
     def __init__(self, out=None, inp=None):
         self.out = out or sys.stdout
