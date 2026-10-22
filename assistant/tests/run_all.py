@@ -45,6 +45,9 @@ def fast():
     wake = {"Hey Kumo, what time is it?": "what time is it", "Here Kumo, play x": "play x", "Kumo.": "", "Como, pause": "pause",
             "What time is it?": None, "I told Kumo about it yesterday": None, "Hey Jarvis hello": None}
     check("wake phrase matcher", all(m(t) == e for t, e in wake.items()))
+    tl = {"Alas sais na ng gabi.": True, "Oo.": True, "Sige po, salamat!": True, "It is six in the evening.": False,
+          "Answer. Magandang gabi! Ano ang maitutulong ko?": True, "The file was saved in your inbox.": False}
+    check("Tagalog reply detection", all(voice.is_tagalog(t) == e for t, e in tl.items()))
     h = voice._is_hallucination
     check("noise filter", all(map(h, ["Mm.", "Dog barks.", "[Music]", "Thanks for watching!"]))
           and not any(map(h, ["Pause the music", "Play Nadarang by Shanti Dope", "Okay, open notepad"])))

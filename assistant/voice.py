@@ -51,27 +51,81 @@ def _output_device():
     print(f"(OUTPUT_DEVICE '{d}' not found, using Windows default)")
 
 
+# Short words that only Tagalog uses this often; a reply full of them is spoken with the Tagalog voice.
+TAGALOG_WORDS = {"ang", "ng", "mga", "sa", "ay", "ko", "mo", "ito", "iyan", "po", "hindi", "oo", "ako", "ikaw", "siya",
+                 "kayo", "tayo", "kami", "namin", "natin", "lang", "din", "rin", "nga", "ba", "kasi", "pero", "kung",
+                 "para", "wala", "meron", "salamat", "naman", "yung", "iyong", "niya", "nila", "ano", "bakit", "paano",
+                 "saan", "kailan", "talaga", "sige", "opo", "ngayon", "mamaya", "bukas", "alas", "magandang", "na"}
+
+
+def is_tagalog(text):
+    words = re.findall(r"[a-zñ']+", text.lower())
+    hits = sum(w in TAGALOG_WORDS for w in words)
+    return hits >= 1 and (hits >= 2 or len(words) <= 3) and hits / max(1, len(words)) >= 0.2
+
+
+_mms = None
+_mms_lock = threading.Lock()
+
+
+def _load_mms():
+    """Meta's MMS Tagalog voice (transformers VITS). None when unavailable."""
+    global _mms
+    with _mms_lock:
+        if _mms is None and config.TAGALOG_VOICE:
+            try:
+                from transformers import AutoTokenizer, VitsModel
+                _mms = (VitsModel.from_pretrained(config.TAGALOG_VOICE), AutoTokenizer.from_pretrained(config.TAGALOG_VOICE))
+            except Exception as e:
+                print(f"(Tagalog voice unavailable: {e})")
+                _mms = False
+        return _mms or None
+
+
+def _play(audio, rate):
+    """Play float32 or int16 audio, stoppable by barge-in, and report its loudness."""
+    level = audio / 32768 if audio.dtype == np.int16 else audio
+    step = int(rate * 0.05)
+    on_speak([_rms(level[i:i + step]) for i in range(0, len(level), step)], 0.05)
+    sd.play(audio, rate, device=_output_device())
+    end = time.time() + len(audio) / rate + 0.3
+    while time.time() < end and sd.get_stream().active:  # like sd.wait(), but stoppable by barge-in
+        if interrupted.is_set():
+            sd.stop()
+            return False
+        time.sleep(0.02)
+    return True
+
+
+def _speak_tagalog(text):
+    mms = _load_mms()
+    if not mms:
+        return False
+    import torch
+    model, tokenizer = mms
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        if not sentence.strip() or interrupted.is_set():
+            continue
+        with torch.no_grad():
+            wave = model(**tokenizer(sentence, return_tensors="pt")).waveform[0].numpy().astype("float32")
+        if not _play(wave, model.config.sampling_rate):
+            break
+    return True
+
+
 def speak(text, voice_file=None):
-    """Speak with Piper; fall back to Windows SAPI (pyttsx3)."""
+    """Speak with Piper (Tagalog with the MMS voice); fall back to Windows SAPI (pyttsx3)."""
     global _sapi
+    if not voice_file and is_tagalog(text) and _speak_tagalog(text):
+        return
     try:
         voice = _load_piper(voice_file)
         if voice:
             from piper.config import SynthesisConfig
             cfg = SynthesisConfig(length_scale=config.VOICE_SPEED, noise_scale=config.VOICE_VARIATION)
             for chunk in voice.synthesize(text, cfg):
-                if interrupted.is_set():
+                if interrupted.is_set() or not _play(chunk.audio_int16_array, voice.config.sample_rate):
                     return
-                audio, rate = chunk.audio_int16_array, voice.config.sample_rate
-                step = int(rate * 0.05)
-                on_speak([_rms(audio[i:i + step] / 32768) for i in range(0, len(audio), step)], 0.05)
-                sd.play(audio, rate, device=_output_device())
-                end = time.time() + len(audio) / rate + 0.3
-                while time.time() < end and sd.get_stream().active:  # like sd.wait(), but stoppable by barge-in
-                    if interrupted.is_set():
-                        sd.stop()
-                        return
-                    time.sleep(0.02)
             return
         print(f"(Piper voice not found at {config.PIPER_VOICE}, using Windows voice)")
     except Exception as e:
@@ -150,6 +204,7 @@ def record():
 
 
 unsure = False  # True when the last transcription had low confidence (see WHISPER_MIN_LOGPROB)
+language = "en"  # language of the last transcription
 
 
 def _hints():
@@ -157,8 +212,15 @@ def _hints():
     return "Words: " + ", ".join([config.ASSISTANT_NAME, *config.APP_WHITELIST, config.WHISPER_HINTS]).strip(", ") + "."
 
 
+def _transcribe(audio, lang, force):
+    segments, info = _whisper.transcribe(audio, language=lang, beam_size=config.WHISPER_BEAM,
+                                         initial_prompt=_hints(), vad_filter=not force,  # force = warm-up: run the full model
+                                         condition_on_previous_text=False)
+    return list(segments), info
+
+
 def transcribe(audio, force=False):
-    global _whisper, unsure
+    global _whisper, unsure, language
     unsure = False
     if len(audio) < RATE * 0.3 and not force:  # under 0.3 s: accidental tap
         return ""
@@ -167,10 +229,15 @@ def transcribe(audio, force=False):
         audio = audio * min(0.7 / peak, 8)
     if _whisper is None:
         from faster_whisper import WhisperModel
-        _whisper = WhisperModel(config.WHISPER_MODEL, device="cpu", compute_type="int8")
-    segments, _ = _whisper.transcribe(audio, language=config.WHISPER_LANGUAGE, beam_size=config.WHISPER_BEAM,
-                                      initial_prompt=_hints(), vad_filter=not force,  # force = warm-up: run the full model
-                                      condition_on_previous_text=False)
+        _whisper = WhisperModel(config.WHISPER_MODEL, device="cpu", compute_type="int8", cpu_threads=config.WHISPER_THREADS)
+    # One pass detects the language while transcribing; only an unexpected language costs a second pass.
+    lang = "en" if force else config.WHISPER_LANGUAGE
+    segments, info = _transcribe(audio, lang, force)
+    if lang is None and info.language not in config.WHISPER_LANGUAGES:
+        allowed = [(p, code) for code, p in (info.all_language_probs or []) if code in config.WHISPER_LANGUAGES]
+        lang = max(allowed)[1] if allowed else config.WHISPER_LANGUAGES[0]
+        segments, info = _transcribe(audio, lang, force)
+    language = lang or info.language
     segments = [s for s in segments if not (s.no_speech_prob > 0.6 and s.avg_logprob < -0.5)]  # Whisper's silence rule
     if segments and np.mean([s.avg_logprob for s in segments]) < config.WHISPER_MIN_LOGPROB:
         unsure = True
@@ -322,6 +389,27 @@ def match_wake(text):
 awake_until = 0.0
 
 
+_remute = False
+
+
+def listen_now():
+    """Kumo's mic button: the next phrase is a request, even when muted or waiting for "hey kumo"."""
+    global _remute
+    if muted.is_set():
+        toggle_mute()
+        _remute = True
+    stay_awake()
+    on_state("listening")
+
+
+def listen_done():
+    """Mic button tapped again, or the request arrived: the mic goes back to how it was."""
+    global _remute
+    if _remute:
+        _remute = False
+        toggle_mute()
+
+
 def stay_awake():
     """Call after a reply: for WAKE_FOLLOWUP_SECONDS the next phrase needs no wake phrase."""
     global awake_until
@@ -353,7 +441,7 @@ def listen_for_wake_phrase(blocks=None):
                 continue
             text = transcribe(audio)
             command = match_wake(text)
-            if command is None and awake and text:
+            if command is None and (awake or time.time() < awake_until) and text:  # the mic button may open it mid-wait
                 command = text  # follow-up: the whole phrase is the request
             if text:
                 print(f"[heard] {text!r}" + ("" if command is not None else "  (no wake phrase, ignored)"))
@@ -374,6 +462,8 @@ def listen_for_wake_phrase(blocks=None):
 def preload():
     """Load every model now so the first real request isn't slow."""
     _load_piper()
+    if config.TAGALOG_VOICE:  # in the background: torch takes a while and English never waits for it
+        threading.Thread(target=_load_mms, daemon=True, name="mms-load").start()
     transcribe(np.zeros(RATE, dtype="float32") + 0.001 * np.random.randn(RATE).astype("float32"), force=True)
     if config.WAKE_WORD_ENABLED and not config.WAKE_PHRASE:
         wait_for_wake_word(frames=[np.zeros(1280, dtype="int16")])
@@ -397,6 +487,8 @@ def listen():
     except _Typed as t:
         unsure = False
         return t.text
+    finally:
+        listen_done()
 
 
 if __name__ == "__main__":

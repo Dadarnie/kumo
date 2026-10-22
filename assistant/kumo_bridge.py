@@ -16,7 +16,8 @@ Kumo -> Kumo (stdout):
   {"t":"news_updated","count":n,"free":[titles]}   a news refresh finished; Kumo re-reads data/news.json
 Kumo -> Kumo (stdin):
   {"t":"answer","id":n,"allow":bool}  {"t":"text","v":text}  {"t":"mute","v":bool}
-  {"t":"news_refresh"}  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)
+  {"t":"news_refresh"}  {"t":"listen"} (mic button: next phrase is a request)  {"t":"listen_stop"}
+  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)
 """
 import itertools
 import json
@@ -44,6 +45,8 @@ class KumoApp:
         self.on_text = lambda text: None
         self.on_toggle_mute = lambda: None
         self.on_news_refresh = lambda: None
+        self.on_listen = lambda: None
+        self.on_listen_stop = lambda: None
         self.is_muted = lambda: False
         self._last_level = 0.0
 
@@ -76,8 +79,8 @@ class KumoApp:
         self._send(t="muted", v=bool(is_muted))
 
     def level(self, rms):
-        now = time.monotonic()  # ~4 updates a second is plenty for the island
-        if now - self._last_level >= 0.25:
+        now = time.monotonic()
+        if now - self._last_level >= 0.12:  # enough for a level meter
             self._last_level = now
             self._send(t="level", v=round(float(rms), 4))
 
@@ -139,6 +142,10 @@ class KumoApp:
                 self.on_toggle_mute()
         elif t == "news_refresh":
             self.on_news_refresh()
+        elif t == "listen":
+            self.on_listen()
+        elif t == "listen_stop":
+            self.on_listen_stop()
         elif t == "stop":
             tools.cancel.set()
             for q in list(self.pending.values()):

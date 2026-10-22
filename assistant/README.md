@@ -10,8 +10,12 @@ The Kumo app starts it (`chat.py --kumo`) and is its only window; this folder ho
 cd assistant
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install openai faster-whisper piper-tts pyttsx3 sounddevice keyboard openwakeword
+.\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+.\.venv\Scripts\python.exe -m pip install transformers
 .\.venv\Scripts\python.exe -m piper.download_voices en_GB-jenny_dioco-medium --download-dir voices
 ```
+
+Speech: Whisper `medium` on the CPU (about 7 s per phrase) detects English or Tagalog (`WHISPER_LANGUAGES`); `small` is faster but weaker in Tagalog. Tagalog replies are spoken with Meta's MMS voice (`facebook/mms-tts-tgl`, CC-BY-NC 4.0: personal use; needs torch and transformers), English ones with Piper.
 
 `.venv`, `voices` and `data` stay out of git. Turn it on in Kumo: Settings → Assistant.
 Windows: Settings → Privacy & security → Microphone → allow **desktop apps**.

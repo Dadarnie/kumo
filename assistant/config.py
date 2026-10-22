@@ -62,6 +62,7 @@ SYSTEM_PROMPT = (
     "approves in a window, so do not ask permission in words first. For a website by name (YouTube, Gmail) call "
     "open_url with its address. If a tool result says DECLINED or Error, the action did NOT happen: say exactly that. "
     "No markdown, lists or emojis: your reply is spoken aloud. "
+    "Reply in the language the user used: English, Tagalog, or Taglish. "
     "The user's words come from speech recognition and may contain wrong words; infer the likely meaning, "
     "and if a request is unclear, ask a short question instead of guessing. "
     "You do not know the current time or date: always call get_time for them, never guess. "
@@ -120,14 +121,19 @@ PERMISSIONS = {
 
 # --- Stage 3: voice ---
 HOTKEY = "right ctrl"      # hold to talk
-WHISPER_MODEL = "small"    # "tiny", "base" or "small"; runs on CPU
-WHISPER_LANGUAGE = "en"
+WHISPER_MODEL = "medium"   # "small" is faster; "medium" understands Tagalog and Taglish much better (CPU)
+WHISPER_LANGUAGE = None    # None = detect, limited to WHISPER_LANGUAGES; or force one, e.g. "en"
+WHISPER_LANGUAGES = ("en", "tl")  # English and Tagalog (Taglish is transcribed as either)
+WHISPER_THREADS = 8        # CPU threads for Whisper (medium: ~7 s per phrase here with 8; "small" ~2.6 s)
 WHISPER_BEAM = 5           # 1 = fastest, 5 = more accurate (a little slower)
 WHISPER_HINTS = ""         # extra words you say often, e.g. "Darnie, Tensura, Downloads"
 WHISPER_MIN_LOGPROB = -0.7 # below this average confidence Kumo asks you to repeat (lower = accept more guesses)
 # Piper voice file. Swap by downloading another voice into voices/ and changing this:
 #   .\.venv\Scripts\python.exe -m piper.download_voices <voice-name> --download-dir voices
 PIPER_VOICE = r"voices\en_GB-jenny_dioco-medium.onnx"
+# Tagalog replies are spoken with Meta's MMS Tagalog voice (facebook/mms-tts-tgl, CC-BY-NC 4.0: personal use).
+# Needs torch + transformers; downloaded once (~145 MB). None = speak everything with PIPER_VOICE.
+TAGALOG_VOICE = "facebook/mms-tts-tgl"
 VOICE_SPEED = 1.1          # Piper length_scale: above 1 = slower, below 1 = faster
 VOICE_VARIATION = 0.3      # Piper noise_scale: lower = flatter, more robotic (default 0.667)
 OUTPUT_DEVICE = "Sound Mapper - Output"  # follows the live Windows default output. Or part of the speaker name, or None = Windows default. List: python voice.py --devices
