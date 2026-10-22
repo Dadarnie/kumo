@@ -116,7 +116,6 @@ export const Bridge = {
   /** Brings the app playing the current media to the front. */
   openMediaSource: (appId: string) => call<boolean>("open_media_source", { appId }),
   callState: () => call<CallState | null>("call_state"),
-  callSetMuted: (muted: boolean) => call<boolean>("call_set_muted", { muted }),
   callFocus: () => call<boolean>("call_focus"),
   toolsApps: (refresh = false) => call<StartApp[]>("tools_apps", { refresh }),
   toolsLaunch: (id: string) => call<void>("tools_launch", { id }),

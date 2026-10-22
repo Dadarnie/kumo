@@ -158,7 +158,7 @@ fn command_line(msg: &Value) -> Option<String> {
         "answer" => msg.get("id")?.is_u64() && msg.get("allow")?.is_boolean(),
         "text" => msg.get("v")?.as_str().is_some_and(|v| !v.trim().is_empty() && v.len() <= 4000),
         "mute" => msg.get("v")?.is_boolean(),
-        "stop" | "news_refresh" => true,
+        "stop" | "news_refresh" | "listen" | "listen_stop" => true,
         _ => false,
     };
     ok.then(|| msg.to_string())
@@ -209,11 +209,36 @@ impl Assistant {
     }
 }
 
+/// The assistant's model runs on Ollama; start it (hidden, its tray app if installed) when
+/// nothing answers on its port, instead of letting the assistant wait for minutes.
+fn ensure_ollama() {
+    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 11434));
+    if std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(400)).is_ok() {
+        return;
+    }
+    let tray = std::env::var_os("LOCALAPPDATA")
+        .map(|d| PathBuf::from(d).join("Programs").join("Ollama").join("ollama app.exe"))
+        .filter(|p| p.is_file());
+    let started = match tray {
+        Some(app) => Command::new(app).creation_flags(CREATE_NO_WINDOW).spawn(),
+        None => match crate::windows::find_on_path("ollama") {
+            Some(cli) => Command::new(cli).arg("serve").creation_flags(CREATE_NO_WINDOW)
+                .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn(),
+            None => return log::line("assistant: Ollama is not installed"),
+        },
+    };
+    match started {
+        Ok(_) => log::line("assistant: started Ollama"),
+        Err(err) => log::line(format!("assistant: could not start Ollama: {err}")),
+    }
+}
+
 fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>>>, stop: Arc<AtomicBool>) {
     let dir = &launch.dir;
     let mut failures = 0usize;
     while !stop.load(Ordering::SeqCst) {
         let started = Instant::now();
+        ensure_ollama();
         match spawn(&launch) {
             Ok(mut child) => {
                 *stdin.lock().unwrap() = child.stdin.take();

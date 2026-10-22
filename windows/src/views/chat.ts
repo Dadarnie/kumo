@@ -70,7 +70,19 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   input.value = State.chatDraft;
   const picker = new ChatPicker(() => { State.chatDraft = input.value; });
   const send = h("button", { type: "button", class: "send-btn", title: "Send", "aria-label": "Send message" }, icon(ICONS.arrowUp, 14));
-  const bar = h("div", { class: "chat-bar" }, input, send);
+  // Mic: the assistant takes your next phrase as a request (English or Tagalog), even when muted.
+  const mic = h("button", { type: "button", class: "chat-mic", title: "Talk to Kumo", "aria-label": "Talk to Kumo" },
+    icon(ICONS.microphone, 16), h("span", { class: "chat-mic-stop", "aria-hidden": "true" }));
+  const bars = h("span", { class: "chat-level", "aria-hidden": "true" }, ...[0, 1, 2, 3, 4].map(() => h("i")));
+  const listeningRow = h("div", { class: "chat-listening", role: "status", hidden: true }, bars,
+    h("span", { text: "Listening… tap the mic to stop" }));
+  const bar = h("div", { class: "chat-bar" }, mic, input, send);
+  const suggestions = ["What's new in AI?", "Any free dev tools today?", "Remind me in 20 minutes to stretch"];
+  const empty = h("div", { class: "chat-empty" },
+    h("strong", { text: "Hi, I'm Kumo" }),
+    h("span", { class: "chat-empty-hint", text: "Type, or tap the mic and talk. English or Tagalog." }),
+    h("div", { class: "chat-suggestions" }, ...suggestions.map(text =>
+      h("button", { type: "button", class: "chat-suggestion", text, onclick: () => { input.value = text; void submit(); } }))));
   const errorText = h("span");
   const error = h("div", { class: "chat-error", role: "alert", hidden: true }, errorText,
     h("button", { type: "button", title: "Dismiss error", "aria-label": "Dismiss error",
@@ -80,13 +92,43 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   const el = h(
     "div",
     { class: "view" },
-    h("div", { class: "card wash chat-card" }, h("div", { class: "chat-body" }, log, chipRow, error, picker.el, bar, dropHint)),
+    h("div", { class: "card chat-card" }, h("div", { class: "chat-body" }, empty, log, chipRow, error, picker.el, listeningRow, bar, dropHint)),
   );
-  (el.querySelector(".card") as HTMLElement).style.setProperty("--wash", "rgba(99,102,241,0.5)");
 
   let sending = false;
   let turnRevision = 0;
   let cancelledTurn = false;
+  let listening = false;
+  let listenTimer: ReturnType<typeof setTimeout> | undefined;
+  let listenFrame = 0;
+  let heardCount = 0;
+  const stopListening = (tell: boolean) => {
+    if (!listening) return;
+    listening = false;
+    clearTimeout(listenTimer);
+    cancelAnimationFrame(listenFrame);
+    if (tell) void Bridge.assistantSend({ t: "listen_stop" });
+    State.notify();
+  };
+  const animateLevel = () => {
+    const level = Math.min(1, Assistant.level * 14);
+    [...bars.children].forEach((bar, i) => {
+      (bar as HTMLElement).style.height = `${4 + Math.round(level * [8, 12, 10, 14, 7][i])}px`;
+    });
+    if (listening) listenFrame = requestAnimationFrame(animateLevel);
+  };
+  mic.addEventListener("click", () => {
+    if (listening) { stopListening(true); return; }
+    if (!Assistant.ready) { State.chatError = "Kumo is starting. Try again in a moment."; State.notify(); return; }
+    listening = true;
+    heardCount = State.chatHistory.length;
+    State.chatError = "";
+    Sound.play("tick");
+    void Bridge.assistantSend({ t: "listen" });
+    listenTimer = setTimeout(() => stopListening(true), 30_000);
+    listenFrame = requestAnimationFrame(animateLevel);
+    State.notify();
+  });
   let generation = State.chatEpoch;
   let disposed = false;
   let renderedCount = -1;
@@ -196,7 +238,19 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       el.querySelector(".chat-card")!.classList.toggle("is-drag-over", State.fileDragOver);
 
       const voiceAssistant = State.settings.assistantEnabled;
-      const thinking = State.stateOverride === "thinking" || (voiceAssistant && Assistant.busy);
+      // Your words arrived (or Kumo started answering): the mic's job is done.
+      if (listening && State.chatHistory.length > heardCount) stopListening(false);
+      const starting = voiceAssistant && !Assistant.ready;
+      const thinking = State.stateOverride === "thinking" || (voiceAssistant && Assistant.ready && Assistant.busy && !listening);
+      empty.hidden = State.chatHistory.length > 0 || thinking;
+      mic.hidden = !voiceAssistant;
+      mic.classList.toggle("is-listening", listening);
+      mic.title = listening ? "Stop listening" : "Talk to Kumo";
+      mic.setAttribute("aria-label", mic.title);
+      listeningRow.hidden = !listening;
+      (empty.querySelector(".chat-empty-hint") as HTMLElement).textContent = starting
+        ? "Starting Kumo's model… this takes a moment after Ollama starts."
+        : voiceAssistant ? "Type, or tap the mic and talk. English or Tagalog." : "Ask anything.";
       const count = State.chatHistory.length + (thinking ? 0.5 : 0);
       if (count !== renderedCount) {
         renderedCount = count;
@@ -224,6 +278,6 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       input.focus({ preventScroll: true });
       input.select();
     },
-    destroy() { disposed = true; picker.destroy(); input.value = ""; },
+    destroy() { disposed = true; stopListening(false); picker.destroy(); input.value = ""; },
   };
 }

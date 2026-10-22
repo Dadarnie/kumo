@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Call pill: when an app holds the microphone (Meet in a browser, Discord,
-// Zoom, Teams…) the island shows the app, a call timer and a mic toggle.
+// Zoom, Teams…) the island shows the app and a call timer; the dot turns red when muted.
 import { h } from "../views/dom";
-import { ICONS, icon } from "../views/icons";
 import { Bridge, type CallState } from "../core/bridge";
 import { Lifetime } from "../core/lifetime";
 
@@ -14,22 +13,14 @@ export class CallPill {
   private dot = h("span", { class: "call-dot", "aria-hidden": "true" });
   private app = h("span", { class: "call-app" });
   private timer = h("span", { class: "call-timer" });
-  private mic = h("button", { class: "call-mic", type: "button" }, icon(ICONS.microphone, 14));
   readonly el = h("div", { class: "call-pill", hidden: true, role: "status" },
-    this.dot, this.app, this.timer, this.mic);
+    this.dot, this.app, this.timer);
   private state: CallState | null = null;
   private lifetime = new Lifetime();
   private poll: ReturnType<typeof setTimeout> | undefined;
   private tick: ReturnType<typeof setInterval> | undefined;
 
   constructor(private onChange: (inCall: boolean) => void) {
-    this.mic.addEventListener("click", event => {
-      event.stopPropagation();
-      if (this.state?.muted == null) return;
-      void Bridge.callSetMuted(!this.state.muted).then(muted => {
-        if (this.state) { this.state = { ...this.state, muted }; this.render(); }
-      }).catch(() => {});
-    }, { signal: this.lifetime.signal });
     // The pill body brings the call app forward (desktop apps; Store apps cannot be focused).
     this.el.addEventListener("click", event => { event.stopPropagation(); void Bridge.callFocus(); }, { signal: this.lifetime.signal });
     void this.refresh();
@@ -55,9 +46,6 @@ export class CallPill {
     if (!call) return;
     this.app.textContent = call.app === "Browser" ? "Web call" : call.app;
     this.el.dataset.muted = String(call.muted === true);
-    this.mic.hidden = call.muted == null;
-    this.mic.title = call.muted ? "Unmute microphone" : "Mute microphone";
-    this.mic.setAttribute("aria-label", this.mic.title);
     const update = () => {
       const seconds = Math.max(0, Math.floor((Date.now() - call.startedAtUnixMs) / 1000));
       const h = Math.floor(seconds / 3600), m = Math.floor(seconds / 60) % 60, s = seconds % 60;

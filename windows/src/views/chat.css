@@ -322,3 +322,33 @@
 .markdown-content table { border-collapse:collapse; min-width:100%; font-size:11px; }
 .markdown-content th, .markdown-content td { text-align:left; padding:5px 9px; border:1px solid var(--hairline); }
 .markdown-content th { background:var(--control-fill); font-weight:600; }
+
+/* Chat, redesigned: the cloud sits in the header, a greeting with suggestions when empty,
+   gradient bubbles for you, quiet cards for Kumo, and a mic beside the input. */
+.chat-model-row[hidden] { display: none; }
+.chat-card { background: var(--card); }
+.chat-card .chat-body { padding: 12px 14px 12px; gap: 8px; }
+.chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 1 1 auto; padding: 8px 0; text-align: center; }
+.chat-empty[hidden] { display: none; }
+.chat-empty strong { font: 600 14px var(--font); color: var(--ink); }
+.chat-empty-hint { font: 400 11.5px var(--font); color: var(--dim); }
+.chat-suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
+.chat-suggestion { min-height: 26px; padding: 4px 11px; border: 1px solid var(--hairline); border-radius: 999px; background: var(--card-flat); color: var(--ink-2); font: 500 11px var(--font); cursor: pointer; }
+.chat-suggestion:hover { background: var(--tab-on); color: var(--ink); }
+.chat-body:has(.chat-empty:not([hidden])) .chat-log { flex: 0 0 auto; }
+.chat-log .chat-row.user .bubble { background: var(--accent-gradient); color: #fff; border-radius: 14px 14px 4px 14px; padding: 7px 11px; }
+.chat-log .chat-row:not(.user) .reply { background: var(--card-flat); border: 1px solid var(--hairline); border-radius: 14px 14px 14px 4px; padding: 7px 11px; color: var(--ink-2); max-width: 88%; }
+.chat-card .chat-bar { border-radius: 14px; padding: 4px; gap: 6px; background: var(--card-flat); }
+.chat-card .send-btn { background: var(--accent-gradient); color: #fff; }
+.chat-card .send-btn:disabled { background: var(--control-fill); color: var(--dim); }
+.chat-mic { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--control-fill); color: var(--accent); cursor: pointer; }
+.chat-mic[hidden] { display: none; }
+.chat-mic:hover { background: var(--control-hover); }
+.chat-mic-stop { display: none; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.chat-mic.is-listening { background: var(--accent-gradient); color: #fff; }
+.chat-mic.is-listening svg { display: none; }
+.chat-mic.is-listening .chat-mic-stop { display: block; }
+.chat-listening { display: flex; align-items: center; gap: 8px; padding: 0 4px; color: var(--dim); font: 400 11px var(--font); }
+.chat-listening[hidden] { display: none; }
+.chat-level { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
+.chat-level i { width: 3px; height: 4px; border-radius: 2px; background: var(--accent); transition: height 90ms linear; }

@@ -142,16 +142,6 @@ fn mic_muted() -> Option<bool> {
     })
 }
 
-/// Mutes or unmutes the default communications microphone; works for any call app.
-pub fn set_mic_muted(muted: bool) -> Result<bool, String> {
-    with_mic(|volume| {
-        unsafe { volume.SetMute(muted, std::ptr::null()) }
-            .ok()
-            .map(|_| muted)
-    })
-    .ok_or_else(|| "Could not change the microphone".to_string())
-}
-
 fn with_mic<T>(read: impl FnOnce(&IAudioEndpointVolume) -> Option<T>) -> Option<T> {
     let initialized = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) }.is_ok();
     let result = (|| {

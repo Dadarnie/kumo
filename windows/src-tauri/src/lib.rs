@@ -424,11 +424,6 @@ fn call_state() -> Option<windows::call::CallState> {
     windows::call::active_call()
 }
 
-#[tauri::command]
-fn call_set_muted(muted: bool) -> Result<bool, String> {
-    windows::call::set_mic_muted(muted)
-}
-
 /// Focuses only the app that is on the call right now, never an arbitrary path.
 #[tauri::command]
 fn call_focus() -> bool {
@@ -1157,7 +1152,6 @@ pub fn run() {
             open_url,
             open_media_source,
             call_state,
-            call_set_muted,
             call_focus,
             tools_apps,
             tools_launch,

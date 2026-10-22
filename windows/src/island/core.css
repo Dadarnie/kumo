@@ -360,13 +360,6 @@
 @keyframes call-pulse { 50% { opacity: .45; } }
 .call-app { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .call-timer { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: auto; }
-.call-mic {
-  width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--control-fill); color: var(--ink); cursor: pointer;
-}
-.call-pill[data-muted="true"] .call-mic { background: var(--red); color: #fff; }
-.call-mic:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
 @media (prefers-reduced-motion: reduce) { .call-dot { animation: none; } }
 /* Calm compact island: one line of work, no extras. Details live in the expanded view. */
 #island[data-visibility="island"] .activity-work-metric,

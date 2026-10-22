@@ -30,7 +30,7 @@ type AssistantEvent =
   | { t: "exit"; code: number | null };
 
 /** What the header's mic button and the voice shortcut need to know. */
-export const Assistant = { ready: false, muted: false, busy: false, speaking: false };
+export const Assistant = { ready: false, muted: false, busy: false, speaking: false, level: 0 };
 
 function task(): AgentTask {
   State.upsertExternalAgent(ASSISTANT_TASK, "Kumo", "#f67e7d");
@@ -81,6 +81,9 @@ export function handleAssistant(island: Island, event: AssistantEvent) {
     case "activity":
       if (event.icon === "▶") show("working", event.text.slice(0, 60));
       State.appendStep(ASSISTANT_TASK, `${event.icon} ${event.text}`.slice(0, 100));
+      break;
+    case "level":
+      Assistant.level = event.v;
       break;
     case "muted":
       Assistant.muted = event.v;
