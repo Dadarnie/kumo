@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Tools tab: pinned app launcher, Raphael's news, Docker containers, Ollama models
+// Tools tab: pinned app launcher, Kumo's news, Docker containers, Ollama models
 // and an Obsidian quick note. Docker and Ollama are polled only while the tab shows.
 import { h } from "./dom";
 import { ICONS, icon } from "./icons";
@@ -98,12 +98,12 @@ export class ToolsPanel {
           this.renderNews();
         } }));
     this.newsRefresh.addEventListener("click", () => {
-      void Bridge.raphaelSend({ t: "news_refresh" });
+      void Bridge.assistantSend({ t: "news_refresh" });
       this.newsRefresh.textContent = "Refreshing…";
       clearTimeout(this.refreshing);
       this.refreshing = setTimeout(() => { this.newsRefresh.textContent = "Refresh"; }, 180_000);
     });
-    void onEvent<{ t: string }>("raphael", event => {
+    void onEvent<{ t: string }>("assistant", event => {
       if (event.t !== "news_updated") return;
       clearTimeout(this.refreshing);
       this.newsRefresh.textContent = "Refresh";
@@ -193,12 +193,12 @@ export class ToolsPanel {
   }
 
   private async loadNews(): Promise<void> {
-    this.news = (await Bridge.raphaelNews().catch(() => null)) ?? [];
+    this.news = (await Bridge.assistantNews().catch(() => null)) ?? [];
     this.renderNews();
   }
 
   private renderNews(): void {
-    const on = State.settings.raphaelEnabled;
+    const on = State.settings.assistantEnabled;
     this.newsCard.hidden = !on && this.news.length === 0;
     this.newsRefresh.hidden = !on;
     for (const chip of this.newsChips.children)
@@ -209,7 +209,7 @@ export class ToolsPanel {
         onclick: () => void Bridge.openUrl(item.link) },
         h("span", { class: "tools-row-name", text: item.title }),
         h("span", { class: "tools-dim", text: `${item.source} · ${age(item.published)}` })))
-      : [h("span", { class: "tools-dim", text: this.news.length ? "Nothing in this category yet." : "No headlines yet. Raphael fetches them a minute after it starts." })]));
+      : [h("span", { class: "tools-dim", text: this.news.length ? "Nothing in this category yet." : "No headlines yet. Kumo fetches them a minute after it starts." })]));
     this.resized();
   }
 

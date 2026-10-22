@@ -200,7 +200,7 @@ code, .path { font: 400 11px/1.5 var(--mono); color: var(--dim); overflow-wrap: 
   .switch::after { transition: none; }
 }
 
-/* Settings › Raphael › News */
+/* Settings › Kumo › News */
 .news-settings { display: flex; flex-direction: column; gap: 6px; }
 .news-sources { display: flex; flex-direction: column; }
 .news-source { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--hairline); }

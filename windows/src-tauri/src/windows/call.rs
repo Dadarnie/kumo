@@ -169,7 +169,7 @@ fn with_mic<T>(read: impl FnOnce(&IAudioEndpointVolume) -> Option<T>) -> Option<
 }
 
 /// The call in progress: the most recent app still holding the microphone.
-/// Kumo's own voice chat and Raphael are not calls.
+/// Kumo's own voice chat and the assistant are not calls.
 pub fn active_call() -> Option<CallState> {
     let mut entries = live_entries(MIC_KEY);
     entries.extend(live_entries(w!(
@@ -182,7 +182,7 @@ pub fn active_call() -> Option<CallState> {
             name != "NonPackaged"
                 && !lower.ends_with("#mimo.exe")
                 && !lower.ends_with("#kumo.exe")
-                && !crate::raphael::is_own_mic_entry(name)
+                && !crate::assistant::is_own_mic_entry(name)
         })
         .max_by_key(|(_, start)| *start)?;
     let path = entry.contains('#').then(|| entry.replace('#', "\\"));

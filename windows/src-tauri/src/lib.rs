@@ -26,7 +26,7 @@ mod media_runtime;
 mod migration;
 mod openai;
 mod pipe;
-mod raphael;
+mod assistant;
 mod secrets;
 mod settings;
 mod tools;
@@ -127,51 +127,39 @@ fn boot(app: AppHandle, shared: State<Shared>) -> BootInfo {
     }
 }
 
-/// Whether a folder holds Raphael (chat.py and its .venv); for the Settings page.
+/// The assistant's saved headlines, from its own folder (never a path from the page).
 #[tauri::command]
-fn raphael_check(dir: String) -> bool {
-    raphael::valid_dir(std::path::Path::new(dir.trim()))
+fn assistant_news() -> serde_json::Value {
+    assistant::news(&assistant::dir())
 }
 
-/// Raphael's saved headlines, from the folder in Settings (never a path from the page).
-#[tauri::command]
-fn raphael_news(shared: State<Shared>) -> serde_json::Value {
-    let dir = shared.settings.lock().unwrap().raphael_dir.trim().to_string();
-    if dir.is_empty() {
-        return serde_json::Value::Array(vec![]);
-    }
-    raphael::news(std::path::Path::new(&dir))
-}
-
-fn raphael_dir(shared: &Shared) -> Result<std::path::PathBuf, String> {
-    let dir = shared.settings.lock().unwrap().raphael_dir.trim().to_string();
-    let dir = std::path::PathBuf::from(dir);
-    if raphael::valid_dir(&dir) { Ok(dir) } else { Err("Set Raphael's folder first.".into()) }
+fn assistant_dir() -> Result<std::path::PathBuf, String> {
+    let dir = assistant::dir();
+    if assistant::valid_dir(&dir) { Ok(dir) } else { Err("The assistant folder is missing its .venv. See assistant/README.md.".into()) }
 }
 
 #[tauri::command]
-fn raphael_news_settings(shared: State<Shared>) -> serde_json::Value {
-    raphael_dir(&shared).map(|dir| raphael::news_settings(&dir)).unwrap_or(serde_json::Value::Null)
+fn assistant_news_settings() -> serde_json::Value {
+    assistant_dir().map(|dir| assistant::news_settings(&dir)).unwrap_or(serde_json::Value::Null)
 }
 
-/// Saves the News settings into Raphael's folder, then asks Raphael to refresh with them.
+/// Saves the News settings into the assistant's folder, then asks the assistant to refresh with them.
 #[tauri::command]
-fn raphael_news_settings_save(
+fn assistant_news_settings_save(
     window: tauri::WebviewWindow,
-    shared: State<Shared>,
-    raphael: State<raphael::Raphael>,
+    assistant: State<assistant::Assistant>,
     value: serde_json::Value,
 ) -> Result<(), String> {
     settings_only(&window)?;
-    raphael::save_news_settings(&raphael_dir(&shared)?, &value)?;
-    let _ = raphael.send(&serde_json::json!({"t": "news_refresh"}));
+    assistant::save_news_settings(&assistant_dir()?, &value)?;
+    let _ = assistant.send(&serde_json::json!({"t": "news_refresh"}));
     Ok(())
 }
 
-/// One command from the island to Raphael (answer, typed text, mute, stop).
+/// One command from the island to Assistant (answer, typed text, mute, stop).
 #[tauri::command]
-fn raphael_send(raphael: State<raphael::Raphael>, msg: serde_json::Value) -> Result<(), String> {
-    raphael.send(&msg)
+fn assistant_send(assistant: State<assistant::Assistant>, msg: serde_json::Value) -> Result<(), String> {
+    assistant.send(&msg)
 }
 
 #[tauri::command]
@@ -257,7 +245,7 @@ fn save_settings(
         app.state::<claude_usage::UsageCache>().clear();
     }
     workflow_native::refresh_voice(&app);
-    app.state::<raphael::Raphael>().sync(&app, &settings);
+    app.state::<assistant::Assistant>().sync(&app, &settings);
     // Keep the other window in step (island ⇄ settings window).
     let _ = app.emit("settings-changed", settings);
 }
@@ -1130,7 +1118,7 @@ pub fn run() {
             gate: gate.clone(),
         })
         .manage(Pending::default())
-        .manage(raphael::Raphael::default())
+        .manage(assistant::Assistant::default())
         .manage(grab::Grab::default())
         .manage(Chat::default())
         .manage(chat_requests::ChatRequests::default())
@@ -1139,11 +1127,10 @@ pub fn run() {
         .manage(codex_usage::UsageCache::default())
         .manage(claude_usage::UsageCache::default())
         .invoke_handler(tauri::generate_handler![
-            raphael_send,
-            raphael_check,
-            raphael_news,
-            raphael_news_settings,
-            raphael_news_settings_save,
+            assistant_send,
+            assistant_news,
+            assistant_news_settings,
+            assistant_news_settings_save,
             codex_usage,
             claude_usage,
             set_audio_meter_active,
@@ -1260,7 +1247,7 @@ pub fn run() {
             }
             pipe::start(handle.clone());
             integrations::start(handle.clone());
-            handle.state::<raphael::Raphael>().sync(&handle, &loaded);
+            handle.state::<assistant::Assistant>().sync(&handle, &loaded);
             Ok(())
         })
         .build(tauri::generate_context!())

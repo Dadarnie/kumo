@@ -61,7 +61,7 @@ import { h } from "../views/dom";
 import { mediaStore } from "../core/media-store";
 import { ActivityStrip } from "./activity-strip";
 import { ACTIVITY_SETTLE_MS, Visibility } from "../core/visibility";
-import { Raphael } from "./raphael";
+import { Assistant } from "./assistant";
 import { IslandWindowBounds } from "./window-bounds";
 import { buildHome, buildMediaPage } from "../views/sections";
 import { safeSectionView, ownsContent } from "../core/sections";
@@ -1698,8 +1698,8 @@ export class Island {
       pendingApproval: State.view === "approval" || State.pendingApprovals.some(request => request.taskId === integration?.id && !request.questions), mediaError: mediaStore.snapshot().state.providerStatus === "error" });
     this.engine.tile = false;
     this.engine.backdrop = State.view !== "media";
-    // Raphael talking animates the mascot's mouth.
-    this.engine.voiceMode = State.settings.raphaelEnabled && Raphael.speaking ? "speaking" : null;
+    // Kumo talking animates the mascot's mouth.
+    this.engine.voiceMode = State.settings.assistantEnabled && Assistant.speaking ? "speaking" : null;
     this.engine.showBadge = State.visibility !== "peek" && !(State.visibility === "island" && this.engine.status === "loading");
     this.engine.badgeMode = "contextual";
     this.engine.setIntegration(integration?.id ?? null);

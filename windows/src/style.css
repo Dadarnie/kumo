@@ -2236,17 +2236,17 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .tools-empty { color: var(--dim); font: 400 11px var(--font-compact); padding: 8px 0; }
 .tools-services[hidden] { display: none; }
-/* Raphael's mic: coral while listening, struck through when off. */
-.header-actions > .header-raphael-mic { color: var(--accent); }
-.header-actions > .header-raphael-mic.is-muted { color: var(--dim-2); }
-.header-raphael-mic.is-muted svg { opacity: .55; }
-.header-raphael-mic.is-muted::after { content: ""; position: absolute; width: 18px; height: 2px; border-radius: 1px; background: currentColor; transform: rotate(-45deg); }
-.header-actions > .header-raphael-mic { position: relative; }
-/* While Raphael works, its mic button becomes a stop button. */
-.raphael-stop-square { display: none; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
-.header-raphael-mic.is-busy svg { display: none; }
-.header-raphael-mic.is-busy .raphael-stop-square { display: block; }
-.header-actions > .header-raphael-mic.is-busy { color: var(--ink); background: var(--tab-on); }
+/* Kumo's mic: coral while listening, struck through when off. */
+.header-actions > .header-assistant-mic { color: var(--accent); }
+.header-actions > .header-assistant-mic.is-muted { color: var(--dim-2); }
+.header-assistant-mic.is-muted svg { opacity: .55; }
+.header-assistant-mic.is-muted::after { content: ""; position: absolute; width: 18px; height: 2px; border-radius: 1px; background: currentColor; transform: rotate(-45deg); }
+.header-actions > .header-assistant-mic { position: relative; }
+/* While Kumo works, its mic button becomes a stop button. */
+.assistant-stop-square { display: none; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.header-assistant-mic.is-busy svg { display: none; }
+.header-assistant-mic.is-busy .assistant-stop-square { display: block; }
+.header-actions > .header-assistant-mic.is-busy { color: var(--ink); background: var(--tab-on); }
 
 /* The ⋯ menu: Now playing, Settings, Sounds. */
 .header-more { position: relative; display: flex; }

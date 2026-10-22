@@ -3,7 +3,7 @@
 
 import { h, clear, dot } from "./dom";
 import { SECTIONS, sectionEnabled, sectionForView } from "../core/sections";
-import { Raphael, stopRaphael, toggleRaphaelMute } from "../island/raphael";
+import { Assistant, stopAssistant, toggleAssistantMute } from "../island/assistant";
 import { ICONS, icon } from "./icons";
 import { integrationsFilled, usageFilled,
   soundFilled, soundOffFilled } from "../icons/filled";
@@ -211,10 +211,10 @@ export function buildHeader(actions: ViewActions): ViewHost {
     approvalLabel, approvalCount);
   const minimizeBtn = h("button", { title: "Minimize", onclick: () => actions.collapse() },
     mimoIcon(collapseGlyph, 18));
-  // Raphael: mic on/off; while it works the same button stops it.
-  const raphaelMic = h("button", { class: "header-raphael-mic", type: "button", hidden: true,
-    onclick: () => { if (Raphael.busy) stopRaphael(); else toggleRaphaelMute(); } },
-    icon(ICONS.microphone, 17), h("span", { class: "raphael-stop-square", "aria-hidden": "true" }));
+  // Kumo: mic on/off; while it works the same button stops it.
+  const assistantMic = h("button", { class: "header-assistant-mic", type: "button", hidden: true,
+    onclick: () => { if (Assistant.busy) stopAssistant(); else toggleAssistantMute(); } },
+    icon(ICONS.microphone, 17), h("span", { class: "assistant-stop-square", "aria-hidden": "true" }));
   // Less-used controls live in one menu so the bar stays calm.
   const menu = h("div", { class: "header-menu", role: "menu", hidden: true }, mediaBtn, gearBtn, soundBtn);
   for (const item of [mediaBtn, gearBtn, soundBtn]) {
@@ -251,7 +251,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       { class: "tabs", "aria-label": "Island sections" },
       ...navigation.map((item) => item.button),
     ),
-    h("div", { class: "header-actions" }, account.el, limitsBtn, raphaelMic, more, minimizeBtn, approvalBtn),
+    h("div", { class: "header-actions" }, account.el, limitsBtn, assistantMic, more, minimizeBtn, approvalBtn),
   );
 
   return {
@@ -287,11 +287,11 @@ export function buildHeader(actions: ViewActions): ViewHost {
       title.textContent = SECTIONS.find(item => item.id === sectionForView(v))?.label
         ?? (v === "media" ? "Now playing" : v === "usage" ? "Limits" : v === "approvals" ? "Approvals" : "");
       gearBtn.classList.toggle("on", v === "settings");
-      raphaelMic.hidden = !State.settings.raphaelEnabled || !Raphael.ready;
-      raphaelMic.classList.toggle("is-muted", Raphael.muted && !Raphael.busy);
-      raphaelMic.classList.toggle("is-busy", Raphael.busy);
-      raphaelMic.title = Raphael.busy ? "Stop Raphael" : Raphael.muted ? "Raphael's mic is off · turn on" : "Raphael is listening · turn mic off";
-      raphaelMic.setAttribute("aria-label", raphaelMic.title);
+      assistantMic.hidden = !State.settings.assistantEnabled || !Assistant.ready;
+      assistantMic.classList.toggle("is-muted", Assistant.muted && !Assistant.busy);
+      assistantMic.classList.toggle("is-busy", Assistant.busy);
+      assistantMic.title = Assistant.busy ? "Stop Kumo" : Assistant.muted ? "Kumo's mic is off · turn on" : "Kumo is listening · turn mic off";
+      assistantMic.setAttribute("aria-label", assistantMic.title);
       if (State.visibility !== "expanded") menu.hidden = true;
       if (renderedSound !== State.settings.soundEnabled) {
         renderedSound = State.settings.soundEnabled;

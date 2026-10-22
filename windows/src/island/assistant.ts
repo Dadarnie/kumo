@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-// Raphael, the local voice assistant, as an agent in the island. The native
-// sidecar (raphael.rs) relays kumo_bridge.py's JSON events as `raphael` events.
-// Raphael is the `agent_raphael` task: the compact strip, Home pill and mascot
-// follow its state. Its approvals use `raphael:<id>` request ids, which the
-// bridge routes back to Raphael instead of the coding-agent pipe.
+// Kumo, the local voice assistant, as an agent in the island. The native
+// sidecar (assistant.rs) relays kumo_bridge.py's JSON events as `assistant` events.
+// Kumo is the `agent_assistant` task: the compact strip, Home pill and mascot
+// follow its state. Its approvals use `assistant:<id>` request ids, which the
+// bridge routes back to Kumo instead of the coding-agent pipe.
 
 import { Bridge, onEvent } from "../core/bridge";
 import { Sound } from "../core/sound";
@@ -12,11 +12,11 @@ import { Visibility } from "../core/visibility";
 import type { Island } from "./island";
 import { cancelApprovalTimeout } from "./hooks";
 
-export const RAPHAEL_TASK = "agent_raphael";
-export const RAPHAEL_PREFIX = "raphael:";
+export const ASSISTANT_TASK = "agent_kumo";
+export const ASSISTANT_PREFIX = "assistant:";
 const REMINDER_MS = 30_000;
 
-type RaphaelEvent =
+type AssistantEvent =
   | { t: "ready" | "unavailable" }
   | { t: "state"; v: "idle" | "listening" | "thinking" | "speaking" }
   | { t: "you" | "reply" | "note"; v: string }
@@ -30,11 +30,11 @@ type RaphaelEvent =
   | { t: "exit"; code: number | null };
 
 /** What the header's mic button and the voice shortcut need to know. */
-export const Raphael = { ready: false, muted: false, busy: false, speaking: false };
+export const Assistant = { ready: false, muted: false, busy: false, speaking: false };
 
 function task(): AgentTask {
-  State.upsertExternalAgent(RAPHAEL_TASK, "Raphael", "#f67e7d");
-  return State.tasks.find(t => t.id === RAPHAEL_TASK)!;
+  State.upsertExternalAgent(ASSISTANT_TASK, "Kumo", "#f67e7d");
+  return State.tasks.find(t => t.id === ASSISTANT_TASK)!;
 }
 
 function show(state: AgentTask["state"], status: string | null) {
@@ -42,25 +42,25 @@ function show(state: AgentTask["state"], status: string | null) {
   t.state = state;
   t.statusText = status;
   t.lastEventAt = Date.now();
-  Raphael.busy = state !== "idle";
-  Raphael.speaking = status === "Speaking";
+  Assistant.busy = state !== "idle";
+  Assistant.speaking = status === "Speaking";
   State.notify();
 }
 
 let reminderTimer: number | undefined;
 let chatId = 1_000_000_000;
 
-/** Raphael's turns, spoken or typed, are the Chat tab's conversation. */
+/** Kumo's turns, spoken or typed, are the Chat tab's conversation. */
 function chatLine(role: "user" | "assistant", content: string) {
   if (!content.trim()) return;
   State.chatHistory.push({ id: chatId++, role, content });
   if (State.chatHistory.length > 100) State.chatHistory.splice(0, State.chatHistory.length - 100);
 }
 
-export function handleRaphael(island: Island, event: RaphaelEvent) {
+export function handleAssistant(island: Island, event: AssistantEvent) {
   switch (event.t) {
     case "ready":
-      Raphael.ready = true;
+      Assistant.ready = true;
       show("idle", null);
       break;
     case "state":
@@ -71,29 +71,29 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
       break;
     case "you":
       chatLine("user", event.v);
-      State.appendStep(RAPHAEL_TASK, `“${event.v.slice(0, 80)}”`);
+      State.appendStep(ASSISTANT_TASK, `“${event.v.slice(0, 80)}”`);
       show("thinking", "Thinking…");
       break;
     case "reply":
       chatLine("assistant", event.v);
-      State.appendStep(RAPHAEL_TASK, event.v.slice(0, 120));
+      State.appendStep(ASSISTANT_TASK, event.v.slice(0, 120));
       break;
     case "activity":
       if (event.icon === "▶") show("working", event.text.slice(0, 60));
-      State.appendStep(RAPHAEL_TASK, `${event.icon} ${event.text}`.slice(0, 100));
+      State.appendStep(ASSISTANT_TASK, `${event.icon} ${event.text}`.slice(0, 100));
       break;
     case "muted":
-      Raphael.muted = event.v;
+      Assistant.muted = event.v;
       State.notify();
       break;
     case "approve": {
-      const requestId = RAPHAEL_PREFIX + event.id;
+      const requestId = ASSISTANT_PREFIX + event.id;
       State.enqueueApproval({
         requestId, sessionId: "", tool: event.name.replace(/_/g, " "), command: event.detail,
-        taskId: RAPHAEL_TASK, agentName: "Raphael", danger: event.danger,
-        reason: event.danger ? "Raphael marks this as able to change, delete or send something." : undefined,
+        taskId: ASSISTANT_TASK, agentName: "Kumo", danger: event.danger,
+        reason: event.danger ? "Kumo marks this as able to change, delete or send something." : undefined,
       });
-      State.setPillBadge(RAPHAEL_TASK, "approval");
+      State.setPillBadge(ASSISTANT_TASK, "approval");
       show("approval", "Approval needed");
       State.isPinned = true;
       Visibility.setPinned(true);
@@ -102,7 +102,7 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
       break;
     }
     case "approve_close":
-      closeApproval(island, RAPHAEL_PREFIX + event.id);
+      closeApproval(island, ASSISTANT_PREFIX + event.id);
       break;
     case "notify":
       notice(island, `⏰ ${event.v}`, event.v, "approval");
@@ -115,10 +115,10 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
     }
     case "exit":
     case "unavailable":
-      Raphael.ready = Raphael.busy = false;
+      Assistant.ready = Assistant.busy = false;
       for (const request of State.pendingApprovals)
-        if (request.requestId.startsWith(RAPHAEL_PREFIX)) closeApproval(island, request.requestId);
-      if (!State.settings.raphaelEnabled) State.removeTask(RAPHAEL_TASK);
+        if (request.requestId.startsWith(ASSISTANT_PREFIX)) closeApproval(island, request.requestId);
+      if (!State.settings.assistantEnabled) State.removeTask(ASSISTANT_TASK);
       else show("error", event.t === "exit" ? "Restarting…" : "Not found: check its folder in Settings");
       break;
   }
@@ -126,24 +126,24 @@ export function handleRaphael(island: Island, event: RaphaelEvent) {
 
 /** A short message in the compact strip (reminders, free finds) that clears itself. */
 function notice(island: Island, step: string, status: string, sound: Parameters<typeof Sound.play>[0]) {
-  State.appendStep(RAPHAEL_TASK, step.slice(0, 120));
-  State.setPillBadge(RAPHAEL_TASK, "finished");
+  State.appendStep(ASSISTANT_TASK, step.slice(0, 120));
+  State.setPillBadge(ASSISTANT_TASK, "finished");
   show("idle", status.slice(0, 80));
   Sound.play(sound);
   island.reveal();
   window.clearTimeout(reminderTimer);
   reminderTimer = window.setTimeout(() => {
-    if (task().pillBadge === "finished") { State.setPillBadge(RAPHAEL_TASK, null); show("idle", null); }
+    if (task().pillBadge === "finished") { State.setPillBadge(ASSISTANT_TASK, null); show("idle", null); }
   }, REMINDER_MS);
 }
 
-/** Raphael timed out or stopped: the card goes, nothing is sent back. */
+/** Kumo timed out or stopped: the card goes, nothing is sent back. */
 function closeApproval(island: Island, requestId: string) {
   const request = State.finishApproval(requestId);
   if (!request) return;
   cancelApprovalTimeout(requestId);
   State.rememberApproval(request, "Timed out");
-  State.setPillBadge(RAPHAEL_TASK, null);
+  State.setPillBadge(ASSISTANT_TASK, null);
   show("idle", null);
   State.isPinned = State.pendingApprovals.length > 0;
   Visibility.setPinned(State.isPinned);
@@ -153,26 +153,26 @@ function closeApproval(island: Island, requestId: string) {
   }
 }
 
-export function toggleRaphaelMute(): boolean {
-  if (!State.settings.raphaelEnabled || !Raphael.ready) return false;
-  void Bridge.raphaelSend({ t: "mute", v: !Raphael.muted });
+export function toggleAssistantMute(): boolean {
+  if (!State.settings.assistantEnabled || !Assistant.ready) return false;
+  void Bridge.assistantSend({ t: "mute", v: !Assistant.muted });
   return true;
 }
 
-export function stopRaphael(): void {
-  void Bridge.raphaelSend({ t: "stop" });
+export function stopAssistant(): void {
+  void Bridge.assistantSend({ t: "stop" });
 }
 
-export async function registerRaphaelHandlers(island: Island): Promise<() => void> {
-  const stop = await onEvent<RaphaelEvent>("raphael", event => handleRaphael(island, event));
+export async function registerAssistantHandlers(island: Island): Promise<() => void> {
+  const stop = await onEvent<AssistantEvent>("assistant", event => handleAssistant(island, event));
   return () => { stop(); window.clearTimeout(reminderTimer); };
 }
 
-/** Settings turned Raphael off: forget its task and any open card. */
-export function syncRaphaelSettings(island: Island): void {
-  if (State.settings.raphaelEnabled) return;
-  Raphael.ready = Raphael.busy = Raphael.muted = false;
+/** Settings turned Kumo off: forget its task and any open card. */
+export function syncAssistantSettings(island: Island): void {
+  if (State.settings.assistantEnabled) return;
+  Assistant.ready = Assistant.busy = Assistant.muted = false;
   for (const request of [...State.pendingApprovals])
-    if (request.requestId.startsWith(RAPHAEL_PREFIX)) closeApproval(island, request.requestId);
-  State.removeTask(RAPHAEL_TASK);
+    if (request.requestId.startsWith(ASSISTANT_PREFIX)) closeApproval(island, request.requestId);
+  State.removeTask(ASSISTANT_TASK);
 }

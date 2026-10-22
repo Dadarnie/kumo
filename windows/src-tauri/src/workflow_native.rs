@@ -72,7 +72,7 @@ pub(crate) fn configure_voice(win: &WebviewWindow, value: &str) -> ShortcutStatu
         .lock()
         .unwrap()
         .clone();
-    let connected = preferences.raphael_enabled;
+    let connected = preferences.assistant_enabled;
     let mut status = configure_slot(
         win,
         if connected { value } else { "" },
@@ -82,7 +82,7 @@ pub(crate) fn configure_voice(win: &WebviewWindow, value: &str) -> ShortcutStatu
     if !connected {
         status.shortcut = value.into();
         status.error =
-            Some("Turn on Raphael in Settings to use this shortcut.".into());
+            Some("Turn on the assistant in Settings to use this shortcut.".into());
     }
     *VOICE_STATUS.get_or_init(Default::default).lock().unwrap() = status.clone();
     status
@@ -288,7 +288,7 @@ unsafe extern "system" fn shortcut_proc(
         let _ = unsafe { RemoveWindowSubclass(hwnd, Some(shortcut_proc), id) };
         drop(unsafe { Box::from_raw(data as *mut Shortcuts) });
     } else if message == WM_HOTKEY && wparam.0 == VOICE_HOTKEY as usize {
-        // Raphael's mic toggle: never take focus from the app the user is in.
+        // The assistant's mic toggle: never take focus from the app the user is in.
         let context = unsafe { &*(data as *const Shortcuts) };
         let _ = context
             .app

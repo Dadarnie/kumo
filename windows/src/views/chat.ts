@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Kumo's conversation and file attachments. With Raphael on, typed requests go to
-// Raphael and the log shows its spoken and typed turns (island/raphael.ts).
+// Kumo's conversation and file attachments. With Kumo on, typed requests go to
+// Kumo and the log shows its spoken and typed turns (island/assistant.ts).
 
 import { h, clear } from "./dom";
 import { ICONS, icon } from "./icons";
@@ -13,7 +13,7 @@ import { ChatPicker } from "./chat-picker";
 import "./chat.css";
 import { Activity } from "../core/activity";
 import { renderMarkdown } from "./markdown";
-import { Raphael } from "../island/raphael";
+import { Assistant } from "../island/assistant";
 
 let nextId = 1;
 
@@ -91,15 +91,15 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   let disposed = false;
   let renderedCount = -1;
 
-  /** Raphael answers by voice and events; the reply arrives in the log on its own. */
-  function askRaphael(query: string): void {
-    if (State.droppedFiles.length) State.chatError = "Raphael can't read attached files yet. Remove them first.";
-    else if (!Raphael.ready) State.chatError = "Raphael is starting. Try again in a moment.";
+  /** Kumo answers by voice and events; the reply arrives in the log on its own. */
+  function askAssistant(query: string): void {
+    if (State.droppedFiles.length) State.chatError = "Kumo can't read attached files yet. Remove them first.";
+    else if (!Assistant.ready) State.chatError = "Kumo is starting. Try again in a moment.";
     else if (query.length > 4000) State.chatError = "Enter a message shorter than 4,000 characters.";
     else {
       input.value = ""; State.chatDraft = ""; State.chatError = "";
       Sound.play("send");
-      void Bridge.raphaelSend({ t: "text", v: query });
+      void Bridge.assistantSend({ t: "text", v: query });
     }
     State.notify();
   }
@@ -107,7 +107,7 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
   async function submit(): Promise<string | undefined> {
     const query = input.value.trim();
     if (!query || sending || disposed || State.chatAttachmentLoading || picker.busy) return;
-    if (State.settings.raphaelEnabled) { askRaphael(query); return; }
+    if (State.settings.assistantEnabled) { askAssistant(query); return; }
     if (new TextEncoder().encode(query).length > 32_000) {
       State.chatError = "Enter a message shorter than 32 KB.";
       State.notify();
@@ -195,8 +195,8 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       dropHint.hidden = !State.fileDragOver;
       el.querySelector(".chat-card")!.classList.toggle("is-drag-over", State.fileDragOver);
 
-      const raphael = State.settings.raphaelEnabled;
-      const thinking = State.stateOverride === "thinking" || (raphael && Raphael.busy);
+      const voiceAssistant = State.settings.assistantEnabled;
+      const thinking = State.stateOverride === "thinking" || (voiceAssistant && Assistant.busy);
       const count = State.chatHistory.length + (thinking ? 0.5 : 0);
       if (count !== renderedCount) {
         renderedCount = count;
@@ -209,9 +209,9 @@ export function buildPrompt(onHeightChange: () => void, _actions?: ViewActions):
       // Place the open picker after conversation and attachment layout changes,
       // so focusing a provider cannot move it between pointerdown and click.
       picker.sync();
-      picker.el.hidden = raphael;
+      picker.el.hidden = voiceAssistant;
 
-      const assistant = raphael ? "Raphael" : chatAssistantName(State.settings);
+      const assistant = voiceAssistant ? "Kumo" : chatAssistantName(State.settings);
       input.placeholder = State.chatHistory.length === 0 ? "Ask " + assistant + "…" : "Continue…";
       input.setAttribute("aria-label", "Ask " + assistant);
       el.setAttribute("aria-label", assistant + " chat");

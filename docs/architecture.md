@@ -18,7 +18,7 @@ Kumo is a Windows Tauri application. Paths below are relative to `windows/`.
 | Agent activity and requests | `island/hooks`, review/question panels | Authenticated per-user named pipe and relay |
 | Connected services | Integration controllers and panels | Seven service pollers |
 | Chat | Chat and provider controls | Provider requests, streaming and credentials |
-| Raphael (voice assistant) | `island/raphael`, Chat in Raphael mode, Settings → Raphael | `raphael.rs`: supervised `chat.py --kumo` child, JSON lines over stdin/stdout |
+| Voice assistant | `island/assistant`, Chat in assistant mode, Settings → Assistant | `assistant.rs`: supervised `assistant/chat.py --kumo` child, JSON lines over stdin/stdout |
 | Shelf | Grab controller, previews and annotations | Local files, capture and clipboard formats |
 
 ## Boundaries
@@ -32,20 +32,21 @@ request expands and pins the island, including in Working mode or over an open
 Chat or Shelf panel. Queued requests preserve the active selection and drafts.
 Unavailable or paused Kumo returns control to the agent.
 
-Raphael is a separate Python project (its folder is a setting). Kumo starts it,
-turns each stdout JSON line into a `raphael` event and writes validated commands
-(`answer`, `text`, `mute`, `stop`) to its stdin; closing stdin makes it save its
-session and quit, and crashes restart with backoff. Raphael is the `agent_raphael`
-task; its approvals use `raphael:<id>` request ids that the bridge answers through
-`raphael_send`, never the coding-agent pipe. Its interpreter is excluded from the
-call pill. Both Raphael and Ollama chat use the local Ollama server.
+The voice assistant is the Python project in `assistant/` (repository root); Kumo
+finds it next to kumo.exe or in the repository. Kumo starts it, turns each stdout
+JSON line into an `assistant` event and writes validated commands (`answer`, `text`,
+`mute`, `stop`, `news_refresh`) to its stdin; closing stdin makes it save its session
+and quit, and crashes restart with backoff. It is the `agent_kumo` task; its approvals
+use `assistant:<id>` request ids that the bridge answers through `assistant_send`,
+never the coding-agent pipe. Its interpreter is excluded from the call pill. Both the
+assistant and Ollama chat use the local Ollama server.
 
-News is Raphael's (`news.py`). Kumo reads `data/news.json` from the configured
-Raphael folder (`raphael_news`), never a path from the page, and writes
+News is the assistant's (`assistant/news.py`). Kumo reads `data/news.json` from the
+assistant folder (`assistant_news`), never a path from the page, and writes
 `data/news_settings.json` only from the Settings window after rebuilding every
-field from a checked list (`raphael_news_settings_save`). `news_refresh` asks
-Raphael to fetch now; `news_updated` reports the end of each refresh with the
-titles of new free finds.
+field from a checked list (`assistant_news_settings_save`). `news_refresh` asks it to
+fetch now; `news_updated` reports the end of each refresh with the titles of new
+free finds.
 
 Chat providers are separate from coding connections. Windows media sessions and
 master/app audio have separate native owners. Unknown capability and activity

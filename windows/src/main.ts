@@ -14,7 +14,7 @@ import { mediaStore } from "./core/media-store";
 import { Island } from "./island/island";
 import { expireApprovals, registerHookHandlers, resetProviderSession } from "./island/hooks";
 import { registerIntegrationHandlers, refreshConfigured } from "./island/integrations";
-import { registerRaphaelHandlers, syncRaphaelSettings, toggleRaphaelMute } from "./island/raphael";
+import { registerAssistantHandlers, syncAssistantSettings, toggleAssistantMute } from "./island/assistant";
 import { Activity } from "./core/activity";
 import type { ClaudeUsage } from "./core/codex-usage";
 
@@ -36,7 +36,7 @@ async function main() {
   const applyPreferences = () => {
     State.loadIntegrationTasks();
     island.applySettings();
-    syncRaphaelSettings(island);
+    syncAssistantSettings(island);
     for (const [id, subscription] of Object.entries(subscriptions)) {
       void subscription
         .setEnabled(State.settings.modules[id as keyof typeof subscriptions])
@@ -84,9 +84,9 @@ async function main() {
   }
   applyPreferences();
   lifetime.own(await onEvent<null>("workflow-shortcut",()=>island.openNextWork()));
-  lifetime.own(await registerRaphaelHandlers(island));
-  // With Raphael on, the voice shortcut turns its microphone on and off.
-  lifetime.own(await onEvent<null>("voice-shortcut",()=>{toggleRaphaelMute();}));
+  lifetime.own(await registerAssistantHandlers(island));
+  // With Kumo on, the voice shortcut turns its microphone on and off.
+  lifetime.own(await onEvent<null>("voice-shortcut",()=>{toggleAssistantMute();}));
   let grabObserved = false;
   lifetime.own(await onEvent<boolean>("grab-detached",value=>{
     grabObserved = true;

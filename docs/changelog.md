@@ -13,12 +13,12 @@ Kumo forks Mimo 1.0.1 under a new name and identity.
 - Island loop capped at 60 fps; lighter polling.
 - Side rail for the tabs, Settings
   with top tabs and card pages, Music page over blurred artwork.
-- Raphael, a local voice assistant, runs inside Kumo: status in the island,
-  approvals in the island, reminders, Chat talks to it, Settings → Raphael. The
-  cloud voice (OpenAI, Gemini, Grok, Groq) is removed.
-- News: Raphael reads coding, AI, security and free-offer feeds; Tools › News with
+- Voice assistant built in (`assistant/`, formerly the separate Raphael project):
+  "hey kumo", status and approvals in the island, reminders, Chat talks to it,
+  Settings → Assistant. The cloud voice (OpenAI, Gemini, Grok, Groq) is removed.
+- News: the assistant reads coding, AI, security and free-offer feeds; Tools › News with
   category chips, island notices for new free finds, a daily vault digest, and
-  sources and interval in Settings → Raphael.
+  sources and interval in Settings → Assistant.
 - Upgrades from Mimo: data, autostart and installed hooks move over on first launch.
 
 Entries below are Mimo's history.

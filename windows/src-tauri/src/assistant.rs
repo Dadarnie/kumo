@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-//! Raphael, the local voice assistant, as a supervised child process.
+//! Kumo's voice assistant (the `assistant/` folder) as a supervised child process.
 //!
-//! Kumo starts `<raphael dir>\.venv\Scripts\python.exe chat.py --kumo`. Raphael writes
-//! one JSON event per line on stdout; each becomes a `raphael` event for the island.
+//! Kumo starts `<assistant dir>\.venv\Scripts\python.exe chat.py --kumo`. The assistant writes
+//! one JSON event per line on stdout; each becomes a `assistant` event for the island.
 //! The island's commands go back as JSON lines on stdin (`kumo_bridge.py` documents
-//! both directions). Closing stdin is Raphael's signal to save its session and quit,
+//! both directions). Closing stdin is the assistant's signal to save its session and quit,
 //! so stopping is graceful, and if Kumo itself dies the pipe closes the same way.
-//! A crash restarts it with backoff; stderr goes to `raphael.log`.
+//! A crash restarts it with backoff; stderr goes to `assistant.log`.
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::os::windows::process::CommandExt;
@@ -23,15 +23,15 @@ use crate::log;
 use crate::settings::Settings;
 
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-/// Time Raphael gets to write its daily session summary after stdin closes.
+/// Time the assistant gets to write its daily session summary after stdin closes.
 const QUIT_GRACE: Duration = Duration::from_secs(20);
 const MAX_LINE: usize = 64 * 1024;
 const BACKOFF: [u64; 4] = [2, 5, 15, 30];
 
 #[derive(Default)]
-pub struct Raphael(Mutex<Option<Running>>);
+pub struct Assistant(Mutex<Option<Running>>);
 
-/// Everything Raphael is started with; a change restarts it.
+/// Everything the assistant is started with; a change restarts it.
 #[derive(Clone, PartialEq)]
 struct Launch {
     dir: PathBuf,
@@ -45,7 +45,7 @@ struct Running {
     stop: Arc<AtomicBool>,
 }
 
-/// The microphone-consent entry of the running Raphael, so the call pill ignores it.
+/// The microphone-consent entry of the running assistant, so the call pill ignores it.
 static MIC_ENTRY: Mutex<Option<String>> = Mutex::new(None);
 
 pub fn is_own_mic_entry(entry: &str) -> bool {
@@ -77,12 +77,20 @@ fn mic_user(dir: &Path) -> PathBuf {
         .unwrap_or_else(|_| python(dir))
 }
 
-/// A folder is usable when it holds Raphael's chat.py and its virtual environment.
+/// Kumo's assistant folder: `assistant/` next to kumo.exe, else the repository's `assistant/`
+/// (where a source build and its installed copy keep the code, voices and .venv).
+pub fn dir() -> PathBuf {
+    let beside = std::env::current_exe().ok().and_then(|exe| exe.parent().map(|p| p.join("assistant")));
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..").join("assistant");
+    beside.filter(|d| valid_dir(d)).unwrap_or(repo)
+}
+
+/// A folder is usable when it holds the assistant's chat.py and its virtual environment.
 pub fn valid_dir(dir: &Path) -> bool {
     dir.is_absolute() && dir.join("chat.py").is_file() && python(dir).is_file()
 }
 
-/// Raphael's saved headlines (`data/news.json`, written by news.py), newest first.
+/// The assistant's saved headlines (`data/news.json`, written by news.py), newest first.
 pub fn news(dir: &Path) -> Value {
     let items = std::fs::read(dir.join("data").join("news.json"))
         .ok()
@@ -95,7 +103,7 @@ pub fn news(dir: &Path) -> Value {
 
 const NEWS_CATEGORIES: [&str; 5] = ["coding", "ai", "free", "security", "release"];
 
-/// Raphael's news settings (`data/news_settings.json`, created by news.py), or null before its first run.
+/// The assistant's news settings (`data/news_settings.json`, created by news.py), or null before its first run.
 pub fn news_settings(dir: &Path) -> Value {
     std::fs::read(dir.join("data").join("news_settings.json"))
         .ok()
@@ -156,13 +164,13 @@ fn command_line(msg: &Value) -> Option<String> {
     ok.then(|| msg.to_string())
 }
 
-impl Raphael {
-    /// Start, restart or stop Raphael to match the settings.
+impl Assistant {
+    /// Start, restart or stop the assistant to match the settings.
     pub fn sync(&self, app: &AppHandle, settings: &Settings) {
-        let want = settings.raphael_enabled.then(|| Launch {
-            dir: PathBuf::from(settings.raphael_dir.trim()),
-            always_listen: settings.raphael_always_listen,
-            model: settings.raphael_model.trim().to_string(),
+        let want = settings.assistant_enabled.then(|| Launch {
+            dir: dir(),
+            always_listen: settings.assistant_always_listen,
+            model: settings.assistant_model.trim().to_string(),
         });
         let mut slot = self.0.lock().unwrap();
         if slot.as_ref().map(|r| &r.launch) == want.as_ref() {
@@ -170,12 +178,12 @@ impl Raphael {
         }
         if let Some(old) = slot.take() {
             old.stop.store(true, Ordering::SeqCst);
-            old.stdin.lock().unwrap().take(); // EOF: Raphael saves its session and exits
+            old.stdin.lock().unwrap().take(); // EOF: the assistant saves its session and exits
         }
         let Some(launch) = want else { return };
         if !valid_dir(&launch.dir) {
-            log::line(&format!("raphael: not started, no chat.py or .venv in {}", launch.dir.display()));
-            let _ = app.emit("raphael", serde_json::json!({"t": "unavailable"}));
+            log::line(&format!("assistant: not started, no chat.py or .venv in {}", launch.dir.display()));
+            let _ = app.emit("assistant", serde_json::json!({"t": "unavailable"}));
             return;
         }
         let running = Running {
@@ -185,18 +193,18 @@ impl Raphael {
         };
         let (stdin, stop, app) = (running.stdin.clone(), running.stop.clone(), app.clone());
         std::thread::Builder::new()
-            .name("raphael".into())
+            .name("assistant".into())
             .spawn(move || supervise(app, launch, stdin, stop))
             .ok();
         *slot = Some(running);
     }
 
     pub fn send(&self, msg: &Value) -> Result<(), String> {
-        let line = command_line(msg).ok_or("unsupported Raphael command")?;
+        let line = command_line(msg).ok_or("unsupported assistant command")?;
         let slot = self.0.lock().unwrap();
-        let running = slot.as_ref().ok_or("Raphael is off")?;
+        let running = slot.as_ref().ok_or("The assistant is off")?;
         let mut stdin = running.stdin.lock().unwrap();
-        let pipe = stdin.as_mut().ok_or("Raphael is starting")?;
+        let pipe = stdin.as_mut().ok_or("The assistant is starting")?;
         writeln!(pipe, "{line}").and_then(|()| pipe.flush()).map_err(|e| e.to_string())
     }
 }
@@ -213,14 +221,14 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
                 if let Some(out) = child.stdout.take() {
                     relay(&app, out);
                 }
-                // stdout closed: Raphael is quitting (or Kumo asked it to).
+                // stdout closed: the assistant is quitting (or Kumo asked it to).
                 stdin.lock().unwrap().take();
                 let code = finish(&mut child);
                 *MIC_ENTRY.lock().unwrap() = None;
-                log::line(&format!("raphael: exited ({code:?})"));
-                let _ = app.emit("raphael", serde_json::json!({"t": "exit", "code": code}));
+                log::line(&format!("assistant: exited ({code:?})"));
+                let _ = app.emit("assistant", serde_json::json!({"t": "exit", "code": code}));
             }
-            Err(err) => log::line(&format!("raphael: could not start: {err}")),
+            Err(err) => log::line(&format!("assistant: could not start: {err}")),
         }
         if stop.load(Ordering::SeqCst) {
             break;
@@ -234,15 +242,15 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
 }
 
 fn spawn(launch: &Launch) -> std::io::Result<Child> {
-    let log = std::fs::File::create(crate::settings::local_dir().join("raphael.log"))?;
+    let log = std::fs::File::create(crate::settings::local_dir().join("assistant.log"))?;
     let mut command = Command::new(python(&launch.dir));
     if !launch.model.is_empty() {
-        command.env("RAPHAEL_MODEL", &launch.model);
+        command.env("KUMO_MODEL", &launch.model);
     }
     command
         .args(["chat.py", "--kumo"])
         .current_dir(&launch.dir)
-        .env("RAPHAEL_ALWAYS_LISTEN", if launch.always_listen { "1" } else { "0" })
+        .env("KUMO_ALWAYS_LISTEN", if launch.always_listen { "1" } else { "0" })
         .env("PYTHONIOENCODING", "utf-8")
         .env("PYTHONUNBUFFERED", "1")
         .stdin(Stdio::piped())
@@ -263,12 +271,12 @@ fn relay(app: &AppHandle, out: std::process::ChildStdout) {
             Ok(_) => {}
         }
         if let Ok(event @ Value::Object(_)) = serde_json::from_str::<Value>(line.trim()) {
-            let _ = app.emit("raphael", event);
+            let _ = app.emit("assistant", event);
         }
     }
 }
 
-/// Wait for a quitting Raphael, killing it if it outlives the grace period.
+/// Wait for a quitting assistant, killing it if it outlives the grace period.
 fn finish(child: &mut Child) -> Option<i32> {
     let deadline = Instant::now() + QUIT_GRACE;
     loop {
@@ -289,7 +297,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn only_bridge_commands_reach_raphael() {
+    fn only_bridge_commands_reach_the_assistant() {
         assert!(command_line(&json!({"t": "answer", "id": 3, "allow": true})).is_some());
         assert!(command_line(&json!({"t": "answer", "id": "3", "allow": true})).is_none());
         assert!(command_line(&json!({"t": "text", "v": "what time is it"})).is_some());
@@ -329,12 +337,13 @@ mod tests {
 
 #[cfg(test)]
 mod live {
-    /// Run with --ignored on a PC that has Raphael: the mic entry must match what Windows records.
+    /// Run with --ignored on a PC that has the assistant: the mic entry must match what Windows records.
     #[test]
     #[ignore]
     fn mic_user_resolves_the_uv_junction() {
-        let dir = std::path::Path::new(r"C:\Users\darnie\own projects\raphael");
-        let entry = super::mic_user(dir).to_string_lossy().replace('\\', "#");
+        let dir = super::dir();
+        assert!(super::valid_dir(&dir), "{}", dir.display());
+        let entry = super::mic_user(&dir).to_string_lossy().replace('\\', "#");
         assert!(entry.contains("cpython-3.11.15"), "{entry}");
     }
 }

@@ -41,7 +41,7 @@ pub struct Settings {
     pub chat_provider: ChatProvider,
     #[serde(default = "default_chat_models")]
     pub chat_models: BTreeMap<ChatProvider, String>,
-    /// Turns Raphael's microphone on and off.
+    /// Turns the assistant's microphone on and off.
     #[serde(default = "default_voice_shortcut")]
     pub voice_shortcut: String,
     #[serde(default)]
@@ -73,17 +73,15 @@ pub struct Settings {
     pub last_visibility: IslandVisibility,
     #[serde(default)]
     pub modules: ModulePreferences,
-    /// Run Raphael (local voice assistant) from `raphael_dir` as Kumo's assistant.
-    #[serde(default)]
-    pub raphael_enabled: bool,
-    #[serde(default)]
-    pub raphael_dir: String,
-    /// Off: Raphael waits for "hey raphael".
-    #[serde(default = "enabled")]
-    pub raphael_always_listen: bool,
-    /// Ollama model id; empty = Raphael's own default.
-    #[serde(default)]
-    pub raphael_model: String,
+    /// Run Kumo's voice assistant (the `assistant/` folder). Older settings used raphael* keys.
+    #[serde(default, alias = "raphaelEnabled")]
+    pub assistant_enabled: bool,
+    /// Off: the assistant waits for "hey kumo".
+    #[serde(default = "enabled", alias = "raphaelAlwaysListen")]
+    pub assistant_always_listen: bool,
+    /// Ollama model id; empty = the assistant's own default.
+    #[serde(default, alias = "raphaelModel")]
+    pub assistant_model: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -366,10 +364,9 @@ impl Default for Settings {
             grab_enabled: true,
             hover_behavior_version: 1,
             modules: ModulePreferences::default(),
-            raphael_enabled: false,
-            raphael_dir: String::new(),
-            raphael_always_listen: true,
-            raphael_model: String::new(),
+            assistant_enabled: false,
+            assistant_always_listen: true,
+            assistant_model: String::new(),
         }
     }
 }
@@ -670,5 +667,23 @@ mod tests {
         let partial: NoticePreferences = serde_json::from_str(r#"{"coding":false}"#).unwrap();
         assert!(!partial.coding);
         assert!(partial.other);
+    }
+}
+
+#[cfg(test)]
+mod renamed_keys {
+    #[test]
+    fn old_raphael_keys_still_load() {
+        let mut v = serde_json::to_value(super::Settings::default()).unwrap();
+        let map = v.as_object_mut().unwrap();
+        for key in ["assistantEnabled", "assistantAlwaysListen", "assistantModel"] {
+            map.remove(key);
+        }
+        map.insert("raphaelEnabled".into(), true.into());
+        map.insert("raphaelAlwaysListen".into(), false.into());
+        map.insert("raphaelModel".into(), "m".into());
+        map.insert("raphaelDir".into(), "x".into());
+        let s = super::from_bytes(&serde_json::to_vec(&v).unwrap()).expect("parses");
+        assert!(s.assistant_enabled && !s.assistant_always_listen && s.assistant_model == "m");
     }
 }

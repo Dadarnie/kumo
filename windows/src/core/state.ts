@@ -32,7 +32,7 @@ export interface AgentTask {
   emote?: BotEmoteName | null;
   miniEye?: EyeShape | null;
   pillBadge?: PillBadge | null;
-  /** Free-form status for the compact strip (Raphael: "Thinking…", a tool, a reminder). */
+  /** Free-form status for the compact strip (Kumo: "Thinking…", a tool, a reminder). */
   statusText?: string | null;
   sessionCwd?: string | null;
   sessionId?: string | null;
@@ -59,7 +59,7 @@ export interface ApprovalInfo {
   returnTarget?: ReturnTarget;
   questions?: AgentQuestion[];
   inputKey?: string;
-  /** Who asks, when it is not a coding provider (Raphael). */
+  /** Who asks, when it is not a coding provider (Kumo). */
   agentName?: string;
   /** The requester itself marks this as risky. */
   danger?: boolean;
@@ -180,7 +180,7 @@ export interface Settings {
   codingHooksInstalled: Partial<Record<CodingProvider, boolean>>;
   chatProvider: ChatProvider;
   chatModels: ChatModels;
-  /** Turns Raphael's microphone on and off. */
+  /** Turns Kumo's microphone on and off. */
   voiceShortcut: string;
   codexHooksInstalled: boolean;
   codexModel: string;
@@ -196,13 +196,12 @@ export interface Settings {
   hoverBehaviorVersion: number;
   lastVisibility: IslandVisibility;
   modules: ModulePreferences;
-  /** Run Raphael (local voice assistant) from raphaelDir as Kumo's assistant. */
-  raphaelEnabled: boolean;
-  raphaelDir: string;
-  /** Off: Raphael waits for "hey raphael". */
-  raphaelAlwaysListen: boolean;
-  /** Ollama model id; empty = Raphael's own default. */
-  raphaelModel: string;
+  /** Run Kumo's voice assistant (the assistant/ folder). */
+  assistantEnabled: boolean;
+  /** Off: the assistant waits for "hey kumo". */
+  assistantAlwaysListen: boolean;
+  /** Ollama model id; empty = the assistant's own default. */
+  assistantModel: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -239,10 +238,9 @@ export const DEFAULT_SETTINGS: Settings = {
   grabEnabled: true,
   hoverBehaviorVersion: 1,
   modules: { ...DEFAULT_MODULES },
-  raphaelEnabled: false,
-  raphaelDir: "",
-  raphaelAlwaysListen: true,
-  raphaelModel: "",
+  assistantEnabled: false,
+  assistantAlwaysListen: true,
+  assistantModel: "",
 };
 
 /** Older settings keep their existing integration selection and gain module defaults. */
@@ -269,10 +267,9 @@ export function normalizeSettings(settings: Partial<Settings> = {}): Settings {
     peekEnabled: false,
     workingModeEnabled: settings.workingModeEnabled !== false,
     grabEnabled: settings.grabEnabled !== false,
-    raphaelEnabled: settings.raphaelEnabled === true,
-    raphaelDir: typeof settings.raphaelDir === "string" ? settings.raphaelDir : "",
-    raphaelAlwaysListen: settings.raphaelAlwaysListen !== false,
-    raphaelModel: typeof settings.raphaelModel === "string" ? settings.raphaelModel : "",
+    assistantEnabled: settings.assistantEnabled === true,
+    assistantAlwaysListen: settings.assistantAlwaysListen !== false,
+    assistantModel: typeof settings.assistantModel === "string" ? settings.assistantModel : "",
     appearance: normalizeAppearance(settings.appearance),
     codingAssistant: isCodingProvider(settings.codingAssistant) ? settings.codingAssistant : "claude",
     codingHooksInstalled: Object.fromEntries(CODING_PROVIDERS.map(({ id }) =>

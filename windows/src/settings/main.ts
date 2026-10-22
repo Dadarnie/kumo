@@ -90,43 +90,29 @@ function preference(
   );
 }
 
-/** Raphael, the local voice assistant Kumo runs (see src-tauri/src/raphael.rs). */
-function raphaelSection(): HTMLElement {
-  const folder = h("input", { class: "model-input", type: "text", value: settings.raphaelDir,
-    placeholder: "C:\\Users\\you\\projects\\raphael", "aria-label": "Raphael folder", spellcheck: "false" }) as HTMLInputElement;
-  const folderStatus = h("p", { class: "hint", role: "status" });
-  const model = h("input", { class: "model-input", type: "text", value: settings.raphaelModel,
-    placeholder: "gemma4-e4b-raphael", "aria-label": "Raphael model", spellcheck: "false" }) as HTMLInputElement;
-  const check = async () => {
-    const dir = folder.value.trim();
-    const ok = !!dir && await Bridge.raphaelCheck(dir);
-    folderStatus.textContent = !dir ? "Enter the folder that holds chat.py and its .venv."
-      : ok ? "Found Raphael." : "No chat.py and .venv in this folder.";
-    return ok;
-  };
+/** Kumo's voice assistant (assistant/ folder, run by src-tauri/src/assistant.rs). */
+function voiceAssistantSection(): HTMLElement {
+  const status = h("p", { class: "hint", role: "status" });
+  const model = h("input", { class: "model-input", type: "text", value: settings.assistantModel,
+    placeholder: "gemma4-e4b-kumo", "aria-label": "Assistant model", spellcheck: "false" }) as HTMLInputElement;
   const apply = h("button", { class: "btn secondary", type: "button", text: "Save", onclick: async () => {
     apply.disabled = true;
     try {
-      if (!await check()) return;
-      settings.raphaelDir = folder.value.trim();
-      settings.raphaelModel = model.value.trim();
+      settings.assistantModel = model.value.trim();
       await save();
-      folderStatus.textContent = settings.raphaelEnabled ? "Saved. Raphael restarts with these settings." : "Saved.";
+      status.textContent = settings.assistantEnabled ? "Saved. The assistant restarts with this model." : "Saved.";
     } finally { apply.disabled = false; }
   } });
-  void check();
   return h("section", { class: "preferences" },
-    h("h2", { text: "Raphael" }),
-    preference("Run Raphael", () => settings.raphaelEnabled, value => { settings.raphaelEnabled = value; },
-      "Local voice assistant: talks, uses tools on this PC and remembers through your vault. Approvals appear in the island."),
-    preference("Always listening", () => settings.raphaelAlwaysListen, value => { settings.raphaelAlwaysListen = value; },
-      "Off: start each request with \u201chey raphael\u201d. On: speakers playing nearby can be heard as requests."),
-    h("label", { text: "Folder" }),
-    h("div", { class: "preference-row" }, folder),
+    h("h2", { text: "Assistant" }),
+    preference("Voice assistant", () => settings.assistantEnabled, value => { settings.assistantEnabled = value; },
+      "Talk to Kumo: it uses tools on this PC and remembers through your vault. Approvals appear in the island."),
+    preference("Always listening", () => settings.assistantAlwaysListen, value => { settings.assistantAlwaysListen = value; },
+      "Off: start each request with \u201chey kumo\u201d. On: speakers playing nearby can be heard as requests."),
     h("label", { text: "Model (Ollama)" }),
     h("div", { class: "preference-row" }, model, apply),
-    folderStatus,
-    h("p", { class: "hint", text: "Leave the model empty for Raphael's default. The microphone shortcut is under Hotkeys." }));
+    status,
+    h("p", { class: "hint", text: "Leave the model empty for the default. The microphone shortcut is under Hotkeys." }));
 }
 
 const NEWS_CATEGORIES = [["coding", "Coding"], ["ai", "AI"], ["free", "Free"], ["security", "Security"], ["release", "Releases"]];
@@ -139,13 +125,13 @@ function categorySelect(value: string, onChange: (v: string) => void): HTMLSelec
   return select;
 }
 
-/** Raphael's feed list, refresh interval, vault digest and free notices (saved into Raphael's folder). */
+/** Kumo's feed list, refresh interval, vault digest and free notices (saved into Kumo's folder). */
 function newsSection(): HTMLElement {
   const body = h("div", { class: "news-settings" }, h("p", { class: "hint", text: "Loading…" }));
   const section = h("section", { class: "preferences" }, h("h2", { text: "News" }), body);
-  void Bridge.raphaelNewsSettings().then(loaded => {
+  void Bridge.assistantNewsSettings().then(loaded => {
     if (!loaded) {
-      body.replaceChildren(h("p", { class: "hint", text: "Turn Raphael on and let it start once; its news settings appear here." }));
+      body.replaceChildren(h("p", { class: "hint", text: "Turn Kumo on and let it start once; its news settings appear here." }));
       return;
     }
     const news = loaded;
@@ -173,7 +159,7 @@ function newsSection(): HTMLElement {
     } });
     const save = h("button", { class: "btn primary", type: "button", text: "Save news settings", onclick: async () => {
       save.disabled = true;
-      try { await Bridge.saveRaphaelNewsSettings(news); status.textContent = "Saved. Raphael is refreshing now."; }
+      try { await Bridge.saveAssistantNewsSettings(news); status.textContent = "Saved. Kumo is refreshing now."; }
       catch (error) { status.textContent = String(error).replace(/^Error:\s*/, ""); }
       finally { save.disabled = false; }
     } });
@@ -182,7 +168,7 @@ function newsSection(): HTMLElement {
       toggle(label, () => news[key], value => { news[key] = value; }));
     body.replaceChildren(
       h("div", { class: "preference-row" }, h("span", { class: "preference-label", text: "Refresh" }), interval),
-      flag("Daily digest", "Writes raphael/news/YYYY-MM-DD.md in your vault.", "digest"),
+      flag("Daily digest", "Writes assistant/news/YYYY-MM-DD.md in your vault.", "digest"),
       flag("Free stuff notices", "The island tells you when new free tiers, credits or courses appear.", "free_notice"),
       h("h2", { text: "Sources" }), list,
       h("div", { class: "preference-row news-add" }, name, url, categorySelect(category, v => { category = v; }), add),
@@ -500,7 +486,7 @@ function chatSection(present: Record<string, boolean>): HTMLElement {
     panels.append(panel);
   }
   return h("div", { class: "assistant-settings" },
-    h("p", { class: "hint", text: "Save your keys here. Pick your AI in chat. With Raphael on, the Chat tab talks to Raphael." }), panels);
+    h("p", { class: "hint", text: "Save your keys here. Pick your AI in chat. With Kumo on, the Chat tab talks to Kumo." }), panels);
 }
 
 function assistantSection(statuses: Record<CodingAssistant, HookStatus>): HTMLElement {
@@ -842,18 +828,18 @@ function mediaSection(): HTMLElement {
 }
 
 function hotkeysSection(): HTMLElement {
-  const voiceValue=h("input",{class:"model-input",type:"text",value:settings.voiceShortcut,"aria-label":"Raphael microphone shortcut"});
+  const voiceValue=h("input",{class:"model-input",type:"text",value:settings.voiceShortcut,"aria-label":"Kumo microphone shortcut"});
   const voiceStatus=h("p",{class:"hint",role:"status"});
   const voiceApply=h("button",{class:"btn secondary",type:"button",text:"Save shortcut",onclick:async()=>{
     voiceApply.disabled=true;
     try {
       const result=await Bridge.configureVoiceShortcut(voiceValue.value.trim());
-      if(result?.error&&!result.error.startsWith("Turn on Raphael")) {voiceStatus.textContent=result.error;return;}
+      if(result?.error&&!result.error.startsWith("Turn on Kumo")) {voiceStatus.textContent=result.error;return;}
       settings.voiceShortcut=voiceValue.value.trim();await save();
-      voiceStatus.textContent=result?.error ?? (settings.voiceShortcut ? "Shortcut ready. It turns Raphael's microphone on and off." : "Microphone shortcut off.");
+      voiceStatus.textContent=result?.error ?? (settings.voiceShortcut ? "Shortcut ready. It turns Kumo's microphone on and off." : "Microphone shortcut off.");
     } catch(error) {voiceStatus.textContent=String(error).replace(/^Error:\s*/,"");} finally {voiceApply.disabled=false;}
   }});
-  void Bridge.voiceShortcutStatus().then(result=>{voiceStatus.textContent=result?.error ?? "Turns Raphael's microphone on and off, anywhere on your desktop.";});
+  void Bridge.voiceShortcutStatus().then(result=>{voiceStatus.textContent=result?.error ?? "Turns Kumo's microphone on and off, anywhere on your desktop.";});
   const value=h("input",{class:"model-input",type:"text",value:settings.workflowShortcut,"aria-label":"Global work shortcut"});
   const status=h("p",{class:"hint",role:"status"});
   const apply=h("button",{class:"btn secondary",type:"button",text:"Save shortcut",onclick:async()=>{
@@ -874,7 +860,7 @@ function hotkeysSection(): HTMLElement {
     h("h2",{text:"Global access"}),
     h("label",{text:"Open next work item"}),
     h("div",{class:"preference-row"},value,apply),status,
-    h("label",{text:"Raphael microphone on/off"}),
+    h("label",{text:"Kumo microphone on/off"}),
     h("div",{class:"preference-row"},voiceValue,voiceApply),voiceStatus,
     h("p",{class:"hint",text:"Use Ctrl, Alt or Shift with a letter or Space. Clear it to turn it off."}),
     h("h2", { text: "In the island" }),
@@ -990,10 +976,10 @@ async function main() {
       sections: [generalSection()],
     },
     {
-      id: "raphael",
-      label: "Raphael",
+      id: "assistant",
+      label: "Assistant",
       glyph: ICONS.microphone,
-      sections: [raphaelSection(), newsSection()],
+      sections: [voiceAssistantSection(), newsSection()],
     },
     {
       id: "media",

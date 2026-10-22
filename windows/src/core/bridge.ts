@@ -153,8 +153,8 @@ export const Bridge = {
   claudeUsage: () => callOrThrow<ClaudeUsage | null>("claude_usage"),
 
   approvalDecision: (requestId: string, decision: "allow" | "deny") =>
-    requestId.startsWith("raphael:")
-      ? call<void>("raphael_send", { msg: { t: "answer", id: Number(requestId.slice(8)), allow: decision === "allow" } })
+    requestId.startsWith("assistant:")
+      ? call<void>("assistant_send", { msg: { t: "answer", id: Number(requestId.slice(10)), allow: decision === "allow" } })
       : call<void>("approval_decision", { requestId, decision }),
   questionAnswer: (requestId: string, answers: Record<string,string>) =>
     callOrThrow<void>("question_answer", {requestId,answers}),
@@ -162,16 +162,15 @@ export const Bridge = {
   approvalAck: (requestId: string) => call<void>("approval_ack", { requestId }),
   /** "Nobody can act on this" — Claude Code asks in the terminal right away. */
   approvalDecline: (requestId: string) =>
-    requestId.startsWith("raphael:")
-      ? call<void>("raphael_send", { msg: { t: "answer", id: Number(requestId.slice(8)), allow: false } })
+    requestId.startsWith("assistant:")
+      ? call<void>("assistant_send", { msg: { t: "answer", id: Number(requestId.slice(10)), allow: false } })
       : call<void>("approval_decline", { requestId }),
-  /** One command to Raphael: answer, text, mute or stop (see kumo_bridge.py). */
-  raphaelSend: (msg: Record<string, unknown>) => call<void>("raphael_send", { msg }),
-  raphaelCheck: (dir: string) => call<boolean>("raphael_check", { dir }),
-  /** Raphael's saved headlines (data/news.json in its folder), newest first. */
-  raphaelNews: () => call<NewsItem[]>("raphael_news"),
-  raphaelNewsSettings: () => call<NewsSettings | null>("raphael_news_settings"),
-  saveRaphaelNewsSettings: (value: NewsSettings) => callOrThrow<void>("raphael_news_settings_save", { value }),
+  /** One command to Kumo: answer, text, mute or stop (see kumo_bridge.py). */
+  assistantSend: (msg: Record<string, unknown>) => call<void>("assistant_send", { msg }),
+  /** Kumo's saved headlines (data/news.json in its folder), newest first. */
+  assistantNews: () => call<NewsItem[]>("assistant_news"),
+  assistantNewsSettings: () => call<NewsSettings | null>("assistant_news_settings"),
+  saveAssistantNewsSettings: (value: NewsSettings) => callOrThrow<void>("assistant_news_settings_save", { value }),
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */
@@ -274,13 +273,13 @@ export async function onDragDrop(handler: (e: DragDropPayload) => void) {
   return listen<DragDropPayload>("mimo-file-drop", event => handler(event.payload));
 }
 
-/** Raphael's news settings (data/news_settings.json), edited in Settings › Raphael. */
+/** Kumo's news settings (data/news_settings.json), edited in Settings › Kumo. */
 export interface NewsSettings {
   interval_hours: number; digest: boolean; free_notice: boolean;
   sources: { name: string; url: string; category: string }[];
 }
 
-/** One headline from Raphael's news reader (news.py). */
+/** One headline from Kumo's news reader (news.py). */
 export interface NewsItem {
   id: string; title: string; link: string; summary: string; source: string;
   categories: string[]; published: number; seen: number;

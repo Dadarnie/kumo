@@ -15,8 +15,8 @@ to Dark; retain the documented Glass material direction without adding Light.
 - Claude hooks and the MCP question connection keep session ownership, bounded
   inputs, authentication and terminal fallback. Permission changes remain explicit.
 - Chat providers/models stay independent from coding connections. Preserve drafts,
-  history and attachment limits. With Raphael on, Chat talks to Raphael.
-- Raphael is the only voice: local speech, its tools behind its own permission
+  history and attachment limits. With the voice assistant on, Chat talks to it.
+- The assistant (`assistant/`) is the only voice: local speech, its tools behind its own permission
   rules, approvals in the island, mic toggle that never takes focus.
 - File intake ends at an explicit choice; Shelf retains previews, notes, selection,
   annotations, capture and native clipboard formats. Files stay in local app data.
