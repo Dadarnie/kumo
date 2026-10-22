@@ -168,7 +168,7 @@ export function botPosition(
   switch (mode) {
     case "peek":
       // A small mascot peeks out of the lip so it is easy to spot.
-      return { cx: PEEK_W - 20, cy: PEEK_H / 2 + 1, diameter: 20, opacity: 1 };
+      return { cx: PEEK_W - 18 - 10, cy: PEEK_H / 2, diameter: 20, opacity: 1 };
     case "island":
       // Mascot on the right; the time takes the left.
       return { cx: COMPACT_W - 30, cy: 20, diameter: 24, opacity: 1 };

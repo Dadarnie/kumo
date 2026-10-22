@@ -22,6 +22,7 @@ const errorText = (error: unknown) => String(error).replace(/^Error:\s*/, "");
 function page(className: string, base: number, body: HTMLElement[], onVisible: (visible: boolean) => void,
   destroy: () => void): ViewHost & { measure(): void } {
   let height = base;
+  let shown = false;
   const el = h("div", { class: `view overview module-layout ${className}` }, ...body);
   const measure = () => {
     const next = Math.min(PANEL_H, Math.max(base, 52 + el.scrollHeight));
@@ -31,7 +32,9 @@ function page(className: string, base: number, body: HTMLElement[], onVisible: (
     el, measure,
     sync: measure,
     layout: () => ({ height, botX: 27, botY: 24, botDiameter: 18, agentMode: "none" }),
-    setVisible: onVisible,
+    // The island reports visibility on every sync; only a change may reload the list, or its
+    // rows are rebuilt between mouse down and up and a click never lands.
+    setVisible: visible => { if (visible !== shown) { shown = visible; onVisible(visible); } },
     destroy,
   };
 }

@@ -281,12 +281,14 @@
   transform: none;
 }
 /* Lip: time on the left, mascot on the right; nothing else fits. */
-#island[data-visibility="peek"] .activity-strip { inset: 0 40px 0 14px; }
+/* Lip: time on the left and the cloud on the right, each 18px from its edge. */
+#island[data-visibility="peek"] .activity-strip { inset: 0 44px 0 18px; display: flex; align-items: center; justify-content: flex-start; }
 #island[data-visibility="peek"] .activity-strip > :not(.activity-time) { display: none !important; }
 #island[data-visibility="peek"] .activity-time:not([hidden]) {
   position: static;
   transform: none;
   display: flex;
+  margin: 0;
   font: 600 13px/28px var(--font-compact);
 }
 #island[data-visibility="peek"] .activity-time small { font-size: 9px; }

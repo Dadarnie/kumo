@@ -1702,7 +1702,8 @@ export class Island {
       integrationCompleted: !!integration?.activity?.completed && !integration.activity.stopped,
       pendingApproval: State.view === "approval" || State.pendingApprovals.some(request => request.taskId === integration?.id && !request.questions), mediaError: mediaStore.snapshot().state.providerStatus === "error" });
     this.engine.tile = false;
-    this.engine.backdrop = State.view !== "media";
+    // No aura in the 28px lip: it reads as a smudge there.
+    this.engine.backdrop = State.view !== "media" && State.visibility !== "peek";
     // Kumo talking animates the mascot's mouth.
     this.engine.voiceMode = State.settings.assistantEnabled && Assistant.speaking ? "speaking" : null;
     this.engine.showBadge = State.visibility !== "peek" && !(State.visibility === "island" && this.engine.status === "loading");
