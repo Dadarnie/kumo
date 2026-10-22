@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+# Piper voices are large; re-download with: python -m piper.download_voices <name> --download-dir voices
+voices/
+# runtime data Raphael writes
+data/
