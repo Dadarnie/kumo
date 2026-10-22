@@ -233,7 +233,7 @@ export class BotEngine {
   private syncStatusBadge() {
     if (this.voiceMode) {
       this.setBadge({ kind: this.voiceMode === "speaking" ? "speaker" : this.voiceMode === "waiting" ? "dots" : "microphone",
-        color: hexToRGB(this.voiceMode === "speaking" ? "#4fb29e" : this.voiceMode === "waiting" ? "#8358e9" : "#2da4f9") });
+        color: hexToRGB(this.voiceMode === "speaking" ? "#ffb997" : this.voiceMode === "waiting" ? "#d9668e" : "#f67e7d") });
       return;
     }
     const app = this.integrationId ? MIMO_APPS[this.integrationId] : undefined;

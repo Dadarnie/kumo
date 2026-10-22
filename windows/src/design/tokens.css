@@ -24,7 +24,7 @@
   --accent: #f67e7d;
   --accent-gradient: linear-gradient(135deg, #843b62, #f67e7d 55%, #ffb997);
   /* Local Home identity colors sampled from the supplied video at 8 seconds. */
-  --mini-work-blue: #2da4f9;
+  --mini-work-blue: #f67e7d; /* work glow, coral in Ember dusk */
   --mini-mint: #4fb29e;
   --mini-coral: #e13d44;
   --mini-amber: #e69537;

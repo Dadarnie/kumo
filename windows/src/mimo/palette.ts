@@ -7,7 +7,8 @@ export const MIMO_PALETTE = {
   shade: "#D9B88E",
   tongue: "#EBA8B5",
   eyes: "#11161B",
-  loading: "#2DA4F9",
+  // Ember dusk state lights: coral work, peach questions, plum-pink thinking.
+  loading: "#F67E7D",
   connected: "#4FB29E",
   error: "#E69537",
   tile: "#1C1C20",
@@ -18,9 +19,9 @@ export const MIMO_PALETTE = {
   love: "#E13D44",
   pride: "#E69537",
   // Expression accents from mimo-core-look/mimo_expressions.png.
-  thinking: "#8358E9",
-  question: "#2DA4F9",
-  music: "#8358E9",
+  thinking: "#D9668E",
+  question: "#FFB997",
+  music: "#D9668E",
   failure: "#E13D44",
 } as const;
 
