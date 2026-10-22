@@ -168,6 +168,8 @@ export const Bridge = {
   /** One command to Raphael: answer, text, mute or stop (see kumo_bridge.py). */
   raphaelSend: (msg: Record<string, unknown>) => call<void>("raphael_send", { msg }),
   raphaelCheck: (dir: string) => call<boolean>("raphael_check", { dir }),
+  /** Raphael's saved headlines (data/news.json in its folder), newest first. */
+  raphaelNews: () => call<NewsItem[]>("raphael_news"),
 
   // ── Chat, files, secrets ──────────────────────────────────────────────────
   /** One chat turn. The API key and any file bytes never leave Rust. */
@@ -268,6 +270,12 @@ export interface DragDropPayload {
 export async function onDragDrop(handler: (e: DragDropPayload) => void) {
   if (!IS_TAURI) return () => {};
   return listen<DragDropPayload>("mimo-file-drop", event => handler(event.payload));
+}
+
+/** One headline from Raphael's news reader (news.py). */
+export interface NewsItem {
+  id: string; title: string; link: string; summary: string; source: string;
+  categories: string[]; published: number; seen: number;
 }
 
 export async function onEvent<T>(name: string, handler: (payload: T) => void) {

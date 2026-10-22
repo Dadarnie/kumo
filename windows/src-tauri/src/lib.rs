@@ -133,6 +133,16 @@ fn raphael_check(dir: String) -> bool {
     raphael::valid_dir(std::path::Path::new(dir.trim()))
 }
 
+/// Raphael's saved headlines, from the folder in Settings (never a path from the page).
+#[tauri::command]
+fn raphael_news(shared: State<Shared>) -> serde_json::Value {
+    let dir = shared.settings.lock().unwrap().raphael_dir.trim().to_string();
+    if dir.is_empty() {
+        return serde_json::Value::Array(vec![]);
+    }
+    raphael::news(std::path::Path::new(&dir))
+}
+
 /// One command from the island to Raphael (answer, typed text, mute, stop).
 #[tauri::command]
 fn raphael_send(raphael: State<raphael::Raphael>, msg: serde_json::Value) -> Result<(), String> {
@@ -1106,6 +1116,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             raphael_send,
             raphael_check,
+            raphael_news,
             codex_usage,
             claude_usage,
             set_audio_meter_active,

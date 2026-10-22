@@ -96,7 +96,7 @@ function raphaelSection(): HTMLElement {
     placeholder: "C:\\Users\\you\\projects\\raphael", "aria-label": "Raphael folder", spellcheck: "false" }) as HTMLInputElement;
   const folderStatus = h("p", { class: "hint", role: "status" });
   const model = h("input", { class: "model-input", type: "text", value: settings.raphaelModel,
-    placeholder: "gemma4-e4b:latest", "aria-label": "Raphael model", spellcheck: "false" }) as HTMLInputElement;
+    placeholder: "gemma4-e4b-raphael", "aria-label": "Raphael model", spellcheck: "false" }) as HTMLInputElement;
   const check = async () => {
     const dir = folder.value.trim();
     const ok = !!dir && await Bridge.raphaelCheck(dir);

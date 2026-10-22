@@ -2257,3 +2257,12 @@ input[type="range"]::-webkit-slider-thumb {
 .header-menu > button { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--dim); font: 500 12px var(--font); text-align: left; cursor: default; }
 .header-menu > button[hidden] { display: none; }
 .header-menu > button:hover, .header-menu > button.on { background: var(--tab-on); color: var(--ink); }
+
+/* Tools › News: category chips and one-line headlines that open in the browser. */
+.tools-news-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.tools-news { gap: 2px; }
+.tools-news-row { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 8px; margin: 0 -8px; border: 0; border-radius: 9px;
+  background: transparent; color: var(--ink-2); font: 500 12px var(--font-compact); text-align: left; cursor: pointer; }
+.tools-news-row:hover { background: var(--tab-on); color: var(--ink); }
+.tools-news-row:focus-visible { outline: none; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 45%); }
+.tools-card[hidden] { display: none; }

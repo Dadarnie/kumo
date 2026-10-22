@@ -82,13 +82,24 @@ pub fn valid_dir(dir: &Path) -> bool {
     dir.is_absolute() && dir.join("chat.py").is_file() && python(dir).is_file()
 }
 
+/// Raphael's saved headlines (`data/news.json`, written by news.py), newest first.
+pub fn news(dir: &Path) -> Value {
+    let items = std::fs::read(dir.join("data").join("news.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+        .and_then(|v| v.get("items").cloned())
+        .and_then(|v| v.as_array().cloned())
+        .unwrap_or_default();
+    Value::Array(items.into_iter().take(300).collect())
+}
+
 /// Only the commands kumo_bridge.py understands, with the fields it reads.
 fn command_line(msg: &Value) -> Option<String> {
     let ok = match msg.get("t")?.as_str()? {
         "answer" => msg.get("id")?.is_u64() && msg.get("allow")?.is_boolean(),
         "text" => msg.get("v")?.as_str().is_some_and(|v| !v.trim().is_empty() && v.len() <= 4000),
         "mute" => msg.get("v")?.is_boolean(),
-        "stop" => true,
+        "stop" | "news_refresh" => true,
         _ => false,
     };
     ok.then(|| msg.to_string())
@@ -234,6 +245,7 @@ mod tests {
         assert!(command_line(&json!({"t": "text", "v": "  "})).is_none());
         assert!(command_line(&json!({"t": "mute", "v": false})).is_some());
         assert!(command_line(&json!({"t": "stop"})).is_some());
+        assert!(command_line(&json!({"t": "news_refresh"})).is_some());
         assert!(command_line(&json!({"t": "quit"})).is_none());
         assert!(command_line(&json!({"t": "eval", "v": "x"})).is_none());
         assert!(command_line(&json!("stop")).is_none());
