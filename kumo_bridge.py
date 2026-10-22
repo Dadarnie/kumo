@@ -13,7 +13,7 @@ Raphael -> Kumo (stdout):
   {"t":"approve","id":n,"name":tool,"detail":text,"danger":bool,"timeout":s}
   {"t":"approve_close","id":n}                     timed out or stopped
   {"t":"notify","title":t,"v":text}                reminders
-  {"t":"news_updated","count":n}                   a news refresh finished (n new); Kumo re-reads data/news.json
+  {"t":"news_updated","count":n,"free":[titles]}   a news refresh finished; Kumo re-reads data/news.json
 Kumo -> Raphael (stdin):
   {"t":"answer","id":n,"allow":bool}  {"t":"text","v":text}  {"t":"mute","v":bool}
   {"t":"news_refresh"}  {"t":"stop"}  {"t":"quit"}   (stdin closing = Kumo is gone: quit)

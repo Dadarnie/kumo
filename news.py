@@ -19,6 +19,8 @@ from pathlib import Path
 import config
 
 FILE = Path(__file__).parent / "data" / "news.json"
+# Editable from Kumo's Settings: sources, refresh interval, digest and free notices. Created from config.py.
+SETTINGS = Path(__file__).parent / "data" / "news_settings.json"
 USER_AGENT = "Raphael-news/1.0 (personal feed reader)"
 MAX_BYTES = 2_000_000
 KEEP_DAYS = 14
@@ -133,9 +135,36 @@ def _save(items):
     tmp.replace(FILE)
 
 
+def _default_settings():
+    return {"interval_hours": config.NEWS_INTERVAL_HOURS, "digest": config.NEWS_DIGEST, "free_notice": True,
+            "sources": [{"name": n, "url": u, "category": c} for n, u, c in config.NEWS_SOURCES]}
+
+
+def settings():
+    """data/news_settings.json, checked; written from config.py the first time. A bad file falls back to defaults."""
+    try:
+        s = json.loads(SETTINGS.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        s = _default_settings()
+        SETTINGS.parent.mkdir(exist_ok=True)
+        SETTINGS.write_text(json.dumps(s, indent=1), encoding="utf-8")
+    except (OSError, ValueError):
+        return _default_settings()
+    d = _default_settings()
+    try:
+        interval = min(24.0, max(0.5, float(s.get("interval_hours", d["interval_hours"]))))
+    except (TypeError, ValueError):
+        interval = d["interval_hours"]
+    sources = [x for x in s.get("sources", []) if isinstance(x, dict) and str(x.get("url", "")).startswith(("http://", "https://"))
+               and x.get("category") in CATEGORIES and str(x.get("name", "")).strip()]
+    return {"interval_hours": interval, "digest": s.get("digest", d["digest"]) is not False,
+            "free_notice": s.get("free_notice", True) is not False, "sources": sources}
+
+
 def refresh(sources=None, fetch=_get, pause=2.0):
     """Fetch every source once. Returns only the new items (also saved). A failing source is skipped."""
-    sources = config.NEWS_SOURCES if sources is None else sources
+    if sources is None:
+        sources = [(x["name"], x["url"], x["category"]) for x in settings()["sources"]]
     now, fresh, errors = time.time(), [], []
     for i, (name, url, base) in enumerate(sources):
         if i and pause:
@@ -231,15 +260,15 @@ def start():
         _wake.wait(60)
         while True:
             _wake.clear()
-            new = []
+            new, s = [], settings()
             try:
                 new = refresh()
-                if config.NEWS_DIGEST:
+                if s["digest"]:
                     digest()
             except Exception as e:  # never let the reader kill Raphael
                 print(f"(news refresh failed: {e})")
             on_new(new)
-            _wake.wait(max(0.5, config.NEWS_INTERVAL_HOURS) * 3600)
+            _wake.wait(s["interval_hours"] * 3600)
     threading.Thread(target=run, daemon=True, name="news").start()
 
 
@@ -269,6 +298,14 @@ if __name__ == "__main__":  # self-check with sample feeds, never touches data/n
     assert refresh(src, fetch, pause=0) == []  # nothing new the second time
     assert "Free tier" in news_list("free") and news_list("weather").startswith("Error")
     assert len(latest()) == 4 and latest("security")[0]["link"] == "https://ex.com/b"
+    SETTINGS = FILE.parent / "news_settings.json"
+    assert settings()["sources"] == _default_settings()["sources"] and SETTINGS.exists()  # created from config
+    SETTINGS.write_text(json.dumps({"interval_hours": 99, "digest": False, "sources": [
+        {"name": "Ok", "url": "https://ok.dev/feed", "category": "ai"}, {"name": "Bad", "url": "file:///c:/x", "category": "ai"},
+        {"name": "Odd", "url": "https://x.dev", "category": "weather"}]}), encoding="utf-8")
+    s = settings()
+    assert s["interval_hours"] == 24 and s["digest"] is False and s["free_notice"] is True
+    assert [x["name"] for x in s["sources"]] == ["Ok"]  # non-http and unknown categories are dropped
     assert _headline("Merge pull request #7 from a/b", "Merge pull request #7 from a/b feat: add X free tier") == \
         ("Add X free tier", "")
     assert _headline("Merge pull request #8 from a/patch-1", "Merge pull request #8 from a/patch-1 Update README.md") is None
