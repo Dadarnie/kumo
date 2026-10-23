@@ -635,19 +635,27 @@ def look_at_screen(question, window=""):
 
 def _vision(question, rect=None, max_tokens=400):
     """Ask the local vision model about a screenshot of rect (x, y, w, h) or the whole screen. None if no screenshot."""
-    import base64
     from openai import OpenAI
     png = _screenshot(rect)
     if not png:
         return None
     client = OpenAI(base_url=config.BASE_URL, api_key=config.API_KEY)
     extra = {"reasoning_effort": config.REASONING_EFFORT} if config.REASONING_EFFORT else {}
-    r = client.chat.completions.create(model=config.VISION_MODEL or config.MODEL, max_tokens=max_tokens, **extra, messages=[
+    model = config.VISION_MODEL or config.MODEL
+    try:
+        r = _vision_request(client, model, question, png, max_tokens, extra)
+    except Exception as e:  # e.g. the vision model isn't pulled: say so instead of guessing at the screen
+        return f"Error: the vision model '{model}' could not look at the screen ({e}). Install it in Ollama or set VISION_MODEL."
+    return r.choices[0].message.content or ""
+
+
+def _vision_request(client, model, question, png, max_tokens, extra):
+    import base64
+    return client.chat.completions.create(model=model, max_tokens=max_tokens, **extra, messages=[
         {"role": "system", "content": "You look at a screenshot for the user. Answer their question precisely and briefly. "
                                       "Quote error messages and code exactly. If something is unreadable, say so."},
         {"role": "user", "content": [{"type": "text", "text": question},
                                      {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}}]}])
-    return r.choices[0].message.content or ""
 
 
 MEDIA_KEYS = {"play": "play/pause media", "pause": "play/pause media", "play_pause": "play/pause media",

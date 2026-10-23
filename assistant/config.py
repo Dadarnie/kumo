@@ -14,8 +14,9 @@ MODEL = os.environ.get("KUMO_MODEL", "gemma4-e4b-kumo")
 # "Think harder" / "use your big brain" switches to this one (sticky until "back to fast mode").
 # Swapping costs ~20 s (load) and ~11 s back on an 8 GB card. Empty = not installed: Kumo says so.
 SMART_MODEL = os.environ.get("KUMO_SMART_MODEL", "")
-# Model for look_at_screen; must accept images. Empty = use MODEL.
-VISION_MODEL = os.environ.get("KUMO_VISION_MODEL", "")
+# Model for look_at_screen; must accept images (the Gemma import can't). Empty = use MODEL.
+# Ornith 1.5 9B's 16k copy: reads screens well; Ollama swaps it in for screen questions (~20-40 s on 8 GB).
+VISION_MODEL = os.environ.get("KUMO_VISION_MODEL", "ornith-1.5-9b-kumo")
 
 # Gemma "thinks" before answering, which adds 15+ s. "none" turns that off (faster, a bit less careful).
 # Set to None to use the model's default.

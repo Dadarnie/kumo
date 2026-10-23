@@ -29,7 +29,7 @@ tokens and Ollama silently cuts the start, so replies stop making sense. Create 
 curl.exe http://127.0.0.1:11434/api/create -d '{"model":"gemma4-e4b-kumo","from":"gemma4-e4b:latest","parameters":{"num_ctx":16384}}'
 ```
 Kumo can override `KUMO_MODEL` (Settings), and `KUMO_BASE_URL`, `KUMO_SMART_MODEL` ("think harder") and
-`KUMO_VISION_MODEL` (`look_at_screen`; the Ollama Gemma import has no vision) are read from the environment.
+`KUMO_VISION_MODEL` are read from the environment. Screen questions (`look_at_screen`) use `ornith-1.5-9b-kumo` (Ornith 1.5 9B with a 16k context; the Gemma import has no vision). Ollama swaps it in for each screen question, about 20-40 s on an 8 GB GPU.
 
 ## Kumo mode
 
