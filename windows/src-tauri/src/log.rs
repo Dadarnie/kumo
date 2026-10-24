@@ -7,6 +7,10 @@ use std::io::Write;
 use crate::{settings, windows};
 
 pub fn line(message: impl AsRef<str>) {
+    // Tests exercise real code paths (relay installs, assistant starts); keep them out of the real log.
+    if cfg!(test) {
+        return;
+    }
     let t = windows::local_time();
     let stamp = format!(
         "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",

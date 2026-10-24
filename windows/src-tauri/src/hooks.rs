@@ -456,6 +456,25 @@ fn install_relay(src: &Path, dest: &Path) -> bool {
     if relay_matches(src, dest).unwrap_or(false) {
         return true;
     }
+    // Claude Code or a virus scanner may hold the relay open for a moment (sharing violation,
+    // access denied): try again shortly instead of keeping an old relay until the next start.
+    const ATTEMPTS: u32 = 4;
+    for attempt in 1..=ATTEMPTS {
+        match try_install_relay(src, dest) {
+            Ok(ready) => return ready,
+            Err(err) if attempt < ATTEMPTS && matches!(err.raw_os_error(), Some(5 | 32)) => {
+                std::thread::sleep(std::time::Duration::from_millis(400 * u64::from(attempt)));
+            }
+            Err(err) => {
+                crate::log::line(format!("could not install {}: {err}", windows::HOOK_EXE));
+                return false;
+            }
+        }
+    }
+    false
+}
+
+fn try_install_relay(src: &Path, dest: &Path) -> std::io::Result<bool> {
     // Stage beside the destination and verify all bytes before replacement.
     // A failed copy or a running helper's lock must leave the old file intact.
     let nonce = std::time::SystemTime::now()
@@ -491,18 +510,32 @@ fn install_relay(src: &Path, dest: &Path) -> bool {
     if created && staged.exists() {
         let _ = std::fs::remove_file(&staged);
     }
-    match installed {
-        Ok(ready) => ready,
-        Err(err) => {
-            crate::log::line(format!("could not install {}: {err}", windows::HOOK_EXE));
-            false
-        }
-    }
+    installed
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_relay_held_open_for_a_moment_is_replaced_on_retry() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let dir = std::env::temp_dir().join(format!("kumo-relay-busy-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (src, dest) = (dir.join("new.exe"), dir.join("relay.exe"));
+        std::fs::write(&src, b"new relay").unwrap();
+        std::fs::write(&dest, b"old relay").unwrap();
+        // Like a scanner reading it: open with no sharing, released after half a second.
+        let held = std::fs::OpenOptions::new().read(true).share_mode(0).open(&dest).unwrap();
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            drop(held);
+        });
+        assert!(install_relay(&src, &dest));
+        release.join().unwrap();
+        assert_eq!(std::fs::read(&dest).unwrap(), b"new relay");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn a_running_relay_is_still_replaced() {
