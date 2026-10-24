@@ -358,3 +358,7 @@
 .chat-card .send-btn.is-stop { background: var(--control-hover); color: var(--ink); }
 .chat-card .send-btn.is-stop svg { display: none; }
 .chat-card .send-btn.is-stop::after { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+
+/* The dropdown's own label stays hidden here (its display rule overrode [hidden]). */
+.chat-assistant-models .audio-device-label[hidden] { display: none; }
+.chat-assistant-models .audio-device-picker { gap: 0; }

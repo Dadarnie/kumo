@@ -131,7 +131,8 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
 
 /** Chat view grows with the conversation — IslandContainer.chatPromptHeight. */
 export function chatPromptHeight(messageCount: number): number {
-  return Math.min(360, 288 + messageCount * 40);
+  // The empty chat holds a greeting, suggestions, an error line, the model chip and the input.
+  return Math.min(400, 330 + messageCount * 30);
 }
 
 export function islandSize(
