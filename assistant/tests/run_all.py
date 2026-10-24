@@ -48,6 +48,11 @@ def fast():
     tl = {"Alas sais na ng gabi.": True, "Oo.": True, "Sige po, salamat!": True, "It is six in the evening.": False,
           "Answer. Magandang gabi! Ano ang maitutulong ko?": True, "The file was saved in your inbox.": False}
     check("Tagalog reply detection", all(voice.is_tagalog(t) == e for t, e in tl.items()))
+    md = {"Done: **\"Tawagan si Nanay\"** at 8 PM.": 'Done: "Tawagan si Nanay" at 8 PM.',
+          "Open `notes_app.py` in [VSCodium](https://vscodium.com).": "Open notes_app.py in VSCodium.",
+          "- *one*\n2. _two_": "one\ntwo", "Keep my_file_name.txt as is.": "Keep my_file_name.txt as is."}
+    check("markdown stripped before speaking", all(voice.speakable(t) == e for t, e in md.items()),
+          [voice.speakable(t) for t in md])
     h = voice._is_hallucination
     check("noise filter", all(map(h, ["Mm.", "Dog barks.", "[Music]", "Thanks for watching!"]))
           and not any(map(h, ["Pause the music", "Play Nadarang by Shanti Dope", "Okay, open notepad"])))

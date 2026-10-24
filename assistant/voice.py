@@ -113,9 +113,22 @@ def _speak_tagalog(text):
     return True
 
 
+def speakable(text):
+    """Markdown marks out, words kept: models sometimes add **bold**, `code` or lists despite the prompt."""
+    text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)                    # [label](url) -> label
+    text = re.sub(r"```\w*", " ", text).replace("`", "")                     # code fences and ticks
+    text = re.sub(r"^\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+[.)]\s+|>\s*)", "", text, flags=re.M)  # headings, lists, quotes
+    text = text.replace("**", "").replace("__", "")
+    text = re.sub(r"(?<!\w)[*_](?=\S)|(?<=\S)[*_](?!\w)", "", text)          # *x* / _x_, not file_name
+    return re.sub(r"[ \t]+", " ", text).strip()
+
+
 def speak(text, voice_file=None):
     """Speak with Piper (Tagalog with the MMS voice); fall back to Windows SAPI (pyttsx3)."""
     global _sapi
+    text = speakable(text)
+    if not text:
+        return
     if not voice_file and is_tagalog(text) and _speak_tagalog(text):
         return
     try:

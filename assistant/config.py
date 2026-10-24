@@ -177,7 +177,6 @@ NEWS_SOURCES = [
     ("GitHub Blog", "https://github.blog/feed/", "coding"),
     ("freeCodeCamp", "https://www.freecodecamp.org/news/rss/", "coding"),
     ("Hugging Face", "https://huggingface.co/blog/feed.xml", "ai"),
-    ("r/LocalLLaMA", "https://www.reddit.com/r/LocalLLaMA/.rss", "ai"),
     ("Simon Willison", "https://simonwillison.net/atom/everything/", "ai"),
     ("OpenAI", "https://openai.com/news/rss.xml", "ai"),
     ("Google AI", "https://blog.google/innovation-and-ai/technology/ai/rss/", "ai"),
