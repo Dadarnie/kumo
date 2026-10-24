@@ -19,6 +19,7 @@ mod hook_config;
 mod hooks;
 mod integrations;
 mod island;
+mod localsend;
 mod log;
 pub mod media;
 pub mod media_player;
@@ -465,6 +466,39 @@ async fn tools_docker_action(id: String, action: String) -> Result<(), String> {
 #[tauri::command]
 async fn tools_ollama() -> tools::OllamaState {
     tools::ollama_state().await
+}
+
+/// LocalSend: phones Kumo has found before (most recent first).
+#[tauri::command]
+fn localsend_devices() -> Vec<localsend::Device> {
+    localsend::devices()
+}
+
+/// LocalSend: look for devices on this network (a couple of seconds).
+#[tauri::command]
+async fn localsend_discover() -> Result<Vec<localsend::Device>, String> {
+    localsend::discover().await
+}
+
+/// LocalSend: send files and/or a text message; the phone asks its user to accept.
+#[tauri::command]
+async fn localsend_send(
+    app: AppHandle,
+    device: String,
+    paths: Vec<String>,
+    text: Option<String>,
+) -> Result<localsend::Sent, String> {
+    let _ = app.emit("localsend", serde_json::json!({"t": "sending", "device": device}));
+    let result = localsend::send(&device, localsend::Outgoing {
+        paths: paths.into_iter().map(std::path::PathBuf::from).collect(),
+        text,
+    })
+    .await;
+    let _ = app.emit("localsend", match &result {
+        Ok(sent) => serde_json::json!({"t": "sent", "device": sent.device, "files": sent.files}),
+        Err(error) => serde_json::json!({"t": "failed", "error": error}),
+    });
+    result
 }
 
 #[tauri::command]
@@ -1180,6 +1214,9 @@ pub fn run() {
             tools_docker_action,
             tools_ollama,
             assistant_models,
+            localsend_devices,
+            localsend_discover,
+            localsend_send,
             assistant_use_model,
             tools_ollama_unload,
             tools_vaults,

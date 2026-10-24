@@ -72,3 +72,4 @@ windows-core = "0.61"
 webview2-com = "0.39.1"
 webview-windows-core = { package = "windows-core", version = "0.62" }
 windows-numerics = "0.2"
+rcgen = { version = "0.14.10", default-features = false, features = ["crypto", "pem", "ring"] }
