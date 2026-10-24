@@ -221,3 +221,57 @@ mod tests {
         assert_eq!(i32::from_le_bytes(bytes[8..12].try_into().unwrap()), -1);
     }
 }
+
+/// What the clipboard holds now: copied files (Explorer's file list) or text. For "send to phone".
+pub fn contents() -> Result<(Vec<std::path::PathBuf>, Option<String>), String> {
+    use windows::Win32::UI::Shell::{DragQueryFileW, HDROP};
+    unsafe {
+        OpenClipboard(None).map_err(|_| "The clipboard is busy. Try again.")?;
+        let read = (|| {
+            if IsClipboardFormatAvailable(15).is_ok() {
+                if let Ok(handle) = GetClipboardData(15) {
+                    let drop = HDROP(handle.0);
+                    let mut files = Vec::new();
+                    for index in 0..DragQueryFileW(drop, u32::MAX, None) {
+                        let mut name = vec![0u16; DragQueryFileW(drop, index, None) as usize + 1];
+                        let length = DragQueryFileW(drop, index, Some(&mut name)) as usize;
+                        files.push(std::path::PathBuf::from(String::from_utf16_lossy(&name[..length])));
+                    }
+                    if !files.is_empty() {
+                        return Ok((files, None));
+                    }
+                }
+            }
+            if IsClipboardFormatAvailable(13).is_ok() {
+                if let Ok(handle) = GetClipboardData(13) {
+                    let memory = windows::Win32::Foundation::HGLOBAL(handle.0);
+                    let pointer = GlobalLock(memory) as *const u16;
+                    if !pointer.is_null() {
+                        let mut length = 0;
+                        while *pointer.add(length) != 0 && length < 1_000_000 {
+                            length += 1;
+                        }
+                        let text = String::from_utf16_lossy(std::slice::from_raw_parts(pointer, length));
+                        let _ = GlobalUnlock(memory);
+                        if !text.trim().is_empty() {
+                            return Ok((Vec::new(), Some(text)));
+                        }
+                    }
+                }
+            }
+            Err("The clipboard has no text or files to send.".to_string())
+        })();
+        let _ = CloseClipboard();
+        read
+    }
+}
+
+#[cfg(test)]
+mod clipboard_tests {
+    /// Run with --ignored after putting text or files on the clipboard.
+    #[test]
+    #[ignore]
+    fn live_clipboard_contents() {
+        println!("clipboard: {:?}", super::contents());
+    }
+}

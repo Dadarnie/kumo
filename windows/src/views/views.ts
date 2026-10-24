@@ -12,6 +12,7 @@ import { mimoIcon } from "../icons/render";
 import { State, type AgentTask } from "../core/state";
 import { chatAssistantName, codingDefinition, codingConnections, detectedCodingProviders, codingLabel, codingProvider, codingAccountColor, preferredUsageProvider, type CodingProvider } from "../core/coding";
 import { Activity } from "../core/activity";
+import { Bridge } from "../core/bridge";
 import { readAssistantUsage } from "../core/usage-reader";
 import { remainingPercent } from "../core/codex-usage";
 import { CompactDropdown } from "./device-picker";
@@ -213,8 +214,10 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const minimizeBtn = h("button", { title: "Minimize", onclick: () => actions.collapse() },
     mimoIcon(collapseGlyph, 18));
   // Less-used controls live in one menu so the bar stays calm.
-  const menu = h("div", { class: "header-menu", role: "menu", hidden: true }, mediaBtn, gearBtn, soundBtn);
-  for (const item of [mediaBtn, gearBtn, soundBtn]) {
+  const phoneBtn = h("button", { type: "button", title: "Send clipboard to phone",
+    onclick: () => void Bridge.localsendSendClipboard().catch(() => {}) }, icon(ICONS.phone, 18), h("span", { text: "Send clipboard to phone" }));
+  const menu = h("div", { class: "header-menu", role: "menu", hidden: true }, mediaBtn, phoneBtn, gearBtn, soundBtn);
+  for (const item of [mediaBtn, phoneBtn, gearBtn, soundBtn]) {
     item.setAttribute("role", "menuitem");
     item.addEventListener("click", () => { menu.hidden = true; });
   }

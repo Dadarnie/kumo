@@ -14,6 +14,7 @@ import { mediaStore } from "./core/media-store";
 import { Island } from "./island/island";
 import { expireApprovals, registerHookHandlers, resetProviderSession } from "./island/hooks";
 import { registerIntegrationHandlers, refreshConfigured } from "./island/integrations";
+import { registerPhoneHandlers } from "./island/phone";
 import { registerAssistantHandlers, syncAssistantSettings, toggleAssistantMute } from "./island/assistant";
 import { Activity } from "./core/activity";
 import type { ClaudeUsage } from "./core/codex-usage";
@@ -85,6 +86,7 @@ async function main() {
   applyPreferences();
   lifetime.own(await onEvent<null>("workflow-shortcut",()=>island.openNextWork()));
   lifetime.own(await registerAssistantHandlers(island));
+  lifetime.own(await registerPhoneHandlers(island));
   // With Kumo on, the voice shortcut turns its microphone on and off.
   lifetime.own(await onEvent<null>("voice-shortcut",()=>{toggleAssistantMute();}));
   let grabObserved = false;

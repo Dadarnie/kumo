@@ -172,6 +172,13 @@ export const Bridge = {
   assistantSend: (msg: Record<string, unknown>) => call<void>("assistant_send", { msg }),
   /** Kumo's saved headlines (data/news.json in its folder), newest first. */
   assistantNews: () => call<NewsItem[]>("assistant_news"),
+  // LocalSend: send to your phone. `device` null = the usual phone (most recently seen).
+  localsendDevices: () => call<LocalSendDevice[]>("localsend_devices"),
+  localsendDiscover: () => callOrThrow<LocalSendDevice[]>("localsend_discover"),
+  localsendSendText: (text: string, device: string | null = null) => callOrThrow<unknown>("localsend_send_text", { device, text }),
+  localsendSendShelf: (ids: string[], device: string | null = null) => callOrThrow<unknown>("localsend_send_shelf", { device, ids }),
+  localsendSendNote: (vault: string, path: string, device: string | null = null) => callOrThrow<unknown>("localsend_send_note", { device, vault, path }),
+  localsendSendClipboard: (device: string | null = null) => callOrThrow<unknown>("localsend_send_clipboard", { device }),
   /** Installed Ollama chat models the assistant can run. */
   assistantModels: () => call<string[]>("assistant_models"),
   /** Prepares the model's 16k copy, saves it as the assistant's model and restarts the assistant. */
@@ -284,6 +291,12 @@ export async function onDragDrop(handler: (e: DragDropPayload) => void) {
 export interface NewsSettings {
   interval_hours: number; digest: boolean; free_notice: boolean;
   sources: { name: string; url: string; category: string }[];
+}
+
+/** A LocalSend device Kumo has found (localsend.rs). */
+export interface LocalSendDevice {
+  fingerprint: string; alias: string; deviceModel?: string | null; deviceType?: string | null;
+  ip: string; port: number; protocol: string; lastSeen: number;
 }
 
 /** One headline from Kumo's news reader (news.py). */

@@ -115,7 +115,7 @@ export function buildGrab(_actions:ViewActions):ViewHost {
     if(!count)grid.append(h("div",{class:"grab-empty"},icon(ICONS.shelf,26),h("b",{text:"A place for your references."}),h("span",{text:"Drag Kumo to capture, or drop a file on him."})));
     const selectAll=button(selected.size===count&&count?"Deselect all":"Select all",()=>{selected=selected.size===count?new Set():new Set(snapshot.items.map(r=>r.id));render();});selectAll.classList.add("grab-select-all");selectAll.disabled=!count;
     const footer=h("div",{class:"grab-footer grab-shelf-footer"},h("span",{class:"grab-selection-count",text:selected.size?`${selected.size} selected`:""}));
-    if(selected.size){footer.append(button("Group",()=>groupFiles()),button("Remove",()=>removeFiles([...selected])));}
+    if(selected.size){footer.append(button("Phone",()=>void Bridge.localsendSendShelf([...selected]).catch(()=>{}),false,ICONS.phone),button("Group",()=>groupFiles()),button("Remove",()=>removeFiles([...selected])));}
     footer.append(h("span",{class:"grow"}),selectAll,glyphButton("Shelf options",ICONS.gear,()=>{scene="options";render();}));
     body.append(header,grid,footer);queueShelfMeasure();
   }

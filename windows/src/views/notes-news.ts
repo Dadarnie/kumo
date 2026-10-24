@@ -2,6 +2,7 @@
 // Notes and News tabs. Notes are saved one per file in the vault's inbox/ (the same place
 // as the assistant's "note this"); News lists the assistant's headlines (assistant/news.py).
 import { h } from "./dom";
+import { ICONS, icon } from "./icons";
 import { Bridge, onEvent, type NewsItem, type ObsidianVault, type VaultNote } from "../core/bridge";
 import { State } from "../core/state";
 import { PANEL_H } from "../core/layout";
@@ -17,6 +18,12 @@ function age(seconds: number): string {
 }
 
 const errorText = (error: unknown) => String(error).replace(/^Error:\s*/, "");
+
+/** A small phone button beside a row; the island shows how the send goes. */
+function sendButton(label: string, send: () => Promise<unknown>): HTMLElement {
+  return h("button", { class: "row-send", type: "button", title: label, "aria-label": label,
+    onclick: () => void send().catch(() => {}) }, icon(ICONS.phone, 14));
+}
 
 /** A page that grows with its content, like the Tools tab. */
 function page(className: string, base: number, body: HTMLElement[], onVisible: (visible: boolean) => void,
@@ -48,11 +55,12 @@ export function buildNotesPage(): ViewHost {
   const save = h("button", { class: "tools-action", type: "button", text: "Save to inbox" });
   const list = h("div", { class: "tools-card-body notes-list" });
   const render = () => {
-    list.replaceChildren(...(notes.length ? notes.map(note =>
+    list.replaceChildren(...(notes.length ? notes.map(note => h("div", { class: "row-with-send" },
       h("button", { class: "tools-news-row", type: "button", title: `Open ${note.path} in Obsidian`,
         onclick: () => { if (vault) void Bridge.toolsOpenNote(vault.id, note.path).catch(e => { status.textContent = errorText(e); }); } },
         h("span", { class: "tools-row-name", text: note.title }),
-        h("span", { class: "tools-dim", text: age(note.modified) })))
+        h("span", { class: "tools-dim", text: age(note.modified) })),
+      sendButton(`Send ${note.title} to phone`, () => vault ? Bridge.localsendSendNote(vault.id, note.path) : Promise.resolve())))
       : [h("span", { class: "tools-dim", text: vault ? "No notes in inbox/ yet." : "Obsidian isn't set up on this PC." })]));
     view.measure();
   };
@@ -107,12 +115,13 @@ export function buildNewsPage(): ViewHost {
     const items = news.filter(item => !category || item.categories.includes(category)).slice(0, NEWS_ROWS);
     const newest = news.reduce((max, item) => Math.max(max, item.seen), 0);
     updated.textContent = newest ? `Updated ${age(newest)} ago` : "";
-    list.replaceChildren(...(items.length ? items.map(item =>
+    list.replaceChildren(...(items.length ? items.map(item => h("div", { class: "row-with-send" },
       h("button", { class: "tools-news-row news-row", type: "button", title: item.link, onclick: () => void Bridge.openUrl(item.link) },
         h("span", { class: "news-row-copy" },
           h("span", { class: "tools-row-name", text: item.title }),
           item.summary ? h("span", { class: "news-row-summary", text: item.summary }) : null),
-        h("span", { class: "tools-dim", text: `${item.source} · ${age(item.published)}` })))
+        h("span", { class: "tools-dim", text: `${item.source} · ${age(item.published)}` })),
+      sendButton("Send this link to phone", () => Bridge.localsendSendText(`${item.title}\n${item.link}`))))
       : [h("span", { class: "tools-dim", text: news.length ? "Nothing in this category yet."
         : on ? "No headlines yet. The assistant fetches them a minute after it starts." : "Turn on the voice assistant in Settings to collect news." })]));
     view.measure();

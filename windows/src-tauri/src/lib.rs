@@ -480,25 +480,67 @@ async fn localsend_discover() -> Result<Vec<localsend::Device>, String> {
     localsend::discover().await
 }
 
-/// LocalSend: send files and/or a text message; the phone asks its user to accept.
-#[tauri::command]
-async fn localsend_send(
-    app: AppHandle,
-    device: String,
-    paths: Vec<String>,
-    text: Option<String>,
+/// Sends to the chosen phone (or the usual one) and tells the island how it went.
+async fn localsend_deliver(
+    app: &AppHandle,
+    device: Option<String>,
+    outgoing: localsend::Outgoing,
 ) -> Result<localsend::Sent, String> {
-    let _ = app.emit("localsend", serde_json::json!({"t": "sending", "device": device}));
-    let result = localsend::send(&device, localsend::Outgoing {
-        paths: paths.into_iter().map(std::path::PathBuf::from).collect(),
-        text,
-    })
-    .await;
+    let target = match device {
+        Some(fingerprint) => localsend::devices().into_iter().find(|d| d.fingerprint == fingerprint)
+            .ok_or("That phone isn't known. Search for devices first.")?,
+        None => localsend::default_device().await?,
+    };
+    let _ = app.emit("localsend", serde_json::json!({"t": "sending", "device": target.alias}));
+    let result = localsend::send(&target.fingerprint, outgoing).await;
     let _ = app.emit("localsend", match &result {
         Ok(sent) => serde_json::json!({"t": "sent", "device": sent.device, "files": sent.files}),
         Err(error) => serde_json::json!({"t": "failed", "error": error}),
     });
     result
+}
+
+/// LocalSend: a text message (a link, a note's text…).
+#[tauri::command]
+async fn localsend_send_text(app: AppHandle, device: Option<String>, text: String) -> Result<localsend::Sent, String> {
+    if text.trim().is_empty() || text.len() > 100_000 {
+        return Err("Nothing to send".into());
+    }
+    localsend_deliver(&app, device, localsend::Outgoing { files: vec![], text: Some(text) }).await
+}
+
+/// LocalSend: Drop Shelf items, by id (files stay inside Kumo's shelf folder).
+#[tauri::command]
+async fn localsend_send_shelf(app: AppHandle, device: Option<String>, ids: Vec<String>) -> Result<localsend::Sent, String> {
+    let dir = grab_store::root();
+    let library = grab_store::load(&dir)?;
+    let mut files = Vec::new();
+    for id in &ids {
+        let item = grab_store::item(&library, id)?;
+        let path = grab_store::path(&dir, item, true)?;
+        let extension = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+        let name = if item.label.contains('.') || extension.is_empty() { item.label.clone() } else { format!("{}.{extension}", item.label) };
+        files.push((path, name));
+    }
+    localsend_deliver(&app, device, localsend::Outgoing { files, text: None }).await
+}
+
+/// LocalSend: a vault note from inbox/ or kumo/news/.
+#[tauri::command]
+async fn localsend_send_note(app: AppHandle, device: Option<String>, vault: String, path: String) -> Result<localsend::Sent, String> {
+    let file = tools::note_file(&vault, &path)?;
+    let name = file.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "note.md".into());
+    localsend_deliver(&app, device, localsend::Outgoing { files: vec![(file, name)], text: None }).await
+}
+
+/// LocalSend: whatever is on the clipboard (copied files, or text).
+#[tauri::command]
+async fn localsend_send_clipboard(app: AppHandle, device: Option<String>) -> Result<localsend::Sent, String> {
+    let (paths, text) = blocking(grab_clipboard::contents).await??;
+    let files = paths.into_iter()
+        .map(|p| { let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(); (p, name) })
+        .collect();
+    localsend_deliver(&app, device, localsend::Outgoing { files, text }).await
 }
 
 #[tauri::command]
@@ -1216,7 +1258,10 @@ pub fn run() {
             assistant_models,
             localsend_devices,
             localsend_discover,
-            localsend_send,
+            localsend_send_text,
+            localsend_send_shelf,
+            localsend_send_note,
+            localsend_send_clipboard,
             assistant_use_model,
             tools_ollama_unload,
             tools_vaults,

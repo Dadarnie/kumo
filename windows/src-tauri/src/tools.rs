@@ -430,6 +430,15 @@ fn openable(rel: &str) -> bool {
     })
 }
 
+/// A note Kumo may share (inbox/ or kumo/news/), as a file on disk.
+pub fn note_file(vault_id: &str, rel: &str) -> Result<std::path::PathBuf, String> {
+    if !openable(rel) {
+        return Err("Kumo only shares notes from inbox/ and kumo/news/".into());
+    }
+    let file = vault_path(vault_id)?.join(rel);
+    if file.is_file() { Ok(file) } else { Err("That note is gone".into()) }
+}
+
 /// Opens one of those notes in Obsidian.
 pub fn open_note(vault_id: &str, rel: &str) -> Result<(), String> {
     if !openable(rel) {

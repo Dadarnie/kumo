@@ -158,6 +158,18 @@ async fn register(client: &reqwest::Client, ip: Ipv4Addr, me: &Value) -> Option<
     None
 }
 
+/// The phone to use when none was chosen: the most recently seen phone, else any device;
+/// searches the network first when nothing is remembered yet.
+pub async fn default_device() -> Result<Device, String> {
+    let pick = |list: Vec<Device>| {
+        list.iter().find(|d| d.device_type.as_deref() == Some("mobile")).or(list.first()).cloned()
+    };
+    if let Some(device) = pick(devices()) {
+        return Ok(device);
+    }
+    pick(discover().await?).ok_or_else(|| "No phone found. Open LocalSend on it, on the same Wi-Fi.".into())
+}
+
 /// Remembered phones, most recently seen first.
 pub fn devices() -> Vec<Device> {
     let mut devices = load().devices;
@@ -198,7 +210,8 @@ pub async fn discover() -> Result<Vec<Device>, String> {
 
 /// What to send: files from disk, and/or a text message (shown as a message on the phone).
 pub struct Outgoing {
-    pub paths: Vec<PathBuf>,
+    /// (file on disk, name the phone sees)
+    pub files: Vec<(PathBuf, String)>,
     pub text: Option<String>,
 }
 
@@ -262,14 +275,13 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
     // (id, file name, size, type, preview), plus where the bytes come from.
     let mut entries = Vec::new();
     let mut sources: BTreeMap<String, Result<PathBuf, Vec<u8>>> = BTreeMap::new();
-    for (i, path) in outgoing.paths.iter().enumerate() {
-        let meta = std::fs::metadata(path).map_err(|_| format!("{} is missing", path.display()))?;
+    for (i, (path, name)) in outgoing.files.iter().enumerate() {
+        let meta = std::fs::metadata(path).map_err(|_| format!("{name} is missing"))?;
         if !meta.is_file() || meta.len() > MAX_FILE {
-            return Err(format!("{} can't be sent (not a file, or over 2 GB)", path.display()));
+            return Err(format!("{name} can't be sent (not a file, or over 2 GB)"));
         }
         let id = format!("file{i}");
-        let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| id.clone());
-        entries.push((id.clone(), name, meta.len(), file_type(path), None));
+        entries.push((id.clone(), name.clone(), meta.len(), file_type(path), None));
         sources.insert(id, Ok(path.clone()));
     }
     if let Some(text) = outgoing.text.filter(|t| !t.trim().is_empty()) {
@@ -386,7 +398,7 @@ mod tests {
                 found = devices(); // remembered from an earlier search
             }
             let phone = found.iter().find(|d| d.device_type.as_deref() == Some("mobile")).or(found.first()).expect("a device");
-            let sent = send(&phone.fingerprint, Outgoing { paths: vec![], text: Some("Hello from Kumo 👋".into()) }).await;
+            let sent = send(&phone.fingerprint, Outgoing { files: vec![], text: Some("Hello from Kumo 👋".into()) }).await;
             println!("text: {sent:?}");
             sent.unwrap();
         });
