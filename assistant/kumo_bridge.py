@@ -14,6 +14,7 @@ Kumo -> Kumo (stdout):
   {"t":"approve_close","id":n}                     timed out or stopped
   {"t":"notify","title":t,"v":text}                reminders
   {"t":"news_updated","count":n,"free":[titles]}   a news refresh finished; Kumo re-reads data/news.json
+  {"t":"phone_send","text"|"file"|"clipboard":…}   send_to_phone (approved): Kumo sends it with LocalSend
 Kumo -> Kumo (stdin):
   {"t":"answer","id":n,"allow":bool}  {"t":"text","v":text}  {"t":"mute","v":bool}
   {"t":"news_refresh"}  {"t":"listen"} (mic button: next phrase is a request)  {"t":"listen_stop"}

@@ -204,6 +204,7 @@ def main():
         voice.on_level = app.level            # Voice panel: mic bars
         voice.on_speak = app.speak_envelope   # Voice panel: Kumo's speech bars
         tools.on_activity = app.activity      # Activity panel: every tool step
+        tools.send_phone = lambda **what: app._send(t="phone_send", **what)  # Kumo sends it (LocalSend)
         app.on_text = voice.typed.put         # "Type to Kumo" box
         app.on_toggle_mute = voice.toggle_mute
         voice.on_mute = app.set_muted

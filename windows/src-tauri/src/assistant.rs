@@ -295,10 +295,34 @@ fn relay(app: &AppHandle, out: std::process::ChildStdout) {
             Ok(0) | Err(_) => return,
             Ok(_) => {}
         }
-        if let Ok(event @ Value::Object(_)) = serde_json::from_str::<Value>(line.trim()) {
-            let _ = app.emit("assistant", event);
+        match serde_json::from_str::<Value>(line.trim()) {
+            Ok(event) if event["t"] == "phone_send" => send_to_phone(app, &event),
+            Ok(event @ Value::Object(_)) => {
+                let _ = app.emit("assistant", event);
+            }
+            _ => {}
         }
     }
+}
+
+/// The assistant's send_to_phone (already approved, file checked against its allowed folders).
+fn send_to_phone(app: &AppHandle, event: &Value) {
+    let (app, event) = (app.clone(), event.clone());
+    tauri::async_runtime::spawn(async move {
+        let result = if event["clipboard"] == true {
+            crate::localsend_send_clipboard(app.clone(), None).await
+        } else if let Some(file) = event["file"].as_str() {
+            let path = std::path::PathBuf::from(file);
+            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            crate::localsend_deliver(&app, None, crate::localsend::Outgoing { files: vec![(path, name)], text: None }).await
+        } else {
+            crate::localsend_send_text(app.clone(), None, event["text"].as_str().unwrap_or_default().into()).await
+        };
+        // Errors before sending (empty clipboard, no phone) show too; a send error just shows again.
+        if let Err(error) = result {
+            let _ = app.emit("localsend", serde_json::json!({"t": "failed", "error": error}));
+        }
+    });
 }
 
 /// Wait for a quitting assistant, killing it if it outlives the grace period.

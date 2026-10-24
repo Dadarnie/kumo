@@ -26,6 +26,7 @@ approver = None              # set in Kumo mode: approver(name, detail, danger) 
 announce = lambda message: None  # chat.py --voice sets this to speak "I need your approval"
 on_action = lambda x, y, label: None  # a cursor at screen x, y while typing (None = hide); unused in Kumo mode
 on_activity = lambda icon, text: None  # Kumo shows each tool step in the island
+send_phone = None  # Kumo mode: send_phone(**what) has Kumo send it with LocalSend; None = not available
 cursor_glide = 0.0                   # seconds the cursor animation takes (0 = no animation, no wait)
 
 # Things that can destroy data or change the system. They are NOT blocked: they always ask, with a warning.
@@ -773,6 +774,32 @@ def run_command(command, folder=""):
     return f"exit code {proc.returncode}\n{out}"
 
 
+def _phone_what(what):
+    """'clipboard', a file in an allowed folder, or text -> (what Kumo sends, how to say it)."""
+    what = what.strip()
+    if not what:
+        raise ValueError("say what to send: text or a link, a file path, or 'clipboard'.")
+    if re.sub(r"^(my|the)\s+", "", what.lower()) == "clipboard":
+        return {"clipboard": True}, "what you copied (the clipboard)"
+    if re.match(r"^[a-zA-Z]:[\\/]", what):
+        p = _safe_path(what)
+        if not p.is_file():
+            raise ValueError(f"there is no file at {what}.")
+        return {"file": str(p)}, f"the file {p}"
+    return {"text": what[:100_000]}, f"this text: {what[:300]}"
+
+
+def describe_send_to_phone(what):
+    return f"Send to your phone (LocalSend): {_phone_what(what)[1]}", False
+
+
+def send_to_phone(what):
+    if not send_phone:
+        return "Error: sending to the phone works only inside Kumo."
+    send_phone(**_phone_what(what)[0])
+    return "Sending now. The phone asks to accept it; Kumo's island shows when it arrives."
+
+
 # ---------- registry and permission gate ----------
 
 def _fn(name, desc, props=None, optional=()):
@@ -853,10 +880,12 @@ TOOLS = [
         {"project": "Project name, e.g. scamcheck"}),
     _fn("read_clipboard", "Read the text the user copied (e.g. an error message to explain)."),
     _fn("copy_to_clipboard", "Put text on the user's clipboard so they can paste it.", {"text": "Text to copy"}),
+    _fn("send_to_phone", "Send something to the user's phone with LocalSend (same Wi-Fi). Use for 'send ... to my phone'. "
+        "The user must approve.", {"what": "The text or link to send, a full file path, or 'clipboard' for what they copied"}),
 ]
 FUNCS = {f["function"]["name"]: globals()[f["function"]["name"]] for f in TOOLS}
 DESCRIBE = {"send_message": describe_send_message, "forget": describe_forget, "kanban_add": describe_kanban_add, "kanban_move": describe_kanban_move, "type_text": describe_type_text, "press_keys": describe_press_keys, "focus_window": lambda window: (
-                f"Bring to front: {_find_window(window)[1]}", False), "open_app": describe_open_app, "open_url": describe_open_url, "play_music": describe_play_music, "write_file": describe_write_file, "edit_file": describe_edit_file,
+                f"Bring to front: {_find_window(window)[1]}", False), "open_app": describe_open_app, "open_url": describe_open_url, "play_music": describe_play_music, "write_file": describe_write_file, "edit_file": describe_edit_file, "send_to_phone": describe_send_to_phone,
             "run_command": describe_run_command}
 
 
@@ -959,6 +988,15 @@ if __name__ == "__main__":
             assert MESSAGING.search(title), title
         for title in ("YouTube", "Nadarang - YouTube", "Untitled - Notepad", "GitHub"):
             assert not MESSAGING.search(title), title
+        sent = []
+        send_phone = lambda **what: sent.append(what)
+        answer = True
+        assert "Sending" in run_tool("send_to_phone", {"what": "my clipboard"})
+        assert "Sending" in run_tool("send_to_phone", {"what": "https://example.com"})
+        assert "Sending" in run_tool("send_to_phone", {"what": root + r"\chat.py"})
+        assert "outside" in run_tool("send_to_phone", {"what": r"C:\Windows\win.ini"})
+        assert sent == [{"clipboard": True}, {"text": "https://example.com"}, {"file": str(Path(root, "chat.py").resolve())}], sent
+        assert asked[-1] == ("send_to_phone", False)
         config.PERMISSIONS["read_file"] = "deny"
         assert "turned off" in run_tool("read_file", {"path": root + r"\chat.py"})
         config.PERMISSIONS["get_time"] = "allow"
