@@ -480,6 +480,33 @@ async fn localsend_discover() -> Result<Vec<localsend::Device>, String> {
     localsend::discover().await
 }
 
+/// Receiving: starts the LocalSend app in the tray, then each file it saves lands on the
+/// Shelf ("From phone", up to 32 MB) and the island says so.
+fn watch_phone(app: AppHandle) {
+    std::thread::spawn(move || {
+        localsend::start_app();
+        let dir = localsend::save_dir();
+        let folder = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let mut watcher = localsend::Watcher::new(dir);
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(3));
+            for path in watcher.poll() {
+                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                let small = std::fs::metadata(&path).is_ok_and(|m| m.len() <= grab_store::MAX_BYTES as u64);
+                let shelved = small && files::ingest(&path.to_string_lossy()).ok().is_some_and(|copy| {
+                    let args = serde_json::json!({"path": copy.path, "collection": "From phone"});
+                    let added = tauri::async_runtime::block_on(grab::grab_action(app.clone(), "import".into(), Some(args))).is_ok();
+                    if !added {
+                        let _ = std::fs::remove_file(&copy.path);
+                    }
+                    added
+                });
+                let _ = app.emit("localsend", serde_json::json!({"t": "received", "name": name, "shelved": shelved, "folder": folder}));
+            }
+        }
+    });
+}
+
 /// Sends to the chosen phone (or the usual one) and tells the island how it went.
 async fn localsend_deliver(
     app: &AppHandle,
@@ -1325,6 +1352,7 @@ pub fn run() {
                 workflow_native::observe(&win, &loaded.workflow_shortcut);
                 windows::file_drop::watch(&handle);
             }
+            watch_phone(handle.clone());
             *gate.visibility.lock().unwrap() = loaded.startup_visibility();
             // Nothing drawn yet, so nothing takes the mouse until the page
             // reports the island's shape.

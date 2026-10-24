@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 //! Send files and text to your phone with LocalSend (protocol v2).
 //!
-//! Kumo is a sender only: receiving stays with the LocalSend app on this PC, which has its own
-//! encrypted server and accept dialog. Phones are found with the protocol's HTTP discovery
+//! Kumo sends itself; receiving stays with the LocalSend app on this PC (its own encrypted
+//! server and accept dialog). Kumo starts that app hidden and watches the folder it saves to. Phones are found with the protocol's HTTP discovery
 //! (POST `/api/localsend/v2/register` to each address on the local /24), so Kumo never competes
 //! with the LocalSend app for its UDP port. Found phones are remembered in `localsend.json`.
 //! LocalSend uses self-signed certificates, so certificate checks are off for these LAN calls;
@@ -346,6 +346,88 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
     Ok(Sent { device: device.alias, files: sent, bytes: total })
 }
 
+// ── Receiving: the LocalSend app saves, Kumo notices ─────────────────────────
+
+/// The LocalSend app, if installed (per-user or machine-wide setup).
+fn app_exe() -> Option<PathBuf> {
+    [std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Programs")),
+        std::env::var_os("ProgramFiles").map(PathBuf::from)]
+        .into_iter()
+        .flatten()
+        .map(|d| d.join("LocalSend").join("localsend_app.exe"))
+        .find(|p| p.is_file())
+}
+
+/// Starts the LocalSend app in the tray unless something already answers on its port.
+pub fn start_app() {
+    use std::os::windows::process::CommandExt;
+    let running = std::net::TcpStream::connect_timeout(&(Ipv4Addr::LOCALHOST, PORT).into(), Duration::from_millis(300)).is_ok();
+    if let (false, Some(exe)) = (running, app_exe()) {
+        // DETACHED_PROCESS: it outlives Kumo and never borrows a console.
+        let _ = std::process::Command::new(exe).arg("--hidden").creation_flags(0x0000_0008).spawn();
+    }
+}
+
+/// Where the LocalSend app saves: its "Destination" setting, else Downloads.
+pub fn save_dir() -> PathBuf {
+    let chosen = std::env::var_os("APPDATA")
+        .and_then(|d| std::fs::read_to_string(PathBuf::from(d).join("LocalSend").join("settings.json")).ok())
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+        .and_then(|v| v["flutter.ls_destination"].as_str().map(PathBuf::from))
+        .filter(|p| p.is_dir());
+    // ponytail: %USERPROFILE%\Downloads; ask the shell (FOLDERID_Downloads) if someone moved it.
+    chosen.unwrap_or_else(|| PathBuf::from(std::env::var_os("USERPROFILE").unwrap_or_default()).join("Downloads"))
+}
+
+/// A finished file the LocalSend app could have written: not a browser's half-download, and
+/// without the "downloaded from the internet" mark that browsers add (LocalSend doesn't).
+// ponytail: tells phone files from browser downloads by that mark; a file copied in by hand shows too.
+fn from_phone(path: &Path) -> bool {
+    let name = path.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
+    let partial = [".crdownload", ".part", ".partial", ".tmp", ".download"].iter().any(|e| name.ends_with(e));
+    let mut marked = path.as_os_str().to_owned();
+    marked.push(":Zone.Identifier");
+    path.is_file() && !partial && !name.starts_with('.') && !Path::new(&marked).exists()
+}
+
+fn listing(dir: &Path) -> BTreeMap<PathBuf, u64> {
+    std::fs::read_dir(dir).into_iter().flatten().flatten()
+        .filter_map(|e| Some((e.path(), e.metadata().ok().filter(|m| m.is_file())?.len())))
+        .collect()
+}
+
+/// New files in `dir` since the last call, once their size stopped changing for one poll.
+pub struct Watcher {
+    dir: PathBuf,
+    known: BTreeMap<PathBuf, u64>,
+    pending: BTreeMap<PathBuf, u64>,
+}
+
+impl Watcher {
+    pub fn new(dir: PathBuf) -> Self {
+        Self { known: listing(&dir), dir, pending: BTreeMap::new() }
+    }
+
+    pub fn poll(&mut self) -> Vec<PathBuf> {
+        let now = listing(&self.dir);
+        let (mut done, mut pending) = (Vec::new(), BTreeMap::new());
+        for (path, size) in &now {
+            if self.known.contains_key(path) {
+                continue;
+            }
+            if self.pending.get(path) != Some(size) {
+                pending.insert(path.clone(), *size); // new or still growing
+            } else if from_phone(path) {
+                done.push(path.clone());
+            }
+        }
+        // Settled files count as seen; deleted ones may come back as new.
+        self.known = now.into_iter().filter(|(p, _)| !pending.contains_key(p)).collect();
+        self.pending = pending;
+        done
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -402,5 +484,24 @@ mod tests {
             println!("text: {sent:?}");
             sent.unwrap();
         });
+    }
+
+    #[test]
+    fn watcher_reports_a_file_once_it_settles_and_skips_browser_downloads() {
+        let dir = std::env::temp_dir().join(format!("kumo-ls-watch-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("old.txt"), "x").unwrap();
+        let mut w = Watcher::new(dir.clone());
+        std::fs::write(dir.join("photo.jpg"), "ab").unwrap();
+        std::fs::write(dir.join("web.zip"), "ab").unwrap();
+        std::fs::write(dir.join("web.zip:Zone.Identifier"), "[ZoneTransfer]\nZoneId=3").unwrap();
+        std::fs::write(dir.join("big.mp4.crdownload"), "a").unwrap();
+        assert!(w.poll().is_empty(), "first sighting waits for the size to settle");
+        std::fs::write(dir.join("photo.jpg"), "abc").unwrap();
+        assert!(w.poll().is_empty(), "still growing");
+        assert_eq!(w.poll(), vec![dir.join("photo.jpg")]);
+        assert!(w.poll().is_empty(), "reported once");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
