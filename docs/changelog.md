@@ -19,6 +19,9 @@ Kumo forks Mimo 1.0.1 under a new name and identity.
 - News: the assistant reads coding, AI, security and free-offer feeds; Tools › News with
   category chips, island notices for new free finds, a daily vault digest, and
   sources and interval in Settings → Assistant.
+- Phone (LocalSend): send Shelf items, notes, headlines, the clipboard or (by voice)
+  text and files to your phone; Kumo starts LocalSend hidden and shelves what the
+  phone sends.
 - Upgrades from Mimo: data, autostart and installed hooks move over on first launch.
 
 Entries below are Mimo's history.

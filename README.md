@@ -31,6 +31,8 @@ only asks for your attention when something actually needs you.
 - **Voice assistant.** Talk to Kumo (or type in Chat): it uses tools on your PC,
   remembers through your Obsidian vault and sets reminders. Its approvals appear in
   the island, and risky ones are red. Everything runs locally on Ollama.
+- **Phone.** Send Shelf items, notes, headlines or the clipboard to your phone with
+  LocalSend; files the phone sends land on the Shelf. See [Phone](#phone-localsend).
 - **Chat.** With the assistant off, chat with Ollama or a cloud provider.
 - **Limits.** Claude usage at a glance.
 
@@ -53,6 +55,26 @@ News uses feeds only (RSS, Atom, the Hacker News API): titles, links and short
 summaries, never whole pages. Edit the sources, refresh interval, digest and free
 notices in Settings → Assistant → News; they apply without restarting it. Ask
 "what's new in AI?" or "any free dev tools today?" as well.
+
+## Phone (LocalSend)
+
+Install [LocalSend](https://localsend.org) on the PC and the phone, on the same Wi-Fi.
+
+- **Send:** the Shelf's **Phone** button (selected items), the phone icon beside each
+  note and headline, ⋯ → **Send clipboard to phone** (copied files or text), or ask
+  the assistant: "send this link to my phone". The phone asks you to accept, and the
+  island shows Phone · Sending… / Sent / why it failed.
+- **Receive:** Kumo starts the LocalSend app hidden in the tray and watches the folder
+  it saves to (its Destination setting, else Downloads). Each new file up to 32 MB
+  lands on the Shelf under **From phone**, and the island says "Got <name>". Bigger
+  files stay in that folder. Accept transfers in LocalSend's window, or mark the phone
+  as a favorite there to skip that.
+- Kumo talks LocalSend's protocol itself (port 53317): it finds phones by asking each
+  address on your /24 and remembers them in `%LOCALAPPDATA%\Kumo\localsend.json`.
+  With no phone chosen, it uses the one seen last. Its own client certificate lives in
+  the same folder (`localsend-cert.pem`, `localsend-key.pem`).
+- A phone that drops off Wi-Fi to save power can't be reached; set LocalSend's battery
+  use to "No restrictions" on the phone.
 
 ## Build
 

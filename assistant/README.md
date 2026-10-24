@@ -225,6 +225,10 @@ The project is a git repository (`git log` shows each step); the Piper voices an
 - Kumo can't click buttons on web pages; links like `messenger.com/t/...` avoid the need.
 - Memory is reloaded on every request, so facts you just told Kumo work right away.
 
+## Phone (LocalSend)
+
+"Send https://example.com to my phone", "send my clipboard to my phone" or "send C:\...\report.pdf to my phone": the `send_to_phone` tool **always asks Allow/Deny**, then hands the send to Kumo (`{"t":"phone_send"}`), which delivers it with LocalSend. Files must be in `ALLOWED_DIRS`. Works only in Kumo mode; the island shows when it arrives.
+
 ## News
 
 `news.py` reads feeds (RSS, Atom, the Hacker News API) every `NEWS_INTERVAL_HOURS` and keeps titles, links and short summaries in `data/news.json` for 14 days. Nothing else from the pages is copied. Each item gets its source's category plus keyword tags from its title: coding, ai, free (free tiers, credits, courses), security, release. Edit `NEWS_SOURCES` in `config.py`. A source that fails or rate-limits (Reddit answers 429 to quick bursts) is skipped until the next refresh.
