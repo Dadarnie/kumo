@@ -31,7 +31,7 @@
   display: none;
 }
 #island[data-core="island"] .activity-strip {
-  inset: 0 56px 0 24px;
+  inset: 0 56px 0 18px; /* 18px from the left edge, like the cloud from the right */
   gap: 10px;
 }
 .activity-time {
@@ -280,7 +280,6 @@
   position: static;
   transform: none;
 }
-/* Lip: time on the left, mascot on the right; nothing else fits. */
 /* Lip: time on the left and the cloud on the right, each 18px from its edge. */
 #island[data-visibility="peek"] .activity-strip { inset: 0 44px 0 18px; display: flex; align-items: center; justify-content: flex-start; }
 #island[data-visibility="peek"] .activity-strip > :not(.activity-time) { display: none !important; }
@@ -298,7 +297,7 @@
 #island[data-core="island"] .activity-time {
   position: static;
   transform: none;
-  margin-right: auto;
+  margin: 0 auto 0 0; /* the base rule's margin: auto would keep it centered */
 }
 /* A quiet focus ring that fits the small transport buttons. */
 .media-ambient.is-compact-transport .media-control:focus-visible {
