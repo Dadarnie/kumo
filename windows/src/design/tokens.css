@@ -85,6 +85,30 @@
   --danger-light: rgba(225, 61, 68, 0.26);
 }
 
+/* Platform looks (core/appearance.ts sets data-os to the OS Kumo runs on).
+   Each keeps Ember dusk but uses that system's own type and corner shapes; fonts it
+   lacks fall back to the bundled Inter. Hard-coded sizes and radii move onto tokens next. */
+:root[data-os="windows"] {
+  --font: "Segoe UI Variable Text", "Segoe UI", "Inter Variable", sans-serif;
+  --font-compact: "Segoe UI Variable Small", "Segoe UI Variable Text", "Segoe UI", "Inter Variable", sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+:root[data-os="macos"] {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Helvetica Neue", sans-serif;
+  --font-compact: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", monospace;
+  --radius-card: 16px;
+  --radius-control: 9px;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-os="linux"] {
+  --font: "Inter Variable", Cantarell, Ubuntu, "Noto Sans", sans-serif;
+  --font-compact: "Inter Variable", Cantarell, Ubuntu, "Noto Sans", sans-serif;
+  --mono: "JetBrains Mono", "DejaVu Sans Mono", "Ubuntu Mono", monospace;
+  --radius-card: 12px;
+  --radius-control: 6px;
+}
+
 /* One square viewport per functional icon, including inside flex/grid controls. */
 .ui-icon {
   display: block;

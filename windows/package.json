@@ -17,7 +17,7 @@
     "test:island": "node --test scripts/island-state.test.mjs",
     "test:workflow": "node --test scripts/workflow.test.mjs scripts/permission-memory.test.mjs",
     "test:icons": "node --test scripts/mimo-icons.test.mjs",
-    "test:mimo": "node --test scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs",
+    "test:mimo": "node --test scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs scripts/platform.test.mjs",
     "test:runtime": "node --test scripts/activity-runtime.test.mjs scripts/integration-workspace.test.mjs scripts/integration-notifications.test.mjs scripts/runtime-lifecycle.test.mjs scripts/island-state.test.mjs",
     "test": "npm run test:unit && npm run test:media-ui",
     "icons": "node scripts/gen-icons.mjs",
@@ -25,7 +25,7 @@
     "predev": "cargo build --release -p kumo-hook",
     "prebuild": "cargo build --release -p kumo-hook",
     "pack": "tauri build && node scripts/pack.mjs",
-    "test:unit": "node --test scripts/media-store.test.mjs scripts/master-audio.test.mjs scripts/audio-levels.test.mjs scripts/sound-assets.test.mjs scripts/runtime-lifecycle.test.mjs scripts/activity-runtime.test.mjs scripts/integration-workspace.test.mjs scripts/integration-notifications.test.mjs scripts/codex-usage.test.mjs scripts/coding-activity.test.mjs scripts/test-results.test.mjs scripts/panel-data.test.mjs scripts/island-state.test.mjs scripts/workflow.test.mjs scripts/app-icons.test.mjs scripts/mimo-icons.test.mjs scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs"
+    "test:unit": "node --test scripts/media-store.test.mjs scripts/master-audio.test.mjs scripts/audio-levels.test.mjs scripts/sound-assets.test.mjs scripts/runtime-lifecycle.test.mjs scripts/activity-runtime.test.mjs scripts/integration-workspace.test.mjs scripts/integration-notifications.test.mjs scripts/codex-usage.test.mjs scripts/coding-activity.test.mjs scripts/test-results.test.mjs scripts/panel-data.test.mjs scripts/island-state.test.mjs scripts/workflow.test.mjs scripts/app-icons.test.mjs scripts/mimo-icons.test.mjs scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs scripts/platform.test.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
