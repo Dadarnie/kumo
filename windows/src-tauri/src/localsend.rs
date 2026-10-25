@@ -349,7 +349,7 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
 // ── Receiving: the LocalSend app saves, Kumo notices ─────────────────────────
 
 /// The LocalSend app, if installed (per-user or machine-wide setup).
-fn app_exe() -> Option<PathBuf> {
+pub fn app_exe() -> Option<PathBuf> {
     [std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Programs")),
         std::env::var_os("ProgramFiles").map(PathBuf::from)]
         .into_iter()
@@ -358,11 +358,15 @@ fn app_exe() -> Option<PathBuf> {
         .find(|p| p.is_file())
 }
 
+/// Whether the LocalSend app (or anything) answers on its port on this PC.
+pub fn app_running() -> bool {
+    std::net::TcpStream::connect_timeout(&(Ipv4Addr::LOCALHOST, PORT).into(), Duration::from_millis(300)).is_ok()
+}
+
 /// Starts the LocalSend app in the tray unless something already answers on its port.
 pub fn start_app() {
     use std::os::windows::process::CommandExt;
-    let running = std::net::TcpStream::connect_timeout(&(Ipv4Addr::LOCALHOST, PORT).into(), Duration::from_millis(300)).is_ok();
-    if let (false, Some(exe)) = (running, app_exe()) {
+    if let (false, Some(exe)) = (app_running(), app_exe()) {
         // DETACHED_PROCESS: it outlives Kumo and never borrows a console.
         let _ = std::process::Command::new(exe).arg("--hidden").creation_flags(0x0000_0008).spawn();
     }

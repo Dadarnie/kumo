@@ -37,7 +37,7 @@
   width: 24px;
   height: 24px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--radius-scale));
   display: grid;
   place-items: center;
   flex: 0 0 24px;
@@ -173,7 +173,7 @@
 .is-module .media-artwork {
   width: 80px;
   height: 80px;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--radius-scale));
 }
 .media-image {
   position: absolute;
@@ -343,7 +343,7 @@
 .media-progress {
   width: 100%;
   height: 4px;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--radius-scale));
   background: var(--progress-rail);
   overflow: hidden;
 }
@@ -450,7 +450,7 @@
   grid-row: 1;
   width: 112px;
   height: 112px;
-  border-radius: 14px;
+  border-radius: calc(14px * var(--radius-scale));
   box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
 }
 .media-row.is-dedicated .media-primary {
@@ -532,7 +532,7 @@
   appearance: none;
   background: linear-gradient(to right, var(--ink) var(--volume-fill), var(--control-fill) var(--volume-fill)) center / 100% 3px no-repeat;
   border: 0;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--radius-scale));
   cursor: ew-resize;
   touch-action: none;
 }
@@ -704,7 +704,7 @@
   margin: 0;
   padding: 5px;
   border: 0;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--radius-scale));
   background: var(--popover-fill);
   color: var(--ink);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
@@ -737,7 +737,7 @@
 .spotify-equalizer i {
   width: 2px;
   height: 18px;
-  border-radius: 2px;
+  border-radius: calc(2px * var(--radius-scale));
   background: currentColor;
   transform: scaleY(0.1);
   transition: transform 150ms linear;
@@ -777,7 +777,7 @@
 .media-progress > input.media-seek:focus-visible {
   outline: 1px solid var(--dim);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
 }
 
 /* Filled horizontal controls keep the system selectors above a bounded mixer. */
@@ -889,7 +889,7 @@
   width: 100%;
   min-height: 32px;
   border: 0;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   padding: 7px 9px;
   background: transparent;
   color: inherit;
@@ -1009,7 +1009,7 @@
   writing-mode: horizontal-tb;
   direction: ltr;
   appearance: none;
-  border-radius: 9px;
+  border-radius: calc(9px * var(--radius-scale));
   background: linear-gradient(
     to right,
     var(--ink-2) var(--volume-fill),
@@ -1055,7 +1055,7 @@
 .audio-volume-row .media-app-mute {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   color: var(--ink-2);
 }
 .audio-volume-row .media-control:focus-visible {
@@ -1090,7 +1090,7 @@
   margin: 0 -4px;
   gap: 3px;
   border: 0;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--radius-scale));
   background: transparent;
   color: var(--dim-2);
   font: inherit;
@@ -1109,7 +1109,7 @@
 .audio-panel .audio-device-grid,
 .audio-panel .audio-mixer {
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--radius-scale));
   background: rgb(255 255 255 / 3.5%);
 }
 .audio-panel .audio-device-label { font-size: 10px; letter-spacing: .02em; }
@@ -1146,7 +1146,7 @@
 .audio-panel .audio-volume-row input.media-volume-slider,
 .audio-panel .audio-volume-row input.media-app-slider {
   height: 6px;
-  border-radius: 3px;
+  border-radius: calc(3px * var(--radius-scale));
   background: linear-gradient(to right, var(--accent) var(--volume-fill), var(--control-fill) var(--volume-fill));
 }
 .audio-panel .media-volume-label { text-align: right; font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; }

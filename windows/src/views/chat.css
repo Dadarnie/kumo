@@ -48,7 +48,7 @@
   margin: 0;
   padding: 10px;
   border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border-radius: calc(12px * var(--radius-scale));
   background: var(--popover-fill);
   color: var(--ink);
   font: 400 12px var(--font);
@@ -112,7 +112,7 @@
   width: 100%;
   justify-content: space-between;
   min-height: 30px;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   background: transparent;
   color: var(--ink-2);
   font: 400 12px var(--font);
@@ -151,7 +151,7 @@
   min-height: 30px;
   padding: 5px 8px;
   border: 1px solid var(--hairline);
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   background: var(--control-fill);
   color: var(--ink);
   font: 400 12px var(--font);
@@ -167,7 +167,7 @@
   min-height: 30px;
   padding: 5px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   background: var(--ink);
   color: var(--primary-control-ink);
   font: 500 12px var(--font);
@@ -268,7 +268,7 @@
   right: 16px;
   margin: 0;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--radius-scale));
   background: var(--popover-fill);
   color: var(--ink);
   font: 500 12px var(--font);
@@ -308,10 +308,10 @@
 .markdown-content :is(h2,h3,h4,h5,h6) { font:600 13px/1.5 var(--font); margin:14px 0 6px; color:var(--ink); }
 .markdown-content ul, .markdown-content ol { margin:6px 0 10px; padding-left:20px; }
 .markdown-content li { margin:3px 0; }
-.markdown-content code { font:400 11px/1.5 var(--mono); background:var(--control-fill); padding:1px 4px; border-radius:4px; }
-.markdown-code { margin:9px 0; border:1px solid var(--hairline); border-radius:10px; background:var(--card-flat); overflow:hidden; }
+.markdown-content code { font:400 11px/1.5 var(--mono); background:var(--control-fill); padding:1px 4px; border-radius:calc(4px * var(--radius-scale)); }
+.markdown-code { margin:9px 0; border:1px solid var(--hairline); border-radius:calc(10px * var(--radius-scale)); background:var(--card-flat); overflow:hidden; }
 .markdown-code-head { display:flex; align-items:center; justify-content:space-between; padding:5px 9px; color:var(--dim); font-size:10px; border-bottom:1px solid var(--hairline); }
-.markdown-copy { padding:2px 5px; border:0; background:transparent; color:var(--dim); font:inherit; border-radius:4px; cursor:pointer; }
+.markdown-copy { padding:2px 5px; border:0; background:transparent; color:var(--dim); font:inherit; border-radius:calc(4px * var(--radius-scale)); cursor:pointer; }
 .markdown-copy:hover { color:var(--ink); background:var(--control-fill); }
 .markdown-code pre { margin:0; padding:10px; white-space:pre; overflow:auto; user-select:text; }
 .markdown-code pre code { padding:0; background:none; }
@@ -336,28 +336,28 @@
 .chat-suggestion { min-height: 26px; padding: 4px 11px; border: 1px solid var(--hairline); border-radius: 999px; background: var(--card-flat); color: var(--ink-2); font: 500 11px var(--font); cursor: pointer; }
 .chat-suggestion:hover { background: var(--tab-on); color: var(--ink); }
 .chat-body:has(.chat-empty:not([hidden])) .chat-log { flex: 0 0 auto; }
-.chat-log .chat-row.user .bubble { background: var(--accent-gradient); color: #fff; border-radius: 14px 14px 4px 14px; padding: 7px 11px; }
-.chat-log .chat-row:not(.user) .reply { background: var(--card-flat); border: 1px solid var(--hairline); border-radius: 14px 14px 14px 4px; padding: 7px 11px; color: var(--ink-2); max-width: 88%; }
-.chat-card .chat-bar { border-radius: 14px; padding: 4px; gap: 6px; background: var(--card-flat); }
+.chat-log .chat-row.user .bubble { background: var(--accent-gradient); color: #fff; border-radius: calc(14px * var(--radius-scale)) calc(14px * var(--radius-scale)) calc(4px * var(--radius-scale)) calc(14px * var(--radius-scale)); padding: 7px 11px; }
+.chat-log .chat-row:not(.user) .reply { background: var(--card-flat); border: 1px solid var(--hairline); border-radius: calc(14px * var(--radius-scale)) calc(14px * var(--radius-scale)) calc(14px * var(--radius-scale)) calc(4px * var(--radius-scale)); padding: 7px 11px; color: var(--ink-2); max-width: 88%; }
+.chat-card .chat-bar { border-radius: calc(14px * var(--radius-scale)); padding: 4px; gap: 6px; background: var(--card-flat); }
 .chat-card .send-btn { background: var(--accent-gradient); color: #fff; }
 .chat-card .send-btn:disabled { background: var(--control-fill); color: var(--dim); }
 .chat-mic { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--control-fill); color: var(--accent); cursor: pointer; }
 .chat-mic[hidden] { display: none; }
 .chat-mic:hover { background: var(--control-hover); }
-.chat-mic-stop { display: none; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.chat-mic-stop { display: none; width: 10px; height: 10px; border-radius: calc(2px * var(--radius-scale)); background: currentColor; }
 .chat-mic.is-listening { background: var(--accent-gradient); color: #fff; }
 .chat-mic.is-listening svg { display: none; }
 .chat-mic.is-listening .chat-mic-stop { display: block; }
 .chat-listening { display: flex; align-items: center; gap: 8px; padding: 0 4px; color: var(--dim); font: 400 11px var(--font); }
 .chat-listening[hidden] { display: none; }
 .chat-level { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
-.chat-level i { width: 3px; height: 4px; border-radius: 2px; background: var(--accent); transition: height 90ms linear; }
+.chat-level i { width: 3px; height: 4px; border-radius: calc(2px * var(--radius-scale)); background: var(--accent); transition: height 90ms linear; }
 
 /* Assistant model picker sits above the input; send turns into stop while Kumo works. */
 .chat-assistant-models { justify-content: flex-end; }
 .chat-card .send-btn.is-stop { background: var(--control-hover); color: var(--ink); }
 .chat-card .send-btn.is-stop svg { display: none; }
-.chat-card .send-btn.is-stop::after { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+.chat-card .send-btn.is-stop::after { content: ""; width: 10px; height: 10px; border-radius: calc(2px * var(--radius-scale)); background: currentColor; }
 
 /* The dropdown's own label stays hidden here (its display rule overrode [hidden]). */
 .chat-assistant-models .audio-device-label[hidden] { display: none; }

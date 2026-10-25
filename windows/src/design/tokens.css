@@ -41,8 +41,10 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
-  --radius-card: 20px;
-  --radius-control: 12px;
+  /* Every corner is drawn at its size × this; each OS look sets its own (below). */
+  --radius-scale: 1;
+  --radius-card: calc(20px * var(--radius-scale));
+  --radius-control: calc(12px * var(--radius-scale));
   --icon-compact: 16px;
   --icon-normal: 18px;
   --icon-primary: 24px;
@@ -87,7 +89,7 @@
 
 /* Platform looks (core/appearance.ts sets data-os to the OS Kumo runs on).
    Each keeps Ember dusk but uses that system's own type and corner shapes; fonts it
-   lacks fall back to the bundled Inter. Hard-coded sizes and radii move onto tokens next. */
+   lacks fall back to the bundled Inter. */
 :root[data-os="windows"] {
   --font: "Segoe UI Variable Text", "Segoe UI", "Inter Variable", sans-serif;
   --font-compact: "Segoe UI Variable Small", "Segoe UI Variable Text", "Segoe UI", "Inter Variable", sans-serif;
@@ -97,16 +99,14 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Helvetica Neue", sans-serif;
   --font-compact: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Helvetica Neue", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", monospace;
-  --radius-card: 16px;
-  --radius-control: 9px;
+  --radius-scale: 0.8;
   -webkit-font-smoothing: antialiased;
 }
 :root[data-os="linux"] {
   --font: "Inter Variable", Cantarell, Ubuntu, "Noto Sans", sans-serif;
   --font-compact: "Inter Variable", Cantarell, Ubuntu, "Noto Sans", sans-serif;
   --mono: "JetBrains Mono", "DejaVu Sans Mono", "Ubuntu Mono", monospace;
-  --radius-card: 12px;
-  --radius-control: 6px;
+  --radius-scale: 0.6;
 }
 
 /* One square viewport per functional icon, including inside flex/grid controls. */

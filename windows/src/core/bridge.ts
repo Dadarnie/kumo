@@ -256,7 +256,7 @@ async function callOrThrow<T>(
   cmd: string,
   args?: Record<string, unknown>,
 ): Promise<T> {
-  if (!IS_TAURI) throw new Error("not running inside Mimo");
+  if (!IS_TAURI) throw new Error("not running inside Kumo");
   return invoke<T>(cmd, args);
 }
 

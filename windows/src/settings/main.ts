@@ -474,7 +474,7 @@ function apiSection(hasKey: boolean, provider: ChatProvider): HTMLElement {
   }
   return h("section", { class: "chat-provider-section" },
     h("div", { class: "chat-provider-heading" }, h("h2", { text: name + " chat" }),
-      h("button", { class: "chat-provider-link", type: "button", text: provider === "ollama" ? "Get Ollama & Hermes 3" : "Provider details", onclick: () => void Bridge.openUrl(definition.url) })),
+      h("button", { class: "chat-provider-link", type: "button", text: provider === "ollama" ? "Get Ollama" : "Provider details", onclick: () => void Bridge.openUrl(definition.url) })),
     h("p", { class: "hint", text: definition.hint }),
     field?.el ?? null);
 }

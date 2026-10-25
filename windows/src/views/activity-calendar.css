@@ -7,7 +7,7 @@
 .calendar-caption { color:var(--dim); }
 .calendar-heading > :last-child { margin-left:auto; }
 .calendar-grid { display:grid; grid-auto-flow:column; grid-template-rows:repeat(7,minmax(0,1fr)); grid-template-columns:repeat(var(--calendar-columns),minmax(0,1fr)); gap:3px; min-width:0; }
-.calendar-cell { display:block; min-width:0; width:100%; aspect-ratio:1; padding:0; border:0; border-radius:2px; background:var(--calendar-zero); cursor:pointer; transition:box-shadow var(--motion-fast) var(--ease-out),transform var(--motion-fast) var(--ease-out); }
+.calendar-cell { display:block; min-width:0; width:100%; aspect-ratio:1; padding:0; border:0; border-radius:calc(2px * var(--radius-scale)); background:var(--calendar-zero); cursor:pointer; transition:box-shadow var(--motion-fast) var(--ease-out),transform var(--motion-fast) var(--ease-out); }
 :is(.calendar-cell,.calendar-legend i)[data-level="1"] { background:var(--calendar-one); }
 :is(.calendar-cell,.calendar-legend i)[data-level="2"] { background:var(--calendar-two); }
 :is(.calendar-cell,.calendar-legend i)[data-level="3"] { background:var(--calendar-three); }
@@ -21,7 +21,7 @@
 .calendar-selection { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
 .calendar-total { font-variant-numeric:tabular-nums; }
 .calendar-legend { display:flex; align-items:center; gap:3px; font:400 9px/12px var(--font); color:var(--dim); white-space:nowrap; }
-.calendar-legend i { width:7px; height:7px; border-radius:2px; background:var(--calendar-zero); }
+.calendar-legend i { width:7px; height:7px; border-radius:calc(2px * var(--radius-scale)); background:var(--calendar-zero); }
 .activity-calendar[data-period="week"] .calendar-grid { grid-template-rows:1fr; gap:6px; }
 .activity-calendar[data-period="week"] .calendar-cell { aspect-ratio:auto; height:68px; border-radius:var(--radius-control); display:flex; flex-direction:column; justify-content:center; gap:5px; color:var(--ink); background:var(--control-fill); font:600 11px/16px var(--font); }
 .calendar-cell small { color:var(--dim); font:400 10px/14px var(--font); }

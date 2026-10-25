@@ -110,6 +110,7 @@ export function buildNewsPage(): ViewHost {
   const render = () => {
     const on = State.settings.assistantEnabled;
     refresh.hidden = !on;
+    digest.hidden = !vault; // the digest is a vault note
     for (const chip of chips.children)
       chip.setAttribute("aria-pressed", String((chip as HTMLElement).dataset.category === category));
     const items = news.filter(item => !category || item.categories.includes(category)).slice(0, NEWS_ROWS);

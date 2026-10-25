@@ -216,7 +216,7 @@ fn save_settings(
         )
     };
     if let Err(err) = settings::save(&settings) {
-        eprintln!("[mimo] could not save settings: {err}");
+        eprintln!("[kumo] could not save settings: {err}");
     }
     if autostart_changed {
         let manager = app.autolaunch();
@@ -226,7 +226,7 @@ fn save_settings(
             manager.disable()
         };
         if let Err(err) = result {
-            eprintln!("[mimo] autostart: {err}");
+            eprintln!("[kumo] autostart: {err}");
         }
     }
     if working_mode_changed {
@@ -483,6 +483,9 @@ async fn localsend_discover() -> Result<Vec<localsend::Device>, String> {
 /// Receiving: starts the LocalSend app in the tray, then each file it saves lands on the
 /// Shelf ("From phone", up to 32 MB) and the island says so.
 fn watch_phone(app: AppHandle) {
+    if localsend::app_exe().is_none() {
+        return; // no LocalSend: nothing saves phone files, so new Downloads files are never "from phone"
+    }
     std::thread::spawn(move || {
         localsend::start_app();
         let dir = localsend::save_dir();
@@ -490,7 +493,13 @@ fn watch_phone(app: AppHandle) {
         let mut watcher = localsend::Watcher::new(dir);
         loop {
             std::thread::sleep(std::time::Duration::from_secs(3));
-            for path in watcher.poll() {
+            let arrived = watcher.poll();
+            // ponytail: LocalSend keeps no receive log, so a file is "from the phone" if it settled
+            // while LocalSend ran and has no browser mark; a dedicated save folder would be exact.
+            if arrived.is_empty() || !localsend::app_running() {
+                continue;
+            }
+            for path in arrived {
                 let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
                 let small = std::fs::metadata(&path).is_ok_and(|m| m.len() <= grab_store::MAX_BYTES as u64);
                 let shelved = small && files::ingest(&path.to_string_lossy()).ok().is_some_and(|copy| {
@@ -1218,7 +1227,7 @@ async fn configure_workflow_shortcut(
 
 pub fn run() {
     if migration::migrate_user_data().is_err() {
-        eprintln!("[mimo] some previous user data could not be copied; originals were preserved");
+        eprintln!("[kumo] some previous user data could not be copied; originals were preserved");
     }
     let loaded = settings::load();
     let gate = Arc::new(PollGate::new());

@@ -947,7 +947,7 @@ impl Worker {
             .and_then(|operation| Pending::new(operation, self.signals.clone()))
         {
             Ok(pending) => self.metadata = Some(MetadataRead { version, pending }),
-            Err(error) => eprintln!("[mimo] media properties: {error}"),
+            Err(error) => eprintln!("[kumo] media properties: {error}"),
         }
     }
 
@@ -1017,7 +1017,7 @@ impl Worker {
                             }
                             Err(error) => {
                                 selected.player.artwork = None;
-                                eprintln!("[mimo] artwork: {error}");
+                                eprintln!("[kumo] artwork: {error}");
                             }
                         }
                         self.publish_selected();
@@ -1027,7 +1027,7 @@ impl Worker {
                 }
                 // Keep the last metadata for this identity, including while
                 // paused. A new identity always starts with empty metadata.
-                Err(error) => eprintln!("[mimo] media properties: {error}"),
+                Err(error) => eprintln!("[kumo] media properties: {error}"),
             }
         }
         if self.artwork.as_ref().is_some_and(|read| {
@@ -1059,7 +1059,7 @@ impl Worker {
                         self.publish_selected();
                     }
                 }
-                Err(error) => eprintln!("[mimo] artwork: {error}"),
+                Err(error) => eprintln!("[kumo] artwork: {error}"),
             }
         }
         if let Some(result) = self
@@ -1312,7 +1312,7 @@ impl Worker {
         }
         // Session removal can race an RPC. Keep the manager subscriptions alive
         // and recover on the next native event, without a retry/polling timer.
-        eprintln!("[mimo] media refresh: {error}");
+        eprintln!("[kumo] media refresh: {error}");
     }
 }
 

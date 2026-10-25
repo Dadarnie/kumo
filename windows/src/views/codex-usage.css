@@ -27,7 +27,7 @@
 .agent-usage-amount { justify-content:flex-end; }
 .agent-usage-amount b { font:600 13px/18px var(--font); letter-spacing:-.02em; }
 .agent-usage-amount > span { font:500 10px/15px var(--font); }
-.agent-usage-track { position:relative; height:6px; border-radius:4px; background:var(--control-fill); overflow:hidden; }
+.agent-usage-track { position:relative; height:6px; border-radius:calc(4px * var(--radius-scale)); background:var(--control-fill); overflow:hidden; }
 .agent-usage-fill { position:absolute; inset:0; right:auto; width:0; border-radius:inherit; background:var(--ink); transition:width 350ms var(--ease-out); }
 .agent-usage-window[data-capacity="available"] .agent-usage-fill { background:var(--green); }
 .agent-usage-window[data-capacity="available"] .agent-usage-amount { color:var(--green); }
