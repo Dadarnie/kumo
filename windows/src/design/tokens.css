@@ -100,6 +100,8 @@
   --font-compact: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Helvetica Neue", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", monospace;
   --radius-scale: 0.8;
+  /* Pure black, so the island blends into the MacBook's camera notch. */
+  --shell-fill: #000;
   -webkit-font-smoothing: antialiased;
 }
 :root[data-os="linux"] {

@@ -199,6 +199,7 @@ export class Island {
   private height = new Tracked(0);
   private mediaSpace = new Tracked(0);
   private radius = new Tracked(ROUNDED_CORNER);
+  private radiusScale = 1;
   private positionX = new Tracked(window.innerWidth / 2);
   private positionY = new Tracked(0);
   private botCx = new Spring(46);
@@ -1116,8 +1117,8 @@ export class Island {
     const layout = this.views.get(State.view)?.layout?.();
     const h = size.h;
     const w = State.visibility === "expanded" && layout?.width ? layout.width + railFor(State.view) : size.w;
-    const r =
-      State.visibility === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER;
+    // The shell's corners follow the OS look (--radius-scale, design/tokens.css) like the CSS ones.
+    const r = (State.visibility === "expanded" ? EXPANDED_CORNER : ROUNDED_CORNER) * this.radiusScale;
     // While the rail shows, the panel is tall enough for all its tabs.
     const bodyHeight = State.visibility === "expanded"
       ? Math.max(layout?.height ?? h, railFor(State.view) ? RAIL_MIN_H : 0) : h;
@@ -1875,6 +1876,7 @@ export class Island {
   applySettings() {
     if(!State.settings.grabEnabled){this.setGrabModifier(false);if(!this.grabDrag?.dragged)this.grabDrag=null;}
     applyAppearance(State.settings.appearance);
+    this.radiusScale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--radius-scale")) || 1;
     Sound.setEnabled(State.settings.soundEnabled);
     Sound.setVolume(State.settings.soundVolume);
     Visibility.configure(State.settings);
