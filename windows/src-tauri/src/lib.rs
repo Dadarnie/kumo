@@ -494,8 +494,8 @@ fn watch_phone(app: AppHandle) {
         loop {
             std::thread::sleep(std::time::Duration::from_secs(3));
             let arrived = watcher.poll();
-            // ponytail: LocalSend keeps no receive log, so a file is "from the phone" if it settled
-            // while LocalSend ran and has no browser mark; a dedicated save folder would be exact.
+            // LocalSend keeps no receive log. With its own Destination folder every file is the
+            // phone's; in plain Downloads these checks (running, no browser mark) are a best guess.
             if arrived.is_empty() || !localsend::app_running() {
                 continue;
             }

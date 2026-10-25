@@ -68,7 +68,9 @@ Install [LocalSend](https://localsend.org) on the PC and the phone, on the same 
   it saves to (its Destination setting, else Downloads). Each new file up to 32 MB
   lands on the Shelf under **From phone**, and the island says "Got <name>". Bigger
   files stay in that folder. Accept transfers in LocalSend's window, or mark the phone
-  as a favorite there to skip that.
+  as a favorite there to skip that. Give LocalSend its own Destination folder (e.g.
+  `Downloads\LocalSend`): in plain Downloads, Kumo can only guess which new files came
+  from the phone (no browser download mark, saved while LocalSend runs).
 - Kumo talks LocalSend's protocol itself (port 53317): it finds phones by asking each
   address on your /24 and remembers them in `%LOCALAPPDATA%\Kumo\localsend.json`.
   With no phone chosen, it uses the one seen last. Its own client certificate lives in
