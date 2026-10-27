@@ -235,7 +235,9 @@ pub fn contents() -> Result<(Vec<std::path::PathBuf>, Option<String>), String> {
                     for index in 0..DragQueryFileW(drop, u32::MAX, None) {
                         let mut name = vec![0u16; DragQueryFileW(drop, index, None) as usize + 1];
                         let length = DragQueryFileW(drop, index, Some(&mut name)) as usize;
-                        files.push(std::path::PathBuf::from(String::from_utf16_lossy(&name[..length])));
+                        files.push(std::path::PathBuf::from(String::from_utf16_lossy(
+                            &name[..length],
+                        )));
                     }
                     if !files.is_empty() {
                         return Ok((files, None));
@@ -251,7 +253,8 @@ pub fn contents() -> Result<(Vec<std::path::PathBuf>, Option<String>), String> {
                         while *pointer.add(length) != 0 && length < 1_000_000 {
                             length += 1;
                         }
-                        let text = String::from_utf16_lossy(std::slice::from_raw_parts(pointer, length));
+                        let text =
+                            String::from_utf16_lossy(std::slice::from_raw_parts(pointer, length));
                         let _ = GlobalUnlock(memory);
                         if !text.trim().is_empty() {
                             return Ok((Vec::new(), Some(text)));

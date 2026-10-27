@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Mimo for Windows — app wiring and the commands the island calls.
 
+mod assistant;
 mod audio_runtime;
 mod chat_api;
 mod chat_history;
@@ -27,7 +28,6 @@ mod media_runtime;
 mod migration;
 mod openai;
 mod pipe;
-mod assistant;
 mod secrets;
 mod settings;
 mod tools;
@@ -136,12 +136,18 @@ fn assistant_news() -> serde_json::Value {
 
 fn assistant_dir() -> Result<std::path::PathBuf, String> {
     let dir = assistant::dir();
-    if assistant::valid_dir(&dir) { Ok(dir) } else { Err("The assistant folder is missing its .venv. See assistant/README.md.".into()) }
+    if assistant::valid_dir(&dir) {
+        Ok(dir)
+    } else {
+        Err("The assistant folder is missing its .venv. See assistant/README.md.".into())
+    }
 }
 
 #[tauri::command]
 fn assistant_news_settings() -> serde_json::Value {
-    assistant_dir().map(|dir| assistant::news_settings(&dir)).unwrap_or(serde_json::Value::Null)
+    assistant_dir()
+        .map(|dir| assistant::news_settings(&dir))
+        .unwrap_or(serde_json::Value::Null)
 }
 
 /// Saves the News settings into the assistant's folder, then asks the assistant to refresh with them.
@@ -159,7 +165,10 @@ fn assistant_news_settings_save(
 
 /// One command from the island to Assistant (answer, typed text, mute, stop).
 #[tauri::command]
-fn assistant_send(assistant: State<assistant::Assistant>, msg: serde_json::Value) -> Result<(), String> {
+fn assistant_send(
+    assistant: State<assistant::Assistant>,
+    msg: serde_json::Value,
+) -> Result<(), String> {
     assistant.send(&msg)
 }
 
@@ -489,7 +498,10 @@ fn watch_phone(app: AppHandle) {
     std::thread::spawn(move || {
         localsend::start_app();
         let dir = localsend::save_dir();
-        let folder = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let folder = dir
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
         let mut watcher = localsend::Watcher::new(dir);
         loop {
             std::thread::sleep(std::time::Duration::from_secs(3));
@@ -500,16 +512,29 @@ fn watch_phone(app: AppHandle) {
                 continue;
             }
             for path in arrived {
-                let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-                let small = std::fs::metadata(&path).is_ok_and(|m| m.len() <= grab_store::MAX_BYTES as u64);
-                let shelved = small && files::ingest(&path.to_string_lossy()).ok().is_some_and(|copy| {
-                    let args = serde_json::json!({"path": copy.path, "collection": "From phone"});
-                    let added = tauri::async_runtime::block_on(grab::grab_action(app.clone(), "import".into(), Some(args))).is_ok();
-                    if !added {
-                        let _ = std::fs::remove_file(&copy.path);
-                    }
-                    added
-                });
+                let name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_default();
+                let small =
+                    std::fs::metadata(&path).is_ok_and(|m| m.len() <= grab_store::MAX_BYTES as u64);
+                let shelved = small
+                    && files::ingest(&path.to_string_lossy())
+                        .ok()
+                        .is_some_and(|copy| {
+                            let args =
+                                serde_json::json!({"path": copy.path, "collection": "From phone"});
+                            let added = tauri::async_runtime::block_on(grab::grab_action(
+                                app.clone(),
+                                "import".into(),
+                                Some(args),
+                            ))
+                            .is_ok();
+                            if !added {
+                                let _ = std::fs::remove_file(&copy.path);
+                            }
+                            added
+                        });
                 let _ = app.emit("localsend", serde_json::json!({"t": "received", "name": name, "shelved": shelved, "folder": folder}));
             }
         }
@@ -523,39 +548,72 @@ async fn localsend_deliver(
     outgoing: localsend::Outgoing,
 ) -> Result<localsend::Sent, String> {
     let target = match device {
-        Some(fingerprint) => localsend::devices().into_iter().find(|d| d.fingerprint == fingerprint)
+        Some(fingerprint) => localsend::devices()
+            .into_iter()
+            .find(|d| d.fingerprint == fingerprint)
             .ok_or("That phone isn't known. Search for devices first.")?,
         None => localsend::default_device().await?,
     };
-    let _ = app.emit("localsend", serde_json::json!({"t": "sending", "device": target.alias}));
+    let _ = app.emit(
+        "localsend",
+        serde_json::json!({"t": "sending", "device": target.alias}),
+    );
     let result = localsend::send(&target.fingerprint, outgoing).await;
-    let _ = app.emit("localsend", match &result {
-        Ok(sent) => serde_json::json!({"t": "sent", "device": sent.device, "files": sent.files}),
-        Err(error) => serde_json::json!({"t": "failed", "error": error}),
-    });
+    let _ = app.emit(
+        "localsend",
+        match &result {
+            Ok(sent) => {
+                serde_json::json!({"t": "sent", "device": sent.device, "files": sent.files})
+            }
+            Err(error) => serde_json::json!({"t": "failed", "error": error}),
+        },
+    );
     result
 }
 
 /// LocalSend: a text message (a link, a note's text…).
 #[tauri::command]
-async fn localsend_send_text(app: AppHandle, device: Option<String>, text: String) -> Result<localsend::Sent, String> {
+async fn localsend_send_text(
+    app: AppHandle,
+    device: Option<String>,
+    text: String,
+) -> Result<localsend::Sent, String> {
     if text.trim().is_empty() || text.len() > 100_000 {
         return Err("Nothing to send".into());
     }
-    localsend_deliver(&app, device, localsend::Outgoing { files: vec![], text: Some(text) }).await
+    localsend_deliver(
+        &app,
+        device,
+        localsend::Outgoing {
+            files: vec![],
+            text: Some(text),
+        },
+    )
+    .await
 }
 
 /// LocalSend: Drop Shelf items, by id (files stay inside Kumo's shelf folder).
 #[tauri::command]
-async fn localsend_send_shelf(app: AppHandle, device: Option<String>, ids: Vec<String>) -> Result<localsend::Sent, String> {
+async fn localsend_send_shelf(
+    app: AppHandle,
+    device: Option<String>,
+    ids: Vec<String>,
+) -> Result<localsend::Sent, String> {
     let dir = grab_store::root();
     let library = grab_store::load(&dir)?;
     let mut files = Vec::new();
     for id in &ids {
         let item = grab_store::item(&library, id)?;
         let path = grab_store::path(&dir, item, true)?;
-        let extension = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
-        let name = if item.label.contains('.') || extension.is_empty() { item.label.clone() } else { format!("{}.{extension}", item.label) };
+        let extension = path
+            .extension()
+            .map(|e| e.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let name = if item.label.contains('.') || extension.is_empty() {
+            item.label.clone()
+        } else {
+            format!("{}.{extension}", item.label)
+        };
         files.push((path, name));
     }
     localsend_deliver(&app, device, localsend::Outgoing { files, text: None }).await
@@ -563,18 +621,44 @@ async fn localsend_send_shelf(app: AppHandle, device: Option<String>, ids: Vec<S
 
 /// LocalSend: a vault note from inbox/ or kumo/news/.
 #[tauri::command]
-async fn localsend_send_note(app: AppHandle, device: Option<String>, vault: String, path: String) -> Result<localsend::Sent, String> {
+async fn localsend_send_note(
+    app: AppHandle,
+    device: Option<String>,
+    vault: String,
+    path: String,
+) -> Result<localsend::Sent, String> {
     let file = tools::note_file(&vault, &path)?;
-    let name = file.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "note.md".into());
-    localsend_deliver(&app, device, localsend::Outgoing { files: vec![(file, name)], text: None }).await
+    let name = file
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "note.md".into());
+    localsend_deliver(
+        &app,
+        device,
+        localsend::Outgoing {
+            files: vec![(file, name)],
+            text: None,
+        },
+    )
+    .await
 }
 
 /// LocalSend: whatever is on the clipboard (copied files, or text).
 #[tauri::command]
-async fn localsend_send_clipboard(app: AppHandle, device: Option<String>) -> Result<localsend::Sent, String> {
+async fn localsend_send_clipboard(
+    app: AppHandle,
+    device: Option<String>,
+) -> Result<localsend::Sent, String> {
     let (paths, text) = blocking(grab_clipboard::contents).await??;
-    let files = paths.into_iter()
-        .map(|p| { let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(); (p, name) })
+    let files = paths
+        .into_iter()
+        .map(|p| {
+            let name = p
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            (p, name)
+        })
         .collect();
     localsend_deliver(&app, device, localsend::Outgoing { files, text }).await
 }
@@ -1389,7 +1473,9 @@ pub fn run() {
             }
             pipe::start(handle.clone());
             integrations::start(handle.clone());
-            handle.state::<assistant::Assistant>().sync(&handle, &loaded);
+            handle
+                .state::<assistant::Assistant>()
+                .sync(&handle, &loaded);
             Ok(())
         })
         .build(tauri::generate_context!())

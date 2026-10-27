@@ -18,10 +18,10 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 };
 use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindow,
-    IsWindowVisible, PostMessageW, SetForegroundWindow, SetWindowsHookExW, ShowWindow,
-    UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT, SW_RESTORE, WH_KEYBOARD_LL, WM_APP, WM_HOTKEY,
-    WM_KEYDOWN, WM_KEYUP, WM_NCDESTROY, WM_SYSKEYDOWN, WM_SYSKEYUP,
+    CallNextHookEx, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible,
+    PostMessageW, SetForegroundWindow, SetWindowsHookExW, ShowWindow, UnhookWindowsHookEx, HHOOK,
+    KBDLLHOOKSTRUCT, SW_RESTORE, WH_KEYBOARD_LL, WM_APP, WM_HOTKEY, WM_KEYDOWN, WM_KEYUP,
+    WM_NCDESTROY, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
 
 const SUBCLASS: usize = 0x4d49_5746;
@@ -81,8 +81,7 @@ pub(crate) fn configure_voice(win: &WebviewWindow, value: &str) -> ShortcutStatu
     );
     if !connected {
         status.shortcut = value.into();
-        status.error =
-            Some("Turn on the assistant in Settings to use this shortcut.".into());
+        status.error = Some("Turn on the assistant in Settings to use this shortcut.".into());
     }
     *VOICE_STATUS.get_or_init(Default::default).lock().unwrap() = status.clone();
     status

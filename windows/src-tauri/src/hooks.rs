@@ -445,7 +445,11 @@ fn remove_old_relays(dest: &Path) {
     };
     let prefix = format!("{stem}.old-");
     for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
-        if entry.file_name().to_str().is_some_and(|n| n.starts_with(&prefix) && n.ends_with(".exe")) {
+        if entry
+            .file_name()
+            .to_str()
+            .is_some_and(|n| n.starts_with(&prefix) && n.ends_with(".exe"))
+        {
             let _ = std::fs::remove_file(entry.path());
         }
     }
@@ -526,7 +530,11 @@ mod tests {
         std::fs::write(&src, b"new relay").unwrap();
         std::fs::write(&dest, b"old relay").unwrap();
         // Like a scanner reading it: open with no sharing, released after half a second.
-        let held = std::fs::OpenOptions::new().read(true).share_mode(0).open(&dest).unwrap();
+        let held = std::fs::OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(&dest)
+            .unwrap();
         let release = std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(500));
             drop(held);
@@ -551,13 +559,20 @@ mod tests {
             .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(300));
         let new = system.join("where.exe");
-        assert!(std::fs::copy(&new, &dest).is_err(), "a running exe can't be overwritten");
+        assert!(
+            std::fs::copy(&new, &dest).is_err(),
+            "a running exe can't be overwritten"
+        );
         assert!(install_relay(&new, &dest));
         assert!(relay_matches(&new, &dest).unwrap());
         let _ = running.kill();
         let _ = running.wait();
         install_relay(&new, &dest); // a later start removes the copy that was moved aside
-        let left: Vec<_> = std::fs::read_dir(&dir).unwrap().flatten().map(|e| e.file_name()).collect();
+        let left: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect();
         assert_eq!(left, vec![std::ffi::OsString::from("relay.exe")]);
         let _ = std::fs::remove_dir_all(&dir);
     }

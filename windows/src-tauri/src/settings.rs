@@ -676,7 +676,11 @@ mod renamed_keys {
     fn old_raphael_keys_still_load() {
         let mut v = serde_json::to_value(super::Settings::default()).unwrap();
         let map = v.as_object_mut().unwrap();
-        for key in ["assistantEnabled", "assistantAlwaysListen", "assistantModel"] {
+        for key in [
+            "assistantEnabled",
+            "assistantAlwaysListen",
+            "assistantModel",
+        ] {
             map.remove(key);
         }
         map.insert("raphaelEnabled".into(), true.into());

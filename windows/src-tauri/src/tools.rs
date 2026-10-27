@@ -217,7 +217,10 @@ fn is_variant(name: &str) -> bool {
 
 /// `qwen3:8b` -> `qwen3-8b-kumo`; `gemma4-e4b:latest` -> `gemma4-e4b-kumo`.
 pub fn variant_name(base: &str) -> String {
-    format!("{}-kumo", base.trim_end_matches(":latest").replace([':', '/'], "-"))
+    format!(
+        "{}-kumo",
+        base.trim_end_matches(":latest").replace([':', '/'], "-")
+    )
 }
 
 /// The assistant runs a copy of `base` with a 16k context: its prompt and tool list are
@@ -227,9 +230,14 @@ pub async fn assistant_variant(base: &str) -> Result<String, String> {
         return Err("That model is not installed in Ollama".into());
     }
     let name = variant_name(base);
-    let installed = http().get(format!("{OLLAMA}/api/tags")).send().await
+    let installed = http()
+        .get(format!("{OLLAMA}/api/tags"))
+        .send()
+        .await
         .map_err(|e| format!("Ollama: {e}"))?
-        .text().await.unwrap_or_default();
+        .text()
+        .await
+        .unwrap_or_default();
     if !installed.contains(&format!("\"{name}:latest\"")) {
         reqwest::Client::builder().timeout(Duration::from_secs(180)).build().unwrap_or_default()
             .post(format!("{OLLAMA}/api/create"))
@@ -328,7 +336,11 @@ fn slug(text: &str) -> String {
     }
     let out: String = out.trim_matches('-').chars().take(60).collect();
     let out = out.trim_end_matches('-').to_string();
-    if out.is_empty() { "note".into() } else { out }
+    if out.is_empty() {
+        "note".into()
+    } else {
+        out
+    }
 }
 
 /// Appends text keeping the file's own line endings (Obsidian vaults in git care).
@@ -341,7 +353,14 @@ fn append_keeping_endings(path: &std::path::Path, text: &str) -> std::io::Result
     }
     joined.push_str(text);
     let joined = joined.replace("\r\n", "\n");
-    std::fs::write(path, if crlf { joined.replace('\n', "\r\n") } else { joined })
+    std::fs::write(
+        path,
+        if crlf {
+            joined.replace('\n', "\r\n")
+        } else {
+            joined
+        },
+    )
 }
 
 /// Saves a note to inbox/<slug>.md with frontmatter and logs it. Returns its vault path.
@@ -357,13 +376,18 @@ pub fn quick_note(vault_id: &str, text: &str) -> Result<String, String> {
     }
     let root = vault_path(vault_id)?;
     let inbox = root.join(INBOX_DIR);
-    std::fs::create_dir_all(&inbox).map_err(|error| format!("Could not write the note: {error}"))?;
+    std::fs::create_dir_all(&inbox)
+        .map_err(|error| format!("Could not write the note: {error}"))?;
     let first = text.lines().next().unwrap_or(text).trim();
     let title: String = first.chars().take(60).collect();
     let base = slug(&title);
     let mut n = 1;
     let file = loop {
-        let name = if n == 1 { format!("{base}.md") } else { format!("{base}-{n}.md") };
+        let name = if n == 1 {
+            format!("{base}.md")
+        } else {
+            format!("{base}-{n}.md")
+        };
         if !inbox.join(&name).exists() {
             break name;
         }
@@ -404,16 +428,30 @@ pub fn recent_notes(vault_id: &str) -> Result<Vec<Note>, String> {
         .filter(|e| e.path().extension().is_some_and(|x| x == "md"))
         .filter_map(|e| {
             let name = e.file_name().to_string_lossy().into_owned();
-            let modified = e.metadata().ok()?.modified().ok()?
-                .duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
-            let head: String = std::fs::read_to_string(e.path()).ok()?.chars().take(600).collect();
+            let modified = e
+                .metadata()
+                .ok()?
+                .modified()
+                .ok()?
+                .duration_since(std::time::UNIX_EPOCH)
+                .ok()?
+                .as_secs();
+            let head: String = std::fs::read_to_string(e.path())
+                .ok()?
+                .chars()
+                .take(600)
+                .collect();
             let title = head
                 .lines()
                 .find_map(|l| l.strip_prefix("title:"))
                 .map(|t| t.trim().trim_matches('"').to_string())
                 .filter(|t| !t.is_empty())
                 .unwrap_or_else(|| name.trim_end_matches(".md").to_string());
-            Some(Note { path: format!("{INBOX_DIR}/{name}"), title, modified })
+            Some(Note {
+                path: format!("{INBOX_DIR}/{name}"),
+                title,
+                modified,
+            })
         })
         .collect();
     notes.sort_by_key(|n| std::cmp::Reverse(n.modified));
@@ -425,7 +463,10 @@ pub fn recent_notes(vault_id: &str) -> Result<Vec<Note>, String> {
 fn openable(rel: &str) -> bool {
     OPENABLE.iter().any(|dir| {
         rel.strip_prefix(dir).is_some_and(|name| {
-            name.ends_with(".md") && !name.contains(['/', '\\']) && !name.contains("..") && name.len() > 3
+            name.ends_with(".md")
+                && !name.contains(['/', '\\'])
+                && !name.contains("..")
+                && name.len() > 3
         })
     })
 }
@@ -436,7 +477,11 @@ pub fn note_file(vault_id: &str, rel: &str) -> Result<std::path::PathBuf, String
         return Err("Kumo only shares notes from inbox/ and kumo/news/".into());
     }
     let file = vault_path(vault_id)?.join(rel);
-    if file.is_file() { Ok(file) } else { Err("That note is gone".into()) }
+    if file.is_file() {
+        Ok(file)
+    } else {
+        Err("That note is gone".into())
+    }
 }
 
 /// Opens one of those notes in Obsidian.
@@ -448,7 +493,10 @@ pub fn open_note(vault_id: &str, rel: &str) -> Result<(), String> {
     if !root.join(rel).is_file() {
         return Err("That note is gone".into());
     }
-    let name = root.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = root
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
     windows::open_url(&format!(
         "obsidian://open?vault={}&file={}",
         encode(&name),
@@ -499,10 +547,17 @@ mod tests {
         for p in [&crlf, &lf, &new] {
             append_keeping_endings(p, "\n## [2026-10-22] create | inbox/x.md\n- note\n").unwrap();
         }
-        assert_eq!(std::fs::read_to_string(&crlf).unwrap(),
-            "# Log\r\n- a\r\n\r\n## [2026-10-22] create | inbox/x.md\r\n- note\r\n");
-        assert_eq!(std::fs::read_to_string(&lf).unwrap(), "# Log\n\n## [2026-10-22] create | inbox/x.md\n- note\n");
-        assert!(std::fs::read_to_string(&new).unwrap().starts_with("\n## [2026-10-22]"));
+        assert_eq!(
+            std::fs::read_to_string(&crlf).unwrap(),
+            "# Log\r\n- a\r\n\r\n## [2026-10-22] create | inbox/x.md\r\n- note\r\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(&lf).unwrap(),
+            "# Log\n\n## [2026-10-22] create | inbox/x.md\n- note\n"
+        );
+        assert!(std::fs::read_to_string(&new)
+            .unwrap()
+            .starts_with("\n## [2026-10-22]"));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -512,7 +567,14 @@ mod tests {
         assert_eq!(slug("!!!"), "note");
         assert!(slug(&"a".repeat(80)).len() <= 60);
         assert!(openable("inbox/my-idea.md") && openable("kumo/news/2026-10-22.md"));
-        for bad in ["inbox/../private/x.md", "private/x.md", "inbox/sub/x.md", "inbox/x.txt", "kumo/memory.md", "inbox/.md"] {
+        for bad in [
+            "inbox/../private/x.md",
+            "private/x.md",
+            "inbox/sub/x.md",
+            "inbox/x.txt",
+            "kumo/memory.md",
+            "inbox/.md",
+        ] {
             assert!(!openable(bad), "{bad}");
         }
     }

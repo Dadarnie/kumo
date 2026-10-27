@@ -66,8 +66,11 @@ fn mic_user(dir: &Path) -> PathBuf {
     std::fs::read_to_string(dir.join(".venv").join("pyvenv.cfg"))
         .ok()
         .and_then(|cfg| {
-            cfg.lines()
-                .find_map(|l| l.split_once('=').filter(|(k, _)| k.trim() == "home").map(|(_, v)| v.trim().to_string()))
+            cfg.lines().find_map(|l| {
+                l.split_once('=')
+                    .filter(|(k, _)| k.trim() == "home")
+                    .map(|(_, v)| v.trim().to_string())
+            })
         })
         .map(|home| Path::new(&home).join("python.exe"))
         .filter(|exe| exe.is_file())
@@ -80,8 +83,13 @@ fn mic_user(dir: &Path) -> PathBuf {
 /// Kumo's assistant folder: `assistant/` next to kumo.exe, else the repository's `assistant/`
 /// (where a source build and its installed copy keep the code, voices and .venv).
 pub fn dir() -> PathBuf {
-    let beside = std::env::current_exe().ok().and_then(|exe| exe.parent().map(|p| p.join("assistant")));
-    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..").join("assistant");
+    let beside = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.join("assistant")));
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("assistant");
     beside.filter(|d| valid_dir(d)).unwrap_or(repo)
 }
 
@@ -113,7 +121,9 @@ pub fn news_settings(dir: &Path) -> Value {
 
 /// Checks settings from the page and rebuilds them field by field, so nothing else reaches the file.
 fn clean_news_settings(value: &Value) -> Result<Value, String> {
-    let interval = value["interval_hours"].as_f64().filter(|h| (0.5..=24.0).contains(h))
+    let interval = value["interval_hours"]
+        .as_f64()
+        .filter(|h| (0.5..=24.0).contains(h))
         .ok_or("Choose a refresh interval between 30 minutes and 24 hours.")?;
     let sources = value["sources"].as_array().ok_or("Sources are missing.")?;
     if sources.len() > 50 {
@@ -127,7 +137,10 @@ fn clean_news_settings(value: &Value) -> Result<Value, String> {
         if name.is_empty() || name.len() > 60 {
             return Err("Give each source a name up to 60 characters.".into());
         }
-        if !(url.starts_with("https://") || url.starts_with("http://")) || url.len() > 500 || url.contains(char::is_whitespace) {
+        if !(url.starts_with("https://") || url.starts_with("http://"))
+            || url.len() > 500
+            || url.contains(char::is_whitespace)
+        {
             return Err(format!("{name}: the feed address must start with https://"));
         }
         if !NEWS_CATEGORIES.contains(&category) {
@@ -148,7 +161,11 @@ pub fn save_news_settings(dir: &Path, value: &Value) -> Result<(), String> {
     let data = dir.join("data");
     std::fs::create_dir_all(&data).map_err(|e| e.to_string())?;
     let tmp = data.join("news_settings.json.tmp");
-    std::fs::write(&tmp, serde_json::to_vec_pretty(&clean).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    std::fs::write(
+        &tmp,
+        serde_json::to_vec_pretty(&clean).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| e.to_string())?;
     std::fs::rename(&tmp, data.join("news_settings.json")).map_err(|e| e.to_string())
 }
 
@@ -156,7 +173,10 @@ pub fn save_news_settings(dir: &Path, value: &Value) -> Result<(), String> {
 fn command_line(msg: &Value) -> Option<String> {
     let ok = match msg.get("t")?.as_str()? {
         "answer" => msg.get("id")?.is_u64() && msg.get("allow")?.is_boolean(),
-        "text" => msg.get("v")?.as_str().is_some_and(|v| !v.trim().is_empty() && v.len() <= 4000),
+        "text" => msg
+            .get("v")?
+            .as_str()
+            .is_some_and(|v| !v.trim().is_empty() && v.len() <= 4000),
         "mute" => msg.get("v")?.is_boolean(),
         "stop" | "news_refresh" | "listen" | "listen_stop" => true,
         _ => false,
@@ -182,7 +202,10 @@ impl Assistant {
         }
         let Some(launch) = want else { return };
         if !valid_dir(&launch.dir) {
-            log::line(format!("assistant: not started, no chat.py or .venv in {}", launch.dir.display()));
+            log::line(format!(
+                "assistant: not started, no chat.py or .venv in {}",
+                launch.dir.display()
+            ));
             let _ = app.emit("assistant", serde_json::json!({"t": "unavailable"}));
             return;
         }
@@ -205,7 +228,9 @@ impl Assistant {
         let running = slot.as_ref().ok_or("The assistant is off")?;
         let mut stdin = running.stdin.lock().unwrap();
         let pipe = stdin.as_mut().ok_or("The assistant is starting")?;
-        writeln!(pipe, "{line}").and_then(|()| pipe.flush()).map_err(|e| e.to_string())
+        writeln!(pipe, "{line}")
+            .and_then(|()| pipe.flush())
+            .map_err(|e| e.to_string())
     }
 }
 
@@ -217,13 +242,23 @@ fn ensure_ollama() {
         return;
     }
     let tray = std::env::var_os("LOCALAPPDATA")
-        .map(|d| PathBuf::from(d).join("Programs").join("Ollama").join("ollama app.exe"))
+        .map(|d| {
+            PathBuf::from(d)
+                .join("Programs")
+                .join("Ollama")
+                .join("ollama app.exe")
+        })
         .filter(|p| p.is_file());
     let started = match tray {
         Some(app) => Command::new(app).creation_flags(CREATE_NO_WINDOW).spawn(),
         None => match crate::windows::find_on_path("ollama") {
-            Some(cli) => Command::new(cli).arg("serve").creation_flags(CREATE_NO_WINDOW)
-                .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn(),
+            Some(cli) => Command::new(cli)
+                .arg("serve")
+                .creation_flags(CREATE_NO_WINDOW)
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn(),
             None => return log::line("assistant: Ollama is not installed"),
         },
     };
@@ -233,7 +268,12 @@ fn ensure_ollama() {
     }
 }
 
-fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>>>, stop: Arc<AtomicBool>) {
+fn supervise(
+    app: AppHandle,
+    launch: Launch,
+    stdin: Arc<Mutex<Option<ChildStdin>>>,
+    stop: Arc<AtomicBool>,
+) {
     let dir = &launch.dir;
     let mut failures = 0usize;
     while !stop.load(Ordering::SeqCst) {
@@ -242,7 +282,8 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
         match spawn(&launch) {
             Ok(mut child) => {
                 *stdin.lock().unwrap() = child.stdin.take();
-                *MIC_ENTRY.lock().unwrap() = Some(mic_user(dir).to_string_lossy().replace('\\', "#"));
+                *MIC_ENTRY.lock().unwrap() =
+                    Some(mic_user(dir).to_string_lossy().replace('\\', "#"));
                 if let Some(out) = child.stdout.take() {
                     relay(&app, out);
                 }
@@ -258,7 +299,11 @@ fn supervise(app: AppHandle, launch: Launch, stdin: Arc<Mutex<Option<ChildStdin>
         if stop.load(Ordering::SeqCst) {
             break;
         }
-        failures = if started.elapsed() > Duration::from_secs(60) { 0 } else { failures + 1 };
+        failures = if started.elapsed() > Duration::from_secs(60) {
+            0
+        } else {
+            failures + 1
+        };
         let wait = Instant::now() + Duration::from_secs(BACKOFF[failures.min(BACKOFF.len() - 1)]);
         while Instant::now() < wait && !stop.load(Ordering::SeqCst) {
             std::thread::sleep(Duration::from_millis(200));
@@ -275,7 +320,10 @@ fn spawn(launch: &Launch) -> std::io::Result<Child> {
     command
         .args(["chat.py", "--kumo"])
         .current_dir(&launch.dir)
-        .env("KUMO_ALWAYS_LISTEN", if launch.always_listen { "1" } else { "0" })
+        .env(
+            "KUMO_ALWAYS_LISTEN",
+            if launch.always_listen { "1" } else { "0" },
+        )
         .env("PYTHONIOENCODING", "utf-8")
         .env("PYTHONUNBUFFERED", "1")
         .stdin(Stdio::piped())
@@ -313,14 +361,33 @@ fn send_to_phone(app: &AppHandle, event: &Value) {
             crate::localsend_send_clipboard(app.clone(), None).await
         } else if let Some(file) = event["file"].as_str() {
             let path = std::path::PathBuf::from(file);
-            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-            crate::localsend_deliver(&app, None, crate::localsend::Outgoing { files: vec![(path, name)], text: None }).await
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            crate::localsend_deliver(
+                &app,
+                None,
+                crate::localsend::Outgoing {
+                    files: vec![(path, name)],
+                    text: None,
+                },
+            )
+            .await
         } else {
-            crate::localsend_send_text(app.clone(), None, event["text"].as_str().unwrap_or_default().into()).await
+            crate::localsend_send_text(
+                app.clone(),
+                None,
+                event["text"].as_str().unwrap_or_default().into(),
+            )
+            .await
         };
         // Errors before sending (empty clipboard, no phone) show too; a send error just shows again.
         if let Err(error) = result {
-            let _ = app.emit("localsend", serde_json::json!({"t": "failed", "error": error}));
+            let _ = app.emit(
+                "localsend",
+                serde_json::json!({"t": "failed", "error": error}),
+            );
         }
     });
 }
@@ -364,8 +431,11 @@ mod tests {
         let ok = json!({"interval_hours": 3.0, "digest": false, "evil": 1,
             "sources": [{"name": " HN ", "url": "https://hn.dev/feed", "category": "coding", "x": 2}]});
         let clean = clean_news_settings(&ok).unwrap();
-        assert_eq!(clean, json!({"interval_hours": 3.0, "digest": false, "free_notice": true,
-            "sources": [{"name": "HN", "url": "https://hn.dev/feed", "category": "coding"}]}));
+        assert_eq!(
+            clean,
+            json!({"interval_hours": 3.0, "digest": false, "free_notice": true,
+            "sources": [{"name": "HN", "url": "https://hn.dev/feed", "category": "coding"}]})
+        );
         for bad in [
             json!({"interval_hours": 0.1, "sources": []}),
             json!({"interval_hours": 3.0, "sources": [{"name": "A", "url": "file:///c:/x", "category": "ai"}]}),

@@ -51,7 +51,10 @@ fn store_path() -> PathBuf {
 }
 
 fn now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 /// Kumo's stable LocalSend identity (phones remember devices by fingerprint) and the phones it found.
@@ -61,7 +64,11 @@ fn load() -> Store {
         .and_then(|b| serde_json::from_slice(&b).ok())
         .unwrap_or_default();
     if store.fingerprint.is_empty() {
-        let random = || std::collections::hash_map::RandomState::new().build_hasher().finish();
+        let random = || {
+            std::collections::hash_map::RandomState::new()
+                .build_hasher()
+                .finish()
+        };
         store.fingerprint = format!("{:016x}{:016x}", random(), random());
         save(&store);
     }
@@ -94,7 +101,10 @@ fn client_identity() -> Option<&'static reqwest::Identity> {
     IDENTITY
         .get_or_init(|| {
             let dir = crate::settings::local_dir();
-            let (cert_path, key_path) = (dir.join("localsend-cert.pem"), dir.join("localsend-key.pem"));
+            let (cert_path, key_path) = (
+                dir.join("localsend-cert.pem"),
+                dir.join("localsend-key.pem"),
+            );
             let pem = match (std::fs::read(&cert_path), std::fs::read(&key_path)) {
                 (Ok(cert), Ok(key)) => [cert, key].concat(),
                 _ => {
@@ -136,17 +146,25 @@ fn local_ipv4() -> Option<Ipv4Addr> {
 /// The other 253 addresses of this PC's /24.
 fn subnet(own: Ipv4Addr) -> Vec<Ipv4Addr> {
     let [a, b, c, d] = own.octets();
-    (1..=254u8).filter(|&h| h != d).map(|h| Ipv4Addr::new(a, b, c, h)).collect()
+    (1..=254u8)
+        .filter(|&h| h != d)
+        .map(|h| Ipv4Addr::new(a, b, c, h))
+        .collect()
 }
 
 async fn register(client: &reqwest::Client, ip: Ipv4Addr, me: &Value) -> Option<Device> {
     for protocol in ["https", "http"] {
         let url = format!("{protocol}://{ip}:{PORT}{API}/register");
-        let Ok(response) = client.post(&url).json(me).send().await else { continue };
+        let Ok(response) = client.post(&url).json(me).send().await else {
+            continue;
+        };
         let info: Value = response.json().await.ok()?;
         return Some(Device {
             fingerprint: info["fingerprint"].as_str()?.to_string(),
-            alias: info["alias"].as_str().unwrap_or("LocalSend device").to_string(),
+            alias: info["alias"]
+                .as_str()
+                .unwrap_or("LocalSend device")
+                .to_string(),
             device_model: info["deviceModel"].as_str().map(str::to_string),
             device_type: info["deviceType"].as_str().map(str::to_string),
             ip: ip.to_string(),
@@ -162,12 +180,16 @@ async fn register(client: &reqwest::Client, ip: Ipv4Addr, me: &Value) -> Option<
 /// searches the network first when nothing is remembered yet.
 pub async fn default_device() -> Result<Device, String> {
     let pick = |list: Vec<Device>| {
-        list.iter().find(|d| d.device_type.as_deref() == Some("mobile")).or(list.first()).cloned()
+        list.iter()
+            .find(|d| d.device_type.as_deref() == Some("mobile"))
+            .or(list.first())
+            .cloned()
     };
     if let Some(device) = pick(devices()) {
         return Ok(device);
     }
-    pick(discover().await?).ok_or_else(|| "No phone found. Open LocalSend on it, on the same Wi-Fi.".into())
+    pick(discover().await?)
+        .ok_or_else(|| "No phone found. Open LocalSend on it, on the same Wi-Fi.".into())
 }
 
 /// Remembered phones, most recently seen first.
@@ -200,7 +222,9 @@ pub async fn discover() -> Result<Vec<Device>, String> {
         }
     }
     for device in &found {
-        store.devices.retain(|d| d.fingerprint != device.fingerprint);
+        store
+            .devices
+            .retain(|d| d.fingerprint != device.fingerprint);
         store.devices.push(device.clone());
     }
     save(&store);
@@ -235,7 +259,12 @@ fn error_chain(error: &dyn std::error::Error) -> String {
 }
 
 fn file_type(path: &Path) -> &'static str {
-    match path.extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase).as_deref() {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(str::to_ascii_lowercase)
+        .as_deref()
+    {
         Some("jpg" | "jpeg") => "image/jpeg",
         Some("png") => "image/png",
         Some("gif") => "image/gif",
@@ -253,7 +282,10 @@ fn file_type(path: &Path) -> &'static str {
 }
 
 /// The prepare-upload body: one entry per file (text goes as a text/plain file with a preview).
-fn prepare_body(me: &Value, files: &[(String, String, u64, &'static str, Option<String>)]) -> Value {
+fn prepare_body(
+    me: &Value,
+    files: &[(String, String, u64, &'static str, Option<String>)],
+) -> Value {
     let map: serde_json::Map<String, Value> = files
         .iter()
         .map(|(id, name, size, kind, preview)| {
@@ -286,7 +318,13 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
     }
     if let Some(text) = outgoing.text.filter(|t| !t.trim().is_empty()) {
         let bytes = text.clone().into_bytes();
-        entries.push(("text".into(), "Kumo message.txt".into(), bytes.len() as u64, "text/plain", Some(text)));
+        entries.push((
+            "text".into(),
+            "Kumo message.txt".into(),
+            bytes.len() as u64,
+            "text/plain",
+            Some(text),
+        ));
         sources.insert("text".into(), Err(bytes));
     }
     if entries.is_empty() {
@@ -300,31 +338,63 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
     let mut attempt = 0;
     let prepare = loop {
         attempt += 1;
-        match prepare_client.post(format!("{base}/prepare-upload")).json(&body).send().await {
+        match prepare_client
+            .post(format!("{base}/prepare-upload"))
+            .json(&body)
+            .send()
+            .await
+        {
             Ok(response) => break response,
-            Err(e) if e.is_connect() && attempt < 3 => tokio::time::sleep(Duration::from_secs(2)).await,
-            Err(e) if e.is_connect() || e.is_timeout() => {
-                return Err(format!("{} didn't answer. Open LocalSend on it, on the same Wi-Fi.", device.alias))
+            Err(e) if e.is_connect() && attempt < 3 => {
+                tokio::time::sleep(Duration::from_secs(2)).await
             }
-            Err(e) => return Err(format!("Could not reach {}: {}", device.alias, error_chain(&e))),
+            Err(e) if e.is_connect() || e.is_timeout() => {
+                return Err(format!(
+                    "{} didn't answer. Open LocalSend on it, on the same Wi-Fi.",
+                    device.alias
+                ))
+            }
+            Err(e) => {
+                return Err(format!(
+                    "Could not reach {}: {}",
+                    device.alias,
+                    error_chain(&e)
+                ))
+            }
         }
     };
     let total = entries.iter().map(|e| e.2).sum();
     match prepare.status().as_u16() {
         200 => {}
-        204 => return Ok(Sent { device: device.alias, files: entries.len(), bytes: total }), // e.g. a text shown as a message
-        401 => return Err(format!("{} asks for a PIN. Turn the PIN off in its LocalSend settings.", device.alias)),
+        204 => {
+            return Ok(Sent {
+                device: device.alias,
+                files: entries.len(),
+                bytes: total,
+            })
+        } // e.g. a text shown as a message
+        401 => {
+            return Err(format!(
+                "{} asks for a PIN. Turn the PIN off in its LocalSend settings.",
+                device.alias
+            ))
+        }
         403 => return Err(format!("{} declined.", device.alias)),
         409 => return Err(format!("{} is busy with another transfer.", device.alias)),
         code => return Err(format!("{} answered {code}.", device.alias)),
     }
     let session: Value = prepare.json().await.map_err(|e| e.to_string())?;
-    let session_id = session["sessionId"].as_str().ok_or("The phone sent no session")?.to_string();
+    let session_id = session["sessionId"]
+        .as_str()
+        .ok_or("The phone sent no session")?
+        .to_string();
     let tokens = session["files"].as_object().cloned().unwrap_or_default();
     let upload = client(Duration::from_secs(3600), Duration::from_secs(5));
     let mut sent = 0usize;
     for (id, token) in &tokens {
-        let Some(token) = token.as_str() else { continue };
+        let Some(token) = token.as_str() else {
+            continue;
+        };
         let body = match sources.get(id) {
             Some(Ok(path)) => tokio::fs::read(path).await.map_err(|e| e.to_string())?,
             Some(Err(bytes)) => bytes.clone(),
@@ -332,35 +402,57 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
         };
         let response = upload
             .post(format!("{base}/upload"))
-            .query(&[("sessionId", session_id.as_str()), ("fileId", id.as_str()), ("token", token)])
+            .query(&[
+                ("sessionId", session_id.as_str()),
+                ("fileId", id.as_str()),
+                ("token", token),
+            ])
             .body(body)
             .send()
             .await
             .map_err(|e| format!("Sending stopped: {e}"))?;
         if !response.status().is_success() {
-            let _ = upload.post(format!("{base}/cancel")).query(&[("sessionId", session_id.as_str())]).send().await;
-            return Err(format!("{} stopped the transfer ({}).", device.alias, response.status().as_u16()));
+            let _ = upload
+                .post(format!("{base}/cancel"))
+                .query(&[("sessionId", session_id.as_str())])
+                .send()
+                .await;
+            return Err(format!(
+                "{} stopped the transfer ({}).",
+                device.alias,
+                response.status().as_u16()
+            ));
         }
         sent += 1;
     }
-    Ok(Sent { device: device.alias, files: sent, bytes: total })
+    Ok(Sent {
+        device: device.alias,
+        files: sent,
+        bytes: total,
+    })
 }
 
 // ── Receiving: the LocalSend app saves, Kumo notices ─────────────────────────
 
 /// The LocalSend app, if installed (per-user or machine-wide setup).
 pub fn app_exe() -> Option<PathBuf> {
-    [std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Programs")),
-        std::env::var_os("ProgramFiles").map(PathBuf::from)]
-        .into_iter()
-        .flatten()
-        .map(|d| d.join("LocalSend").join("localsend_app.exe"))
-        .find(|p| p.is_file())
+    [
+        std::env::var_os("LOCALAPPDATA").map(|d| PathBuf::from(d).join("Programs")),
+        std::env::var_os("ProgramFiles").map(PathBuf::from),
+    ]
+    .into_iter()
+    .flatten()
+    .map(|d| d.join("LocalSend").join("localsend_app.exe"))
+    .find(|p| p.is_file())
 }
 
 /// Whether the LocalSend app (or anything) answers on its port on this PC.
 pub fn app_running() -> bool {
-    std::net::TcpStream::connect_timeout(&(Ipv4Addr::LOCALHOST, PORT).into(), Duration::from_millis(300)).is_ok()
+    std::net::TcpStream::connect_timeout(
+        &(Ipv4Addr::LOCALHOST, PORT).into(),
+        Duration::from_millis(300),
+    )
+    .is_ok()
 }
 
 /// Starts the LocalSend app in the tray unless something already answers on its port.
@@ -368,34 +460,49 @@ pub fn start_app() {
     use std::os::windows::process::CommandExt;
     if let (false, Some(exe)) = (app_running(), app_exe()) {
         // DETACHED_PROCESS: it outlives Kumo and never borrows a console.
-        let _ = std::process::Command::new(exe).arg("--hidden").creation_flags(0x0000_0008).spawn();
+        let _ = std::process::Command::new(exe)
+            .arg("--hidden")
+            .creation_flags(0x0000_0008)
+            .spawn();
     }
 }
 
 /// Where the LocalSend app saves: its "Destination" setting, else Downloads.
 pub fn save_dir() -> PathBuf {
     let chosen = std::env::var_os("APPDATA")
-        .and_then(|d| std::fs::read_to_string(PathBuf::from(d).join("LocalSend").join("settings.json")).ok())
+        .and_then(|d| {
+            std::fs::read_to_string(PathBuf::from(d).join("LocalSend").join("settings.json")).ok()
+        })
         .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         .and_then(|v| v["flutter.ls_destination"].as_str().map(PathBuf::from))
         .filter(|p| p.is_dir());
     // ponytail: %USERPROFILE%\Downloads; ask the shell (FOLDERID_Downloads) if someone moved it.
-    chosen.unwrap_or_else(|| PathBuf::from(std::env::var_os("USERPROFILE").unwrap_or_default()).join("Downloads"))
+    chosen.unwrap_or_else(|| {
+        PathBuf::from(std::env::var_os("USERPROFILE").unwrap_or_default()).join("Downloads")
+    })
 }
 
 /// A finished file the LocalSend app could have written: not a browser's half-download, and
 /// without the "downloaded from the internet" mark that browsers add (LocalSend doesn't).
 // ponytail: tells phone files from browser downloads by that mark; a file copied in by hand shows too.
 fn from_phone(path: &Path) -> bool {
-    let name = path.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
-    let partial = [".crdownload", ".part", ".partial", ".tmp", ".download"].iter().any(|e| name.ends_with(e));
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    let partial = [".crdownload", ".part", ".partial", ".tmp", ".download"]
+        .iter()
+        .any(|e| name.ends_with(e));
     let mut marked = path.as_os_str().to_owned();
     marked.push(":Zone.Identifier");
     path.is_file() && !partial && !name.starts_with('.') && !Path::new(&marked).exists()
 }
 
 fn listing(dir: &Path) -> BTreeMap<PathBuf, u64> {
-    std::fs::read_dir(dir).into_iter().flatten().flatten()
+    std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
         .filter_map(|e| Some((e.path(), e.metadata().ok().filter(|m| m.is_file())?.len())))
         .collect()
 }
@@ -409,7 +516,11 @@ pub struct Watcher {
 
 impl Watcher {
     pub fn new(dir: PathBuf) -> Self {
-        Self { known: listing(&dir), dir, pending: BTreeMap::new() }
+        Self {
+            known: listing(&dir),
+            dir,
+            pending: BTreeMap::new(),
+        }
     }
 
     pub fn poll(&mut self) -> Vec<PathBuf> {
@@ -426,7 +537,10 @@ impl Watcher {
             }
         }
         // Settled files count as seen; deleted ones may come back as new.
-        self.known = now.into_iter().filter(|(p, _)| !pending.contains_key(p)).collect();
+        self.known = now
+            .into_iter()
+            .filter(|(p, _)| !pending.contains_key(p))
+            .collect();
         self.pending = pending;
         done
     }
@@ -441,16 +555,28 @@ mod tests {
         let ips = subnet(Ipv4Addr::new(192, 168, 1, 23));
         assert_eq!(ips.len(), 253);
         assert!(!ips.contains(&Ipv4Addr::new(192, 168, 1, 23)));
-        assert!(ips.contains(&Ipv4Addr::new(192, 168, 1, 1)) && ips.contains(&Ipv4Addr::new(192, 168, 1, 254)));
+        assert!(
+            ips.contains(&Ipv4Addr::new(192, 168, 1, 1))
+                && ips.contains(&Ipv4Addr::new(192, 168, 1, 254))
+        );
     }
 
     #[test]
     fn prepare_upload_matches_the_protocol() {
         let me = identity("abc");
-        let body = prepare_body(&me, &[
-            ("file0".into(), "photo.jpg".into(), 10, "image/jpeg", None),
-            ("text".into(), "Kumo message.txt".into(), 5, "text/plain", Some("hello".into())),
-        ]);
+        let body = prepare_body(
+            &me,
+            &[
+                ("file0".into(), "photo.jpg".into(), 10, "image/jpeg", None),
+                (
+                    "text".into(),
+                    "Kumo message.txt".into(),
+                    5,
+                    "text/plain",
+                    Some("hello".into()),
+                ),
+            ],
+        );
         assert_eq!(body["info"]["fingerprint"], "abc");
         assert_eq!(body["info"]["deviceType"], "desktop");
         assert_eq!(body["files"]["file0"]["fileName"], "photo.jpg");
@@ -464,27 +590,52 @@ mod tests {
     fn file_types_cover_phone_media() {
         assert_eq!(file_type(Path::new("a.JPG")), "image/jpeg");
         assert_eq!(file_type(Path::new("clip.mp4")), "video/mp4");
-        assert_eq!(file_type(Path::new("thing.xyz")), "application/octet-stream");
+        assert_eq!(
+            file_type(Path::new("thing.xyz")),
+            "application/octet-stream"
+        );
     }
 
     /// Run with --ignored while LocalSend is open on a phone on this network.
     #[test]
     #[ignore]
     fn live_find_and_send_text() {
-        let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
         rt.block_on(async {
             let mut found = Vec::new();
             for _ in 0..6 {
                 found = discover().await.unwrap();
-                if !found.is_empty() { break; }
+                if !found.is_empty() {
+                    break;
+                }
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }
-            println!("found: {:?}", found.iter().map(|d| (&d.alias, &d.ip, &d.device_type)).collect::<Vec<_>>());
+            println!(
+                "found: {:?}",
+                found
+                    .iter()
+                    .map(|d| (&d.alias, &d.ip, &d.device_type))
+                    .collect::<Vec<_>>()
+            );
             if found.is_empty() {
                 found = devices(); // remembered from an earlier search
             }
-            let phone = found.iter().find(|d| d.device_type.as_deref() == Some("mobile")).or(found.first()).expect("a device");
-            let sent = send(&phone.fingerprint, Outgoing { files: vec![], text: Some("Hello from Kumo 👋".into()) }).await;
+            let phone = found
+                .iter()
+                .find(|d| d.device_type.as_deref() == Some("mobile"))
+                .or(found.first())
+                .expect("a device");
+            let sent = send(
+                &phone.fingerprint,
+                Outgoing {
+                    files: vec![],
+                    text: Some("Hello from Kumo 👋".into()),
+                },
+            )
+            .await;
             println!("text: {sent:?}");
             sent.unwrap();
         });
@@ -499,9 +650,16 @@ mod tests {
         let mut w = Watcher::new(dir.clone());
         std::fs::write(dir.join("photo.jpg"), "ab").unwrap();
         std::fs::write(dir.join("web.zip"), "ab").unwrap();
-        std::fs::write(dir.join("web.zip:Zone.Identifier"), "[ZoneTransfer]\nZoneId=3").unwrap();
+        std::fs::write(
+            dir.join("web.zip:Zone.Identifier"),
+            "[ZoneTransfer]\nZoneId=3",
+        )
+        .unwrap();
         std::fs::write(dir.join("big.mp4.crdownload"), "a").unwrap();
-        assert!(w.poll().is_empty(), "first sighting waits for the size to settle");
+        assert!(
+            w.poll().is_empty(),
+            "first sighting waits for the size to settle"
+        );
         std::fs::write(dir.join("photo.jpg"), "abc").unwrap();
         assert!(w.poll().is_empty(), "still growing");
         assert_eq!(w.poll(), vec![dir.join("photo.jpg")]);
