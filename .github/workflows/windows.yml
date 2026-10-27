@@ -73,6 +73,10 @@ jobs:
       - name: Build and pack the installer
         id: pack
         shell: pwsh
+        env:
+          # Signs the installer for the in-app updater (public key in tauri.conf.json).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           npm run pack
           $version = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
@@ -139,10 +143,10 @@ jobs:
             git tag -f windows-latest "${{ github.sha }}"
             git push -f origin windows-latest
             gh release edit windows-latest --title "Kumo for Windows (latest)" --notes "Always the newest Windows build — currently $v."
-            gh release upload windows-latest "release/Kumo-Windows-setup.exe" --clobber
+            gh release upload windows-latest "release/Kumo-Windows-setup.exe" "release/latest.json" --clobber
           } else {
             gh release create windows-latest `
-              "release/Kumo-Windows-setup.exe" `
+              "release/Kumo-Windows-setup.exe" "release/latest.json" `
               --title "Kumo for Windows (latest)" `
               --notes "Always the newest Windows build — currently $v." `
               --latest=false

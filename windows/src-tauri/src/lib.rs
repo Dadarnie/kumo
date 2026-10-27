@@ -1324,6 +1324,9 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             let _ = app.emit_to(island::WINDOW_LABEL, "tray", "open".to_string());
         }))
+        // Updates are checked only when asked (Settings › About).
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         // The previous startup entry is migrated after the new plugin is ready.
         .plugin(
             tauri_plugin_autostart::Builder::new()

@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "settings-updates",
+  "description": "Only the Settings window may check for, install and restart into an update (Settings \u203a About).",
+  "windows": [
+    "settings"
+  ],
+  "permissions": [
+    "updater:default",
+    "process:allow-restart"
+  ]
+}

@@ -52,6 +52,25 @@ for (const { dir, suffix, names } of packages) {
   }
 }
 
+// Signed build (TAURI_SIGNING_PRIVATE_KEY set): the in-app updater's feed, served from the
+// rolling windows-latest release and pointing at this version's installer.
+const installer = newest(join(bundleRoot, "nsis"), "-setup.exe");
+try {
+  const signature = readFileSync(`${installer}.sig`, "utf8");
+  const feed = join(outDir, "latest.json");
+  writeFileSync(feed, JSON.stringify({
+    version,
+    notes: `Kumo ${version}`,
+    pub_date: new Date().toISOString(),
+    platforms: { "windows-x86_64": {
+      signature,
+      url: `https://github.com/Dadarnie/kumo/releases/download/windows-v${version}/Kumo-Windows-${version}-setup.exe`,
+    } },
+  }, null, 2) + "
+");
+  written.push(feed);
+} catch { /* unsigned local build: no update feed */ }
+
 const checksums = written.map(file =>
   `${createHash("sha256").update(readFileSync(file)).digest("hex")}  ${basename(file)}`,
 );

@@ -12,6 +12,8 @@ import { ICONS, icon } from "../views/icons";
 import { appearance, musicMode } from "../icons/glyphs";
 import { mimoIcon } from "../icons/render";
 import { applyAppearance } from "../core/appearance";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { CompactDropdown } from "../views/device-picker";
 import "../island/media.css";
 import { Lifetime } from "../core/lifetime";
@@ -889,6 +891,38 @@ function hotkeysSection(): HTMLElement {
   );
 }
 
+/** Settings › About: look for a newer signed release on GitHub, install it, restart. Only when asked. */
+function updateRow(): HTMLElement {
+  const status = h("span", { class: "hint", role: "status", text: "" });
+  let found: Update | null = null;
+  const button = h("button", { class: "btn secondary", type: "button", text: "Check for updates" }) as HTMLButtonElement;
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      if (!found) {
+        status.textContent = "Checking…";
+        found = await check();
+        status.textContent = found ? `Kumo ${found.version} is available.` : "Kumo is up to date.";
+        button.textContent = found ? "Install and restart" : "Check for updates";
+      } else {
+        let total = 0, done = 0;
+        await found.downloadAndInstall(event => {
+          if (event.event === "Started") total = event.data.contentLength ?? 0;
+          if (event.event === "Progress") done += event.data.chunkLength;
+          status.textContent = total ? `Downloading… ${Math.round(done / total * 100)}%` : "Downloading…";
+        });
+        status.textContent = "Restarting…";
+        await relaunch();
+      }
+    } catch (error) {
+      status.textContent = `Couldn't update: ${String(error).replace(/^Error:\s*/, "")}`;
+    } finally {
+      button.disabled = false;
+    }
+  });
+  return h("div", { class: "preference-row" }, status, button);
+}
+
 function aboutSection(): HTMLElement {
   return h(
     "section",
@@ -916,8 +950,9 @@ function aboutSection(): HTMLElement {
     }),
     h("p", {
       class: "hint about-privacy",
-      text: "No telemetry. Kumo only contacts your connected services.",
+      text: "No telemetry. Kumo only contacts your connected services, and GitHub when you check for updates.",
     }),
+    updateRow(),
   );
 }
 
