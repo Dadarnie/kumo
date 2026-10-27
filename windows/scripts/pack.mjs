@@ -66,8 +66,7 @@ try {
       signature,
       url: `https://github.com/Dadarnie/kumo/releases/download/windows-v${version}/Kumo-Windows-${version}-setup.exe`,
     } },
-  }, null, 2) + "
-");
+  }, null, 2) + "\n");
   written.push(feed);
 } catch { /* unsigned local build: no update feed */ }
 
