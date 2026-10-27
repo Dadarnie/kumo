@@ -19,9 +19,6 @@ use serde_json::{json, Value};
 
 const PORT: u16 = 53317;
 const API: &str = "/api/localsend/v2";
-/// Whole files are read into memory (no streaming body feature); keep it to sensible sizes.
-// ponytail: in-memory upload, cap 2 GB; stream with reqwest's `stream` feature if bigger files matter.
-const MAX_FILE: u64 = 2 * 1024 * 1024 * 1024;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -309,8 +306,8 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
     let mut sources: BTreeMap<String, Result<PathBuf, Vec<u8>>> = BTreeMap::new();
     for (i, (path, name)) in outgoing.files.iter().enumerate() {
         let meta = std::fs::metadata(path).map_err(|_| format!("{name} is missing"))?;
-        if !meta.is_file() || meta.len() > MAX_FILE {
-            return Err(format!("{name} can't be sent (not a file, or over 2 GB)"));
+        if !meta.is_file() {
+            return Err(format!("{name} can't be sent (not a file)"));
         }
         let id = format!("file{i}");
         entries.push((id.clone(), name.clone(), meta.len(), file_type(path), None));
@@ -395,9 +392,14 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
         let Some(token) = token.as_str() else {
             continue;
         };
-        let body = match sources.get(id) {
-            Some(Ok(path)) => tokio::fs::read(path).await.map_err(|e| e.to_string())?,
-            Some(Err(bytes)) => bytes.clone(),
+        // Files stream from disk (any size); the text message is already in memory.
+        let (body, length) = match sources.get(id) {
+            Some(Ok(path)) => {
+                let file = tokio::fs::File::open(path).await.map_err(|e| e.to_string())?;
+                let length = file.metadata().await.map_err(|e| e.to_string())?.len();
+                (reqwest::Body::from(file), length)
+            }
+            Some(Err(bytes)) => (reqwest::Body::from(bytes.clone()), bytes.len() as u64),
             None => continue,
         };
         let response = upload
@@ -407,6 +409,7 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
                 ("fileId", id.as_str()),
                 ("token", token),
             ])
+            .header(reqwest::header::CONTENT_LENGTH, length)
             .body(body)
             .send()
             .await
