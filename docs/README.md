@@ -8,6 +8,7 @@
 | [Distribution](distribution.md) | Installer, checksums and unsigned-build notice |
 | [Assets](assets.md) | App identity, sounds, preview GIFs and local production files |
 | [Architecture](architecture.md) | Frontend, native runtime and build inputs |
+| [Linux port](linux-port.md) | Plan for running Kumo on Zorin OS (X11) |
 | [Companion](companion.md) | Mascot renderer, expressions and motion |
 | [Product](product.md) | Behavior and compatibility boundaries |
 | [Contributors](contributors.md) | Maintainer and contributors |

@@ -78,6 +78,15 @@ Install [LocalSend](https://localsend.org) on the PC and the phone, on the same 
 - A phone that drops off Wi-Fi to save power can't be reached; set LocalSend's battery
   use to "No restrictions" on the phone.
 
+**Live check** (phone on the same Wi-Fi, LocalSend open), after changing phone code:
+
+1. Shelf: select an item → **Phone**; the phone asks, the island says Sent.
+2. Notes and News: the phone icon on a note (a file) and on a headline (a text message).
+3. ⋯ → **Send clipboard to phone**, once with copied text and once with a copied file
+   (a big one, over 1 GB, checks streaming).
+4. "Send https://example.com to my phone" to the assistant: approval, then it arrives.
+5. Send a photo from the phone: it lands in the LocalSend folder and on the Shelf.
+
 ## Looks right on every OS
 
 Kumo sets `<html data-os>` to the system it runs on (`windows`, `macos`, `linux`), and
