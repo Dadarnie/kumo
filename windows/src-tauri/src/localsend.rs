@@ -395,7 +395,9 @@ pub async fn send(fingerprint: &str, outgoing: Outgoing) -> Result<Sent, String>
         // Files stream from disk (any size); the text message is already in memory.
         let (body, length) = match sources.get(id) {
             Some(Ok(path)) => {
-                let file = tokio::fs::File::open(path).await.map_err(|e| e.to_string())?;
+                let file = tokio::fs::File::open(path)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 let length = file.metadata().await.map_err(|e| e.to_string())?.len();
                 (reqwest::Body::from(file), length)
             }

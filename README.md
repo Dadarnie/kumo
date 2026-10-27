@@ -78,6 +78,21 @@ Install [LocalSend](https://localsend.org) on the PC and the phone, on the same 
 - A phone that drops off Wi-Fi to save power can't be reached; set LocalSend's battery
   use to "No restrictions" on the phone.
 
+## Looks right on every OS
+
+Kumo sets `<html data-os>` to the system it runs on (`windows`, `macos`, `linux`), and
+[`design/tokens.css`](windows/src/design/tokens.css) gives each its own type, corners and
+focus style while keeping Ember dusk:
+
+- **Windows:** Segoe UI Variable, Cascadia Mono, corners as designed (`--radius-scale: 1`).
+- **macOS:** the system font (SF), SF Mono, slightly tighter corners (`0.8`), a soft focus
+  glow, and a pure black island that blends into the camera notch.
+- **Linux:** Inter, JetBrains Mono, flatter corners (`0.6`) closer to GNOME.
+
+Every CSS corner is written as `calc(<px> * var(--radius-scale))`, and the island's own
+corners follow the same scale. To preview another look, run
+`document.documentElement.dataset.os = "macos"` in the dev tools.
+
 ## Build
 
 You need Windows 10/11, WebView2, Node.js 20+, Rust and the MSVC C++ build tools.
@@ -87,7 +102,14 @@ cd windows
 npm ci
 npm run tauri dev          # live development
 npm run tauri build -- --no-bundle   # release build → target\release\kumo.exe
+npm run install:local      # build, then install into %LOCALAPPDATA%\Programs\Kumo and restart
 ```
+
+**Updates.** Settings › About › **Check for updates** asks GitHub for the newest signed
+release (the `latest.json` on the `windows-latest` release), only when you click it.
+`.github/workflows/windows.yml` builds a release from a `windows-v<version>` tag, signs it
+with the `TAURI_SIGNING_PRIVATE_KEY` Actions secret, and publishes it when `PUBLISH` is
+`"true"` in that workflow.
 
 See [windows/README.md](windows/README.md) for tests and packaging, and
 [docs/](docs/README.md) for architecture and agent integration details.

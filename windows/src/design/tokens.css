@@ -138,6 +138,11 @@ summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+/* macOS draws focus as a soft glow hugging the control rather than an offset outline. */
+:root[data-os="macos"] :is(button, input, select, summary):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 input {
   caret-color: var(--accent);
 }

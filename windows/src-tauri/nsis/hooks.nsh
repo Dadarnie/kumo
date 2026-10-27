@@ -3,7 +3,7 @@
 ; Credit the publisher in the setup executable's Windows file properties too.
 VIAddVersionKey "CompanyName" "John Paul"
 ;
-; The app stages mimo-hook.exe into %LOCALAPPDATA%\Mimo\bin at launch, so the
+; The app stages kumo-hook.exe into %LOCALAPPDATA%\Kumo\bin at launch, so the
 ; installer never recorded it and the default uninstaller leaves it behind. The
 ; inbox and the log live in the same place and are ours too.
 ;
@@ -14,7 +14,8 @@ VIAddVersionKey "CompanyName" "John Paul"
 ; printing anything, so a leftover entry costs nothing beyond a dead path.
 
 !macro NSIS_HOOK_PREUNINSTALL
-  RMDir /r "$LOCALAPPDATA\Mimo\bin"
-  RMDir /r "$LOCALAPPDATA\Mimo\inbox"
-  Delete "$LOCALAPPDATA\Mimo\mimo.log"
+  RMDir /r "$LOCALAPPDATA\Kumo\bin"
+  RMDir /r "$LOCALAPPDATA\Kumo\inbox"
+  Delete "$LOCALAPPDATA\Kumo\kumo.log"
+  Delete "$LOCALAPPDATA\Kumo\kumo.log.1"
 !macroend
