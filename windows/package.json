@@ -20,6 +20,7 @@
     "test:mimo": "node --test scripts/mimo-engine.test.mjs scripts/mimo-expressions.test.mjs scripts/upload-sequence.test.mjs scripts/platform.test.mjs",
     "test:runtime": "node --test scripts/activity-runtime.test.mjs scripts/integration-workspace.test.mjs scripts/integration-notifications.test.mjs scripts/runtime-lifecycle.test.mjs scripts/island-state.test.mjs",
     "test": "npm run test:unit && npm run test:media-ui",
+    "install:local": "npm run tauri build -- --no-bundle && node scripts/install-local.mjs",
     "icons": "node scripts/gen-icons.mjs",
     "tauri": "tauri",
     "predev": "cargo build --release -p kumo-hook",
