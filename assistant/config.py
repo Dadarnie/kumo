@@ -124,7 +124,11 @@ PERMISSIONS = {
 
 # --- Stage 3: voice ---
 HOTKEY = "right ctrl"      # hold to talk
-WHISPER_MODEL = "medium"   # "small" is faster; "medium" understands Tagalog and Taglish much better (CPU)
+WHISPER_MODEL = "medium"   # CPU fallback: "small" is faster; "medium" understands Tagalog and Taglish much better
+# GPU (Vulkan) whisper.cpp build, used when it and the model exist; "" = always the CPU. See README.
+# large-v3-turbo on an RX 5700 XT: ~2-3 s per phrase and better Tagalog than medium on the CPU (~7 s).
+WHISPERCPP_DIR = os.environ.get("KUMO_WHISPERCPP_DIR", r"C:\Users\darnie\own projects\vendor\whisper.cpp")
+WHISPERCPP_MODEL = "ggml-large-v3-turbo-q5_0.bin"
 WHISPER_LANGUAGE = None    # None = detect, limited to WHISPER_LANGUAGES; or force one, e.g. "en"
 WHISPER_LANGUAGES = ("en", "tl")  # English and Tagalog (Taglish is transcribed as either)
 WHISPER_THREADS = 8        # CPU threads for Whisper (medium: ~7 s per phrase here with 8; "small" ~2.6 s)

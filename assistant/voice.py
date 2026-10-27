@@ -13,6 +13,7 @@ import numpy as np
 import sounddevice as sd
 
 import config
+import whisper_gpu
 
 RATE = 16000  # what Whisper expects
 _whisper = None
@@ -225,7 +226,19 @@ def _hints():
     return "Words: " + ", ".join([config.ASSISTANT_NAME, *config.APP_WHITELIST, config.WHISPER_HINTS]).strip(", ") + "."
 
 
+def _cpu_whisper():
+    from faster_whisper import WhisperModel
+    return WhisperModel(config.WHISPER_MODEL, device="cpu", compute_type="int8", cpu_threads=config.WHISPER_THREADS)
+
+
 def _transcribe(audio, lang, force):
+    global _whisper
+    if _whisper == "gpu":
+        try:
+            return whisper_gpu.transcribe(audio, lang, _hints())
+        except Exception as e:  # driver or server trouble: keep listening on the CPU
+            print(f"[voice] Whisper GPU failed ({e}); using the CPU", file=sys.stderr)
+            _whisper = _cpu_whisper()
     segments, info = _whisper.transcribe(audio, language=lang, beam_size=config.WHISPER_BEAM,
                                          initial_prompt=_hints(), vad_filter=not force,  # force = warm-up: run the full model
                                          condition_on_previous_text=False)
@@ -241,8 +254,7 @@ def transcribe(audio, force=False):
     if 0 < peak < 0.5 and not force:  # quiet voice: raise volume (max x8 so noise isn't blown up)
         audio = audio * min(0.7 / peak, 8)
     if _whisper is None:
-        from faster_whisper import WhisperModel
-        _whisper = WhisperModel(config.WHISPER_MODEL, device="cpu", compute_type="int8", cpu_threads=config.WHISPER_THREADS)
+        _whisper = "gpu" if whisper_gpu.available() else _cpu_whisper()
     # One pass detects the language while transcribing; only an unexpected language costs a second pass.
     lang = "en" if force else config.WHISPER_LANGUAGE
     segments, info = _transcribe(audio, lang, force)
@@ -254,7 +266,7 @@ def transcribe(audio, force=False):
     segments = [s for s in segments if not (s.no_speech_prob > 0.6 and s.avg_logprob < -0.5)]  # Whisper's silence rule
     if segments and np.mean([s.avg_logprob for s in segments]) < config.WHISPER_MIN_LOGPROB:
         unsure = True
-    text = " ".join(s.text.strip() for s in segments).strip()
+    text = re.sub(r"\s+", " ", "".join(s.text for s in segments)).strip()  # segments carry their own spaces (and may split a word)
     return "" if _is_hallucination(text) else text
 
 

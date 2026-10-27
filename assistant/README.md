@@ -92,6 +92,26 @@ Tuning in `config.py`:
 - `REASONING_EFFORT = "none"` in `config.py` turns off Gemma's hidden "thinking" (was 15-60 s of delay). Set to `None` for the model default.
 - Still too slow? Use a smaller Ollama model in Settings → Assistant → Model.
 
+## Whisper on the GPU
+
+With a Vulkan build of whisper.cpp at `WHISPERCPP_DIR` (config.py), speech-to-text runs on the
+graphics card: large-v3-turbo takes ~2-3 s per phrase on an RX 5700 XT (CPU medium: ~7 s) and
+gets Tagalog names and words right more often. `whisper_gpu.py` starts `whisper-server` on
+127.0.0.1:8178 and stops it when the assistant exits. Without the build or the model, or if the
+GPU fails, Kumo uses faster-whisper on the CPU as before.
+
+Build once (Visual Studio Build Tools 2022, the Vulkan SDK, CMake and Ninja):
+
+```powershell
+git clone --depth 1 --branch v1.9.5 https://github.com/ggml-org/whisper.cpp.git
+# in a "x64 Native Tools" prompt, inside whisper.cpp:
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=ON
+cmake --build build --target whisper-server
+curl -L -o models/ggml-large-v3-turbo-q5_0.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin
+```
+
+Self-check: `.\.venv\Scripts\python.exe whisper_gpu.py` prints `whisper_gpu OK`.
+
 ## Wake phrase: "hey kumo"
 
 `WAKE_PHRASE = "hey kumo"` in `config.py` (used when `WAKE_WORD_ENABLED = True`). Whisper transcribes each thing you say on the CPU and checks that it starts with the phrase, so there is no training and no extra package.
