@@ -52,6 +52,9 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Frontend unit tests
         run: npm run test:unit
+      # The app bundles the release relay as a resource, so it must exist before the app builds.
+      - name: Hook relay
+        run: cargo build --release -p kumo-hook --locked
       - name: Rust workspace tests
         run: cargo test --workspace --locked
       - name: Production frontend and relay build

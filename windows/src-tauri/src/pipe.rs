@@ -208,7 +208,7 @@ async fn handle(app: AppHandle, mut pipe: NamedPipeServer) {
         && payload["mimo_response_channel"] == "mcp"
         && payload["tool_name"] == "mimo.ask_user";
     if event != "PermissionRequest" && questions.is_none() {
-        log::line(format!("hook {event}"));
+        // Routine agent events (thousands a day) stay out of the log; approvals and failures are logged.
         let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
         let _ = pipe.disconnect();
         return;

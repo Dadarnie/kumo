@@ -21,12 +21,12 @@ pub fn line(message: impl AsRef<str>) {
         return;
     }
     let path = dir.join("kumo.log");
-    // Keep it from growing forever: start fresh past ~1 MB.
+    // Keep it from growing forever: past ~1 MB it becomes kumo.log.1 (the one before is dropped).
     if std::fs::metadata(&path)
         .map(|m| m.len() > 1_000_000)
         .unwrap_or(false)
     {
-        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::rename(&path, dir.join("kumo.log.1"));
     }
     let mut options = std::fs::OpenOptions::new();
     options.create(true).append(true);
